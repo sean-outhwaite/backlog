@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaSource {
+  tmdb
+  openlibrary
+  rawg
+}
+
+enum MediaType {
+  movie
+  tv
+  book
+  game
+}
+
+enum ListStatus {
+  want
+  done
+}
+
+model Profile {
+  id        String   @id
+  username  String?  @unique
+  createdAt DateTime @default(now())
+
+  listEntries       ListEntry[]
+  inviteLink        InviteLink?
+  friendshipsAsA    Friendship[]     @relation("FriendshipUserA")
+  friendshipsAsB    Friendship[]     @relation("FriendshipUserB")
+  recommendationsSent     Recommendation[] @relation("RecommendationFrom")
+  recommendationsReceived Recommendation[] @relation("RecommendationTo")
+}
+
+model MediaItem {
+  id            String   @id @default(uuid())
+  source        MediaSource
+  externalId    String
+  type          MediaType
+  title         String
+  coverImageUrl String?
+  description   String?
+  createdAt     DateTime @default(now())
+
+  listEntries     ListEntry[]
+  recommendations Recommendation[]
+
+  @@unique([source, externalId])
+}
+
+model ListEntry {
+  id           String     @id @default(uuid())
+  userId       String
+  mediaItemId  String
+  status       ListStatus @default(want)
+  notes        String?
+  addedAt      DateTime   @default(now())
+  completedAt  DateTime?
+
+  user      Profile   @relation(fields: [userId], references: [id])
+  mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+
+  @@unique([userId, mediaItemId])
+}
+
+model InviteLink {
+  id        String   @id @default(uuid())
+  ownerId   String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  owner Profile @relation(fields: [ownerId], references: [id])
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+
+  userA Profile @relation("FriendshipUserA", fields: [userAId], references: [id])
+  userB Profile @relation("FriendshipUserB", fields: [userBId], references: [id])
+
+  @@unique([userAId, userBId])
+}
+
+model Recommendation {
+  id          String    @id @default(uuid())
+  fromUserId  String
+  toUserId    String
+  mediaItemId String
+  message     String?
+  createdAt   DateTime  @default(now())
+  viewedAt    DateTime?
+
+  fromUser  Profile   @relation("RecommendationFrom", fields: [fromUserId], references: [id])
+  toUser    Profile   @relation("RecommendationTo", fields: [toUserId], references: [id])
+  mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+}
