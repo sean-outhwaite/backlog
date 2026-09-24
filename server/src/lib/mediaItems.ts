@@ -1,6 +1,6 @@
 import type { MediaItem } from '@prisma/client'
 import { z } from 'zod'
-import { prisma } from './prisma.js'
+import { isUniqueConstraintError, prisma } from './prisma.js'
 import { providersByType, sourceByType } from '../providers/index.js'
 
 // A title can be referenced either by an existing MediaItem row, or (straight from search
@@ -29,17 +29,20 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
   const details = await providersByType[type].getById(externalId)
   if (!details) return null
 
-  // upsert rather than create: two users adding the same new title at once shouldn't 500.
-  return prisma.mediaItem.upsert({
-    where,
-    create: {
-      source,
-      type,
-      externalId,
-      title: details.title,
-      coverImageUrl: details.coverImageUrl,
-      description: details.description,
-    },
-    update: {},
-  })
+  try {
+    return await prisma.mediaItem.create({
+      data: {
+        source,
+        type,
+        externalId,
+        title: details.title,
+        coverImageUrl: details.coverImageUrl,
+        description: details.description,
+      },
+    })
+  } catch (error) {
+    // Someone else added the same new title between our lookup and insert.
+    if (!isUniqueConstraintError(error)) throw error
+    return prisma.mediaItem.findUnique({ where })
+  }
 }

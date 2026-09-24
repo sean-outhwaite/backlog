@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
-import { prisma } from '../lib/prisma.js'
+import { isUniqueConstraintError, prisma } from '../lib/prisma.js'
 import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
 
 export const listsRouter = Router()
@@ -40,18 +40,26 @@ listsRouter.post(
       return
     }
 
-    const entry = await prisma.listEntry.upsert({
-      where: { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } },
-      create: {
-        userId,
-        mediaItemId: mediaItem.id,
-        status: parsed.data.status,
-        completedAt: parsed.data.status === 'done' ? new Date() : null,
-      },
-      update: {},
-      include: { mediaItem: true },
-    })
-    res.status(201).json(entry)
+    // mediaItem is attached here rather than via `include`, which would turn a single
+    // INSERT into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
+    let entry
+    try {
+      entry = await prisma.listEntry.create({
+        data: {
+          userId,
+          mediaItemId: mediaItem.id,
+          status: parsed.data.status,
+          completedAt: parsed.data.status === 'done' ? new Date() : null,
+        },
+      })
+    } catch (error) {
+      // Already on the list: return the existing entry, unchanged.
+      if (!isUniqueConstraintError(error)) throw error
+      entry = await prisma.listEntry.findUniqueOrThrow({
+        where: { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } },
+      })
+    }
+    res.status(201).json({ ...entry, mediaItem })
   }),
 )
 

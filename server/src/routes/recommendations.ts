@@ -49,16 +49,20 @@ recommendationsRouter.post(
       return
     }
 
-    const recommendation = await prisma.recommendation.create({
-      data: {
-        fromUserId: userId,
-        toUserId: parsed.data.toUserId,
-        mediaItemId: mediaItem.id,
-        message: parsed.data.message,
-      },
-      include: { fromUser: true, mediaItem: true },
-    })
-    res.status(201).json(recommendation)
+    // Run in parallel and assemble the response by hand: `include` would turn the INSERT
+    // into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
+    const [recommendation, fromUser] = await Promise.all([
+      prisma.recommendation.create({
+        data: {
+          fromUserId: userId,
+          toUserId: parsed.data.toUserId,
+          mediaItemId: mediaItem.id,
+          message: parsed.data.message,
+        },
+      }),
+      prisma.profile.findUniqueOrThrow({ where: { id: userId } }),
+    ])
+    res.status(201).json({ ...recommendation, fromUser, mediaItem })
   }),
 )
 
