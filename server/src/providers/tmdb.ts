@@ -1,5 +1,5 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, type MediaProvider, type NormalizedMediaResult } from './types.js'
+import { PROVIDER_TIMEOUT_MS, type MediaProvider, type MediaSearchResult } from './types.js'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
@@ -9,6 +9,7 @@ interface TmdbMovieResult {
   title: string
   overview: string | null
   poster_path: string | null
+  vote_count?: number
 }
 
 interface TmdbTvResult {
@@ -16,6 +17,7 @@ interface TmdbTvResult {
   name: string
   overview: string | null
   poster_path: string | null
+  vote_count?: number
 }
 
 interface TmdbSearchResponse<T> {
@@ -42,12 +44,13 @@ export const tmdbMovieProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
     return (data?.results ?? []).map(
-      (r): NormalizedMediaResult => ({
+      (r): MediaSearchResult => ({
         externalId: String(r.id),
         type: 'movie',
         title: r.title,
         coverImageUrl: toCoverUrl(r.poster_path),
         description: r.overview,
+        popularity: r.vote_count ?? 0,
       }),
     )
   },
@@ -68,12 +71,13 @@ export const tmdbTvProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbTvResult>>('/search/tv', { query })
     return (data?.results ?? []).map(
-      (r): NormalizedMediaResult => ({
+      (r): MediaSearchResult => ({
         externalId: String(r.id),
         type: 'tv',
         title: r.name,
         coverImageUrl: toCoverUrl(r.poster_path),
         description: r.overview,
+        popularity: r.vote_count ?? 0,
       }),
     )
   },

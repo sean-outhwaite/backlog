@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { allMediaTypes, providersByType } from '../providers/index.js'
-import type { NormalizedMediaResult } from '../providers/types.js'
+import type { MediaSearchResult } from '../providers/types.js'
+import { rankSearchResults } from '../lib/searchRanking.js'
 
 const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
 
@@ -36,7 +37,7 @@ mediaRouter.get(
       }),
     )
 
-    const results: NormalizedMediaResult[] = []
+    const results: MediaSearchResult[] = []
     settled.forEach((outcome, i) => {
       if (outcome.status === 'fulfilled') results.push(...outcome.value)
       else console.warn(`Search provider for "${typesToSearch[i]}" failed:`, outcome.reason)
@@ -47,7 +48,7 @@ mediaRouter.get(
       return
     }
 
-    res.json(results)
+    res.json(rankSearchResults(results, q))
   }),
 )
 

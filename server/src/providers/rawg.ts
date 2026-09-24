@@ -1,5 +1,5 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, type MediaProvider, type NormalizedMediaResult } from './types.js'
+import { PROVIDER_TIMEOUT_MS, type MediaProvider, type MediaSearchResult } from './types.js'
 
 const RAWG_BASE = 'https://api.rawg.io/api'
 
@@ -7,6 +7,7 @@ interface RawgGameSummary {
   id: number
   name: string
   background_image: string | null
+  added?: number
 }
 
 interface RawgSearchResponse {
@@ -33,12 +34,13 @@ export const rawgProvider: MediaProvider = {
   async search(query) {
     const data = await rawgFetch<RawgSearchResponse>('/games', { search: query })
     return (data?.results ?? []).map(
-      (r): NormalizedMediaResult => ({
+      (r): MediaSearchResult => ({
         externalId: String(r.id),
         type: 'game',
         title: r.name,
         coverImageUrl: r.background_image,
         description: null,
+        popularity: r.added ?? 0,
       }),
     )
   },

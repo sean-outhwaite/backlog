@@ -8,8 +8,16 @@ export interface NormalizedMediaResult {
   description: string | null
 }
 
+// Search results also carry a rough popularity signal, used to rank results from different
+// providers against each other. Each provider maps it from a "how many people engaged with
+// this" count (TMDB vote_count, Open Library readinglog_count, RAWG added), which land on
+// roughly the same scale: thousands for hits, single digits for obscure titles.
+export interface MediaSearchResult extends NormalizedMediaResult {
+  popularity: number
+}
+
 export interface MediaProvider {
-  search(query: string): Promise<NormalizedMediaResult[]>
+  search(query: string): Promise<MediaSearchResult[]>
   getById(externalId: string): Promise<NormalizedMediaResult | null>
 }
 
