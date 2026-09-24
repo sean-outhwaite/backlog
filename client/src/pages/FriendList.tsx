@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
+import { EmptyState, PageHeader } from '../components/PageHeader'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import type { ListEntry } from '../types'
 
@@ -18,14 +20,31 @@ export function FriendList() {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <p className="page-status">Loading…</p>
-
   return (
     <div>
-      <h2>Their list</h2>
+      <Link to="/friends" className="back-link">
+        ← Friends
+      </Link>
+      <PageHeader title="Their backlog" />
+
+      {loading && <LoadingState />}
+      {!loading && entries.length === 0 && (
+        <EmptyState>
+          <p>Their list is empty for now.</p>
+        </EmptyState>
+      )}
+
       <div className="media-grid">
         {entries.map((entry) => (
-          <MediaCard key={entry.id} mediaItem={entry.mediaItem} actions={<span>{entry.status}</span>} />
+          <MediaCard
+            key={entry.id}
+            mediaItem={entry.mediaItem}
+            actions={
+              <span className={`status-badge status-badge--${entry.status}`}>
+                {entry.status === 'done' ? 'Done' : 'Up next'}
+              </span>
+            }
+          />
         ))}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { Spinner } from './Spinner'
 import type { MediaRef, Profile } from '../types'
 
 export function RecommendControl({ media }: { media: MediaRef }) {
@@ -37,8 +38,8 @@ export function RecommendControl({ media }: { media: MediaRef }) {
           </option>
         ))}
       </select>
-      <button onClick={() => void handleRecommend()} disabled={!selectedFriendId || status === 'sending'}>
-        {status === 'sent' ? 'Sent!' : 'Send'}
+      <button className={status === 'sent' ? 'is-sent' : ''} onClick={() => void handleRecommend()} disabled={!selectedFriendId || status === 'sending'}>
+        {status === 'sending' ? <Spinner /> : status === 'sent' ? 'Sent!' : 'Send'}
       </button>
     </div>
   )

@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
+import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
+import { LoadingState } from '../components/Spinner'
+import { LogoMark } from '../components/icons'
+import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
 const MEDIA_TYPES: Array<MediaType | 'all'> = ['all', 'movie', 'tv', 'book', 'game']
 
 export function Dashboard() {
+  const { profile } = useAuth()
   const [entries, setEntries] = useState<ListEntry[]>([])
   const [status, setStatus] = useState<ListStatus>('want')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
@@ -31,19 +37,25 @@ export function Dashboard() {
     setEntries((prev) => prev.filter((e) => e.id !== entry.id))
   }
 
+  const countFor = (s: ListStatus) => entries.filter((entry) => entry.status === s).length
   const visible = entries.filter(
     (entry) => entry.status === status && (typeFilter === 'all' || entry.mediaItem.type === typeFilter),
   )
 
   return (
     <div>
+      <PageHeader
+        title={profile?.username ? `${profile.username}'s backlog` : 'My backlog'}
+        subtitle="Everything you've been meaning to watch, read and play."
+      />
+
       <div className="page-toolbar">
         <div className="tabs">
           <button className={status === 'want' ? 'active' : ''} onClick={() => setStatus('want')}>
-            Want to consume
+            Up next <span className="tab-count">{countFor('want')}</span>
           </button>
           <button className={status === 'done' ? 'active' : ''} onClick={() => setStatus('done')}>
-            Done
+            Done <span className="tab-count">{countFor('done')}</span>
           </button>
         </div>
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
@@ -55,8 +67,18 @@ export function Dashboard() {
         </select>
       </div>
 
-      {loading && <p className="page-status">Loading…</p>}
-      {!loading && visible.length === 0 && <p className="page-status">Nothing here yet.</p>}
+      {loading && <LoadingState />}
+      {!loading && visible.length === 0 && (
+        <EmptyState icon={<LogoMark />}>
+          {status === 'want' ? (
+            <p>
+              Your backlog is empty. <Link to="/search">Find something to add</Link>.
+            </p>
+          ) : (
+            <p>Nothing finished yet. Mark something done and it'll show up here.</p>
+          )}
+        </EmptyState>
+      )}
 
       <div className="media-grid">
         {visible.map((entry) => (
@@ -65,10 +87,15 @@ export function Dashboard() {
             mediaItem={entry.mediaItem}
             actions={
               <>
-                <button onClick={() => void updateStatus(entry, entry.status === 'want' ? 'done' : 'want')}>
-                  {entry.status === 'want' ? 'Mark done' : 'Move back to want'}
+                <button
+                  className={entry.status === 'want' ? 'btn-primary' : ''}
+                  onClick={() => void updateStatus(entry, entry.status === 'want' ? 'done' : 'want')}
+                >
+                  {entry.status === 'want' ? 'Mark done' : 'Move back to up next'}
                 </button>
-                <button onClick={() => void removeEntry(entry)}>Remove</button>
+                <button className="btn-quiet btn-danger" onClick={() => void removeEntry(entry)}>
+                  Remove
+                </button>
                 <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
               </>
             }

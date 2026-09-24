@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { AuthShell } from '../components/AuthShell'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import type { Profile } from '../types'
@@ -30,7 +31,7 @@ export function Onboarding() {
   }
 
   return (
-    <div className="centered-page">
+    <AuthShell>
       <h1>Pick a username</h1>
       <p>Friends will see this when you recommend something to them.</p>
       <form onSubmit={(event) => void handleSubmit(event)}>
@@ -43,11 +44,11 @@ export function Onboarding() {
           value={username}
           onChange={(event) => setUsername(event.target.value)}
         />
-        <button type="submit" disabled={submitting}>
+        <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting ? 'Saving…' : 'Continue'}
         </button>
       </form>
       {error && <p className="error-text">{error}</p>}
-    </div>
+    </AuthShell>
   )
 }

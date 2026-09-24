@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { LogoMark } from './icons'
 
 export function Layout() {
   const { profile, signOut } = useAuth()
@@ -7,24 +8,26 @@ export function Layout() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <span className="app-title">Backlog</span>
+        <NavLink to="/" className="app-title">
+          <LogoMark />
+          Backlog
+        </NavLink>
         <nav className="app-nav">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink to="/" end>
             My List
           </NavLink>
-          <NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Search
-          </NavLink>
-          <NavLink to="/friends" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Friends
-          </NavLink>
-          <NavLink to="/recommendations" className={({ isActive }) => (isActive ? 'active' : '')}>
-            Recommendations
-          </NavLink>
+          <NavLink to="/search">Search</NavLink>
+          <NavLink to="/friends">Friends</NavLink>
+          <NavLink to="/recommendations">Recommendations</NavLink>
         </nav>
         <div className="app-user">
-          <span>{profile?.username}</span>
-          <button onClick={() => void signOut()}>Sign out</button>
+          <span className="avatar" aria-hidden="true">
+            {profile?.username?.[0]?.toUpperCase()}
+          </span>
+          <span className="app-username">{profile?.username}</span>
+          <button className="btn-quiet" onClick={() => void signOut()}>
+            Sign out
+          </button>
         </div>
       </header>
       <main className="app-main">

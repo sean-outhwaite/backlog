@@ -1,6 +1,10 @@
 import { useState, type FormEvent } from 'react'
+import { AddToListButton } from '../components/AddToListButton'
+import { SearchIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
+import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import type { MediaSearchResult, MediaType } from '../types'
 
@@ -15,6 +19,7 @@ export function Search() {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [results, setResults] = useState<MediaSearchResult[]>([])
+  const [searchedQuery, setSearchedQuery] = useState<string | null>(null)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +34,7 @@ export function Search() {
       if (typeFilter !== 'all') params.set('type', typeFilter)
       const found = await api.get<MediaSearchResult[]>(`/api/media/search?${params}`)
       setResults(found)
+      setSearchedQuery(query)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed')
     } finally {
@@ -43,12 +49,17 @@ export function Search() {
 
   return (
     <div>
-      <form className="page-toolbar" onSubmit={(event) => void handleSearch(event)}>
-        <input
-          placeholder="Search movies, shows, books, games…"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+      <PageHeader title="Search" subtitle="Movies, shows, books and games, all in one place." />
+
+      <form className="page-toolbar search-bar" onSubmit={(event) => void handleSearch(event)}>
+        <label className="search-input">
+          <SearchIcon />
+          <input
+            placeholder="Search movies, shows, books, games…"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
           {MEDIA_TYPES.map((type) => (
             <option key={type} value={type}>
@@ -56,23 +67,33 @@ export function Search() {
             </option>
           ))}
         </select>
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
 
       {error && <p className="error-text">{error}</p>}
 
-      <div className="media-grid">
+      {loading && results.length === 0 && <LoadingState label="Searching…" />}
+      {!loading && searchedQuery === null && (
+        <EmptyState icon={<SearchIcon />}>
+          <p>Look something up to start building your backlog.</p>
+        </EmptyState>
+      )}
+      {!loading && searchedQuery !== null && results.length === 0 && (
+        <EmptyState icon={<SearchIcon />}>
+          <p>Nothing found for “{searchedQuery}”.</p>
+        </EmptyState>
+      )}
+
+      <div className={`media-grid${loading ? ' is-stale' : ''}`}>
         {results.map((result) => (
           <MediaCard
             key={resultKey(result)}
             mediaItem={result}
             actions={
               <>
-                <button onClick={() => void addToList(result)} disabled={addedIds.has(resultKey(result))}>
-                  {addedIds.has(resultKey(result)) ? 'Added' : 'Add to list'}
-                </button>
+                <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addToList(result)} />
                 <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
               </>
             }

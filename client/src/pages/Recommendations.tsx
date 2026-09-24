@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { AddToListButton } from '../components/AddToListButton'
 import { MediaCard } from '../components/MediaCard'
+import { EmptyState, PageHeader } from '../components/PageHeader'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import type { Recommendation } from '../types'
 
@@ -25,26 +28,37 @@ export function Recommendations() {
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
-  if (loading) return <p className="page-status">Loading…</p>
-  if (recommendations.length === 0) return <p className="page-status">No recommendations yet.</p>
-
   return (
-    <div className="media-grid">
-      {recommendations.map((rec) => (
-        <MediaCard
-          key={rec.id}
-          mediaItem={rec.mediaItem}
-          actions={
-            <>
-              <p>From {rec.fromUser.username}</p>
-              {rec.message && <p className="recommendation-message">"{rec.message}"</p>}
-              <button onClick={() => void addToList(rec.mediaItemId)} disabled={addedIds.has(rec.mediaItemId)}>
-                {addedIds.has(rec.mediaItemId) ? 'Added' : 'Add to my list'}
-              </button>
-            </>
-          }
-        />
-      ))}
+    <div>
+      <PageHeader title="Recommendations" subtitle="Things your friends think you'd love." />
+
+      {loading && <LoadingState />}
+      {!loading && recommendations.length === 0 && (
+        <EmptyState>
+          <p>No recommendations yet. When a friend sends you something, it'll land here.</p>
+        </EmptyState>
+      )}
+
+      <div className="media-grid">
+        {recommendations.map((rec) => (
+          <MediaCard
+            key={rec.id}
+            mediaItem={rec.mediaItem}
+            actions={
+              <>
+                <p className="recommendation-from">
+                  <span className="avatar avatar--sm" aria-hidden="true">
+                    {rec.fromUser.username?.[0]?.toUpperCase()}
+                  </span>
+                  From <strong>{rec.fromUser.username}</strong>
+                </p>
+                {rec.message && <p className="recommendation-message">“{rec.message}”</p>}
+                <AddToListButton added={addedIds.has(rec.mediaItemId)} onAdd={() => addToList(rec.mediaItemId)} />
+              </>
+            }
+          />
+        ))}
+      </div>
     </div>
   )
 }

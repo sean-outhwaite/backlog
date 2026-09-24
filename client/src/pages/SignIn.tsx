@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { AuthShell } from '../components/AuthShell'
 import { useAuth } from '../hooks/useAuth'
 
 export function SignIn() {
@@ -30,12 +31,12 @@ export function SignIn() {
   }
 
   return (
-    <div className="centered-page">
-      <h1>Backlog</h1>
+    <AuthShell>
+      <h1 className="wordmark">Backlog</h1>
       <p>Track what you want to watch, read, and play — and pass it on to friends.</p>
 
       {status === 'sent' ? (
-        <p>Check your email for a sign-in link.</p>
+        <p className="auth-sent">Check your email for a sign-in link.</p>
       ) : (
         <form onSubmit={(event) => void handleSubmit(event)}>
           <input
@@ -45,13 +46,13 @@ export function SignIn() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
-          <button type="submit" disabled={status === 'sending'}>
+          <button type="submit" className="btn-primary" disabled={status === 'sending'}>
             {status === 'sending' ? 'Sending…' : 'Send sign-in link'}
           </button>
         </form>
       )}
 
       {error && <p className="error-text">{error}</p>}
-    </div>
+    </AuthShell>
   )
 }

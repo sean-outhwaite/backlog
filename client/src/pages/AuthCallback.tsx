@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 
 const PENDING_INVITE_KEY = 'pendingInviteToken'
@@ -31,5 +32,5 @@ export function AuthCallback() {
     void finish()
   }, [loading, session, profile, navigate])
 
-  return <p className="page-status">Signing you in…</p>
+  return <LoadingState label="Signing you in…" />
 }

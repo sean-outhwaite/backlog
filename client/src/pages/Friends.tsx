@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { EmptyState, PageHeader } from '../components/PageHeader'
 import { api } from '../lib/api'
 import type { InviteLink, Profile } from '../types'
 
@@ -23,22 +24,38 @@ export function Friends() {
 
   return (
     <div>
-      <section>
+      <PageHeader title="Friends" subtitle="See what your friends are into, and send them things you love." />
+
+      <section className="panel">
         <h2>Your invite link</h2>
         <p>Share this so a friend can connect with you.</p>
         <div className="invite-link-row">
-          <input readOnly value={inviteUrl} />
-          <button onClick={() => void copyInviteUrl()}>{copied ? 'Copied!' : 'Copy'}</button>
+          <input readOnly value={inviteUrl} onFocus={(event) => event.target.select()} />
+          <button className="btn-primary" onClick={() => void copyInviteUrl()}>
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
         </div>
       </section>
 
       <section>
-        <h2>Friends</h2>
-        {friends.length === 0 && <p className="page-status">No friends yet — share your invite link.</p>}
+        <h2>Your friends</h2>
+        {friends.length === 0 && (
+          <EmptyState>
+            <p>No friends yet. Share your invite link to get started.</p>
+          </EmptyState>
+        )}
         <ul className="friend-list">
           {friends.map((friend) => (
             <li key={friend.id}>
-              <Link to={`/friends/${friend.id}`}>{friend.username}</Link>
+              <Link to={`/friends/${friend.id}`} className="friend-card">
+                <span className="avatar" aria-hidden="true">
+                  {friend.username?.[0]?.toUpperCase()}
+                </span>
+                <span className="friend-name">{friend.username}</span>
+                <span className="friend-arrow" aria-hidden="true">
+                  →
+                </span>
+              </Link>
             </li>
           ))}
         </ul>

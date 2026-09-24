@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 
 const PENDING_INVITE_KEY = 'pendingInviteToken'
@@ -25,5 +26,5 @@ export function InviteRedeem() {
       .then(() => navigate('/friends', { replace: true }))
   }, [loading, session, token, navigate])
 
-  return <p className="page-status">Connecting you with your friend…</p>
+  return <LoadingState label="Connecting you with your friend…" />
 }
