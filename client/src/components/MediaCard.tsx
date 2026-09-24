@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import type { MediaItem } from '../types'
 
-export function MediaCard({ mediaItem, actions }: { mediaItem: MediaItem; actions?: ReactNode }) {
+export function MediaCard({
+  mediaItem,
+  actions,
+}: {
+  mediaItem: Pick<MediaItem, 'type' | 'title' | 'coverImageUrl'>
+  actions?: ReactNode
+}) {
   return (
     <div className="media-card">
       {mediaItem.coverImageUrl && <img src={mediaItem.coverImageUrl} alt="" />}

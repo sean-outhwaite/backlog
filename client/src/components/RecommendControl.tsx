@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import type { Profile } from '../types'
+import type { MediaRef, Profile } from '../types'
 
-export function RecommendControl({ mediaItemId }: { mediaItemId: string }) {
+export function RecommendControl({ media }: { media: MediaRef }) {
   const [friends, setFriends] = useState<Profile[]>([])
   const [selectedFriendId, setSelectedFriendId] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -18,7 +18,7 @@ export function RecommendControl({ mediaItemId }: { mediaItemId: string }) {
     if (!selectedFriendId) return
     setStatus('sending')
     try {
-      await api.post('/api/recommendations', { toUserId: selectedFriendId, mediaItemId })
+      await api.post('/api/recommendations', { toUserId: selectedFriendId, ...media })
       setStatus('sent')
     } catch {
       setStatus('error')

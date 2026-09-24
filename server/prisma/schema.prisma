@@ -51,7 +51,7 @@ model MediaItem {
   listEntries     ListEntry[]
   recommendations Recommendation[]
 
-  @@unique([source, externalId])
+  @@unique([source, type, externalId])
 }
 
 model ListEntry {

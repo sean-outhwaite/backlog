@@ -2,14 +2,19 @@ import { useState, type FormEvent } from 'react'
 import { MediaCard } from '../components/MediaCard'
 import { RecommendControl } from '../components/RecommendControl'
 import { api } from '../lib/api'
-import type { MediaItem, MediaType } from '../types'
+import type { MediaSearchResult, MediaType } from '../types'
 
 const MEDIA_TYPES: Array<MediaType | 'all'> = ['all', 'movie', 'tv', 'book', 'game']
+
+// externalId alone isn't unique across types (a TMDB movie and show can share an id).
+function resultKey(result: MediaSearchResult) {
+  return `${result.type}:${result.externalId}`
+}
 
 export function Search() {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
-  const [results, setResults] = useState<MediaItem[]>([])
+  const [results, setResults] = useState<MediaSearchResult[]>([])
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,7 +27,7 @@ export function Search() {
     try {
       const params = new URLSearchParams({ q: query })
       if (typeFilter !== 'all') params.set('type', typeFilter)
-      const found = await api.get<MediaItem[]>(`/api/media/search?${params}`)
+      const found = await api.get<MediaSearchResult[]>(`/api/media/search?${params}`)
       setResults(found)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed')
@@ -31,9 +36,9 @@ export function Search() {
     }
   }
 
-  async function addToList(mediaItem: MediaItem) {
-    await api.post('/api/lists', { mediaItemId: mediaItem.id })
-    setAddedIds((prev) => new Set(prev).add(mediaItem.id))
+  async function addToList(result: MediaSearchResult) {
+    await api.post('/api/lists', { type: result.type, externalId: result.externalId })
+    setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
 
   return (
@@ -59,16 +64,16 @@ export function Search() {
       {error && <p className="error-text">{error}</p>}
 
       <div className="media-grid">
-        {results.map((mediaItem) => (
+        {results.map((result) => (
           <MediaCard
-            key={mediaItem.id}
-            mediaItem={mediaItem}
+            key={resultKey(result)}
+            mediaItem={result}
             actions={
               <>
-                <button onClick={() => void addToList(mediaItem)} disabled={addedIds.has(mediaItem.id)}>
-                  {addedIds.has(mediaItem.id) ? 'Added' : 'Add to list'}
+                <button onClick={() => void addToList(result)} disabled={addedIds.has(resultKey(result))}>
+                  {addedIds.has(resultKey(result)) ? 'Added' : 'Add to list'}
                 </button>
-                <RecommendControl mediaItemId={mediaItem.id} />
+                <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
               </>
             }
           />

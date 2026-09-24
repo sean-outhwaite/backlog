@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
+import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
 import { areFriends } from '../lib/friendship.js'
 
 export const recommendationsRouter = Router()
@@ -20,11 +21,12 @@ recommendationsRouter.get(
   }),
 )
 
-const createRecommendationSchema = z.object({
-  toUserId: z.string(),
-  mediaItemId: z.string().uuid(),
-  message: z.string().max(280).optional(),
-})
+const createRecommendationSchema = z
+  .object({
+    toUserId: z.string(),
+    message: z.string().max(280).optional(),
+  })
+  .and(mediaRefSchema)
 
 recommendationsRouter.post(
   '/',
@@ -41,11 +43,17 @@ recommendationsRouter.post(
       return
     }
 
+    const mediaItem = await resolveMediaItem(parsed.data)
+    if (!mediaItem) {
+      res.status(404).json({ error: 'Media item not found' })
+      return
+    }
+
     const recommendation = await prisma.recommendation.create({
       data: {
         fromUserId: userId,
         toUserId: parsed.data.toUserId,
-        mediaItemId: parsed.data.mediaItemId,
+        mediaItemId: mediaItem.id,
         message: parsed.data.message,
       },
       include: { fromUser: true, mediaItem: true },

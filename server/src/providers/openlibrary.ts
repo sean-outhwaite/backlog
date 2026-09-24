@@ -1,4 +1,4 @@
-import type { MediaProvider, NormalizedMediaResult } from './types.js'
+import { PROVIDER_TIMEOUT_MS, type MediaProvider, type NormalizedMediaResult } from './types.js'
 
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org'
 const COVER_BASE = 'https://covers.openlibrary.org/b/id'
@@ -38,7 +38,7 @@ export const openLibraryProvider: MediaProvider = {
     url.searchParams.set('q', query)
     url.searchParams.set('limit', '20')
 
-    const response = await fetch(url)
+    const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibrarySearchResponse
 
@@ -53,7 +53,9 @@ export const openLibraryProvider: MediaProvider = {
     )
   },
   async getById(externalId) {
-    const response = await fetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`)
+    const response = await fetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, {
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+    })
     if (!response.ok) return null
     const work = (await response.json()) as OpenLibraryWork
 

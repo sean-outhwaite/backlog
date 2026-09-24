@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
+import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
 
 export const listsRouter = Router()
 
@@ -19,10 +20,9 @@ listsRouter.get(
   }),
 )
 
-const createEntrySchema = z.object({
-  mediaItemId: z.string().uuid(),
-  status: z.enum(['want', 'done']).default('want'),
-})
+const createEntrySchema = z
+  .object({ status: z.enum(['want', 'done']).default('want') })
+  .and(mediaRefSchema)
 
 listsRouter.post(
   '/',
@@ -34,11 +34,17 @@ listsRouter.post(
       return
     }
 
+    const mediaItem = await resolveMediaItem(parsed.data)
+    if (!mediaItem) {
+      res.status(404).json({ error: 'Media item not found' })
+      return
+    }
+
     const entry = await prisma.listEntry.upsert({
-      where: { userId_mediaItemId: { userId, mediaItemId: parsed.data.mediaItemId } },
+      where: { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } },
       create: {
         userId,
-        mediaItemId: parsed.data.mediaItemId,
+        mediaItemId: mediaItem.id,
         status: parsed.data.status,
         completedAt: parsed.data.status === 'done' ? new Date() : null,
       },

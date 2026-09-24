@@ -69,7 +69,7 @@ export function Dashboard() {
                   {entry.status === 'want' ? 'Mark done' : 'Move back to want'}
                 </button>
                 <button onClick={() => void removeEntry(entry)}>Remove</button>
-                <RecommendControl mediaItemId={entry.mediaItem.id} />
+                <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
               </>
             }
           />
