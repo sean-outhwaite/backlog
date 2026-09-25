@@ -38,6 +38,7 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
         title: details.title,
         coverImageUrl: details.coverImageUrl,
         description: details.description,
+        releaseYear: details.releaseYear,
       },
     })
   } catch (error) {

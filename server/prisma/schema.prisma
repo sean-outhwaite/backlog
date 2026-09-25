@@ -46,6 +46,7 @@ model MediaItem {
   title         String
   coverImageUrl String?
   description   String?
+  releaseYear   Int?
   createdAt     DateTime @default(now())
 
   listEntries     ListEntry[]

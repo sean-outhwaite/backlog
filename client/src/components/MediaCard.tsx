@@ -7,7 +7,7 @@ export function MediaCard({
   mediaItem,
   actions,
 }: {
-  mediaItem: Pick<MediaItem, 'type' | 'title' | 'coverImageUrl'>
+  mediaItem: Pick<MediaItem, 'type' | 'title' | 'coverImageUrl' | 'releaseYear'>
   actions?: ReactNode
 }) {
   return (
@@ -27,7 +27,10 @@ export function MediaCard({
         </span>
       </div>
       <div className="media-card-body">
-        <h3 title={mediaItem.title}>{mediaItem.title}</h3>
+        <div className="media-card-heading">
+          <h3 title={mediaItem.title}>{mediaItem.title}</h3>
+          {mediaItem.releaseYear !== null && <span className="media-card-year">{mediaItem.releaseYear}</span>}
+        </div>
         {actions && <div className="media-card-actions">{actions}</div>}
       </div>
     </article>

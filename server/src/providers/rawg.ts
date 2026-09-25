@@ -1,5 +1,5 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, type MediaProvider, type MediaSearchResult } from './types.js'
+import { PROVIDER_TIMEOUT_MS, yearFromDate, type MediaProvider, type MediaSearchResult } from './types.js'
 
 const RAWG_BASE = 'https://api.rawg.io/api'
 
@@ -7,6 +7,7 @@ interface RawgGameSummary {
   id: number
   name: string
   background_image: string | null
+  released: string | null
   added?: number
 }
 
@@ -39,6 +40,7 @@ export const rawgProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: r.background_image,
       description: null,
+      releaseYear: yearFromDate(r.released),
       popularity: r.added ?? 0,
     }))
   },
@@ -51,6 +53,7 @@ export const rawgProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: r.background_image,
       description: r.description_raw,
+      releaseYear: yearFromDate(r.released),
     }
   },
 }

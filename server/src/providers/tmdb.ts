@@ -1,5 +1,5 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, type MediaProvider, type MediaSearchResult } from './types.js'
+import { PROVIDER_TIMEOUT_MS, yearFromDate, type MediaProvider, type MediaSearchResult } from './types.js'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
@@ -9,6 +9,7 @@ interface TmdbMovieResult {
   title: string
   overview: string | null
   poster_path: string | null
+  release_date?: string
   vote_count?: number
 }
 
@@ -17,6 +18,7 @@ interface TmdbTvResult {
   name: string
   overview: string | null
   poster_path: string | null
+  first_air_date?: string
   vote_count?: number
 }
 
@@ -49,6 +51,7 @@ export const tmdbMovieProvider: MediaProvider = {
       title: r.title,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
+      releaseYear: yearFromDate(r.release_date),
       popularity: r.vote_count ?? 0,
     }))
   },
@@ -61,6 +64,7 @@ export const tmdbMovieProvider: MediaProvider = {
       title: r.title,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
+      releaseYear: yearFromDate(r.release_date),
     }
   },
 }
@@ -74,6 +78,7 @@ export const tmdbTvProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
+      releaseYear: yearFromDate(r.first_air_date),
       popularity: r.vote_count ?? 0,
     }))
   },
@@ -86,6 +91,7 @@ export const tmdbTvProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
+      releaseYear: yearFromDate(r.first_air_date),
     }
   },
 }

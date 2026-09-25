@@ -480,6 +480,18 @@ section + section {
   overflow: hidden;
 }
 
+.media-card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.media-card-year {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 .media-card-actions {
   display: flex;
   flex-direction: column;
