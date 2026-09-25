@@ -3,11 +3,15 @@ import { z } from 'zod'
 import { isUniqueConstraintError, prisma } from './prisma.js'
 import { providersByType, sourceByType } from '../providers/index.js'
 
+// Provider ids (TMDB/RAWG numbers, Open Library "OL123W") are interpolated into provider URL
+// paths, so only allow characters that can't change the path.
+export const externalIdSchema = z.string().regex(/^[A-Za-z0-9_-]+$/)
+
 // A title can be referenced either by an existing MediaItem row, or (straight from search
 // results, which aren't stored) by its provider identity.
 export const mediaRefSchema = z.union([
   z.object({ mediaItemId: z.string().uuid() }),
-  z.object({ type: z.enum(['movie', 'tv', 'book', 'game']), externalId: z.string().min(1) }),
+  z.object({ type: z.enum(['movie', 'tv', 'book', 'game']), externalId: externalIdSchema }),
 ])
 
 export type MediaRef = z.infer<typeof mediaRefSchema>

@@ -4,6 +4,7 @@ import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { allMediaTypes, providersByType } from '../providers/index.js'
 import type { MediaSearchResult } from '../providers/types.js'
+import { externalIdSchema } from '../lib/mediaItems.js'
 import { rankSearchResults } from '../lib/searchRanking.js'
 
 const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
@@ -11,6 +12,11 @@ const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
 const searchQuerySchema = z.object({
   q: z.string().min(1),
   type: z.enum(['movie', 'tv', 'book', 'game']).optional(),
+})
+
+const detailsParamsSchema = z.object({
+  type: z.enum(['movie', 'tv', 'book', 'game']),
+  externalId: externalIdSchema,
 })
 
 export const mediaRouter = Router()
@@ -49,6 +55,28 @@ mediaRouter.get(
     }
 
     res.json(rankSearchResults(results, q))
+  }),
+)
+
+// Full details for one title, fetched live from its provider for the details view. Like
+// search, this never touches the DB: only the core fields are ever stored on MediaItem.
+mediaRouter.get(
+  '/details/:type/:externalId',
+  asyncHandler(async (req, res) => {
+    const parsed = detailsParamsSchema.safeParse(req.params)
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() })
+      return
+    }
+    const { type, externalId } = parsed.data
+
+    const details = await providersByType[type].getById(externalId)
+    if (!details) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    res.set('Cache-Control', 'private, max-age=3600')
+    res.json(details)
   }),
 )
 

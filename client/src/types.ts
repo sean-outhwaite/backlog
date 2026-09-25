@@ -18,6 +18,19 @@ export type MediaSearchResult = Pick<
   'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description' | 'releaseYear'
 >
 
+// Live details for one title, fetched from its provider when its details view opens; never stored.
+export interface MediaFact {
+  label: string
+  value: string
+}
+
+export interface MediaDetails extends MediaSearchResult {
+  tagline: string | null
+  genres: string[]
+  facts: MediaFact[]
+  url: string
+}
+
 // How the API identifies a title to add or recommend: an existing MediaItem, or a search result.
 export type MediaRef = { mediaItemId: string } | Pick<MediaItem, 'type' | 'externalId'>
 

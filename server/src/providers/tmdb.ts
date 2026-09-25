@@ -1,5 +1,12 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, yearFromDate, type MediaProvider, type MediaSearchResult } from './types.js'
+import {
+  joinNames,
+  PROVIDER_TIMEOUT_MS,
+  toFacts,
+  yearFromDate,
+  type MediaProvider,
+  type MediaSearchResult,
+} from './types.js'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
@@ -22,6 +29,37 @@ interface TmdbTvResult {
   vote_count?: number
 }
 
+interface TmdbNamed {
+  name: string
+}
+
+interface TmdbCredits {
+  cast: TmdbNamed[]
+  crew: Array<TmdbNamed & { job: string }>
+}
+
+interface TmdbMovieDetail extends TmdbMovieResult {
+  tagline: string | null
+  runtime: number | null
+  genres: TmdbNamed[]
+  vote_average: number
+  credits?: TmdbCredits
+}
+
+interface TmdbTvDetail extends TmdbTvResult {
+  tagline: string | null
+  genres: TmdbNamed[]
+  created_by: TmdbNamed[]
+  networks: TmdbNamed[]
+  number_of_seasons: number | null
+  number_of_episodes: number | null
+  episode_run_time: number[]
+  status: string | null
+  vote_average: number
+  // The whole run's cast; plain `credits` only lists the latest season's.
+  aggregate_credits?: TmdbCredits
+}
+
 interface TmdbSearchResponse<T> {
   results: T[]
 }
@@ -42,6 +80,24 @@ function toCoverUrl(posterPath: string | null): string | null {
   return posterPath ? `${TMDB_IMAGE_BASE}${posterPath}` : null
 }
 
+function formatRuntime(minutes: number | null | undefined): string | null {
+  if (!minutes) return null
+  const hours = Math.floor(minutes / 60)
+  return hours ? `${hours}h ${minutes % 60}m` : `${minutes}m`
+}
+
+function formatRating(voteAverage: number, voteCount: number | undefined): string | null {
+  return voteCount ? `${voteAverage.toFixed(1)}/10 on TMDB` : null
+}
+
+function names(people: TmdbNamed[] | undefined): string[] {
+  return (people ?? []).map((person) => person.name)
+}
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`
+}
+
 export const tmdbMovieProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
@@ -56,8 +112,9 @@ export const tmdbMovieProvider: MediaProvider = {
     }))
   },
   async getById(externalId) {
-    const r = await tmdbFetch<TmdbMovieResult>(`/movie/${externalId}`, {})
+    const r = await tmdbFetch<TmdbMovieDetail>(`/movie/${externalId}`, { append_to_response: 'credits' })
     if (!r?.id) return null
+    const directors = r.credits?.crew.filter((member) => member.job === 'Director')
     return {
       externalId: String(r.id),
       type: 'movie',
@@ -65,6 +122,15 @@ export const tmdbMovieProvider: MediaProvider = {
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
       releaseYear: yearFromDate(r.release_date),
+      tagline: r.tagline || null,
+      genres: names(r.genres),
+      facts: toFacts([
+        ['Directed by', joinNames(names(directors))],
+        ['Starring', joinNames(names(r.credits?.cast).slice(0, 4))],
+        ['Runtime', formatRuntime(r.runtime)],
+        ['Rating', formatRating(r.vote_average, r.vote_count)],
+      ]),
+      url: `https://www.themoviedb.org/movie/${r.id}`,
     }
   },
 }
@@ -83,8 +149,13 @@ export const tmdbTvProvider: MediaProvider = {
     }))
   },
   async getById(externalId) {
-    const r = await tmdbFetch<TmdbTvResult>(`/tv/${externalId}`, {})
+    const r = await tmdbFetch<TmdbTvDetail>(`/tv/${externalId}`, { append_to_response: 'aggregate_credits' })
     if (!r?.id) return null
+    const seasons =
+      r.number_of_seasons &&
+      [plural(r.number_of_seasons, 'season'), r.number_of_episodes && plural(r.number_of_episodes, 'episode')]
+        .filter(Boolean)
+        .join(' · ')
     return {
       externalId: String(r.id),
       type: 'tv',
@@ -92,6 +163,18 @@ export const tmdbTvProvider: MediaProvider = {
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
       releaseYear: yearFromDate(r.first_air_date),
+      tagline: r.tagline || null,
+      genres: names(r.genres),
+      facts: toFacts([
+        ['Created by', joinNames(names(r.created_by))],
+        ['Network', joinNames(names(r.networks))],
+        ['Starring', joinNames(names(r.aggregate_credits?.cast).slice(0, 4))],
+        ['Seasons', seasons || null],
+        ['Episode length', formatRuntime(r.episode_run_time[0])],
+        ['Status', r.status],
+        ['Rating', formatRating(r.vote_average, r.vote_count)],
+      ]),
+      url: `https://www.themoviedb.org/tv/${r.id}`,
     }
   },
 }

@@ -17,9 +17,36 @@ export interface MediaSearchResult extends NormalizedMediaResult {
   popularity: number
 }
 
+// A labelled, display-ready detail ("Director": "Denis Villeneuve", "Platforms": "PC, PS5").
+// Providers format these themselves so the client can render any type's details generically.
+export interface MediaFact {
+  label: string
+  value: string
+}
+
+// Everything getById knows about a title. Only the NormalizedMediaResult fields are ever
+// stored (on MediaItem); the rest is fetched live whenever someone opens a title's details.
+export interface MediaDetails extends NormalizedMediaResult {
+  tagline: string | null
+  genres: string[]
+  facts: MediaFact[]
+  url: string
+}
+
 export interface MediaProvider {
   search(query: string): Promise<MediaSearchResult[]>
-  getById(externalId: string): Promise<NormalizedMediaResult | null>
+  getById(externalId: string): Promise<MediaDetails | null>
+}
+
+// Builds a facts list, dropping entries whose value is missing or empty.
+export function toFacts(entries: Array<[label: string, value: string | null | undefined]>): MediaFact[] {
+  return entries.filter((entry): entry is [string, string] => !!entry[1]).map(([label, value]) => ({ label, value }))
+}
+
+export function joinNames(names: string[] | undefined, max = 4): string | null {
+  if (!names?.length) return null
+  const shown = names.slice(0, max).join(', ')
+  return names.length > max ? `${shown} +${names.length - max} more` : shown
 }
 
 // Providers give release dates in assorted shapes ("2024-03-01", "1969", "March 1969", "").

@@ -1,5 +1,12 @@
 import { env } from '../lib/env.js'
-import { PROVIDER_TIMEOUT_MS, yearFromDate, type MediaProvider, type MediaSearchResult } from './types.js'
+import {
+  joinNames,
+  PROVIDER_TIMEOUT_MS,
+  toFacts,
+  yearFromDate,
+  type MediaProvider,
+  type MediaSearchResult,
+} from './types.js'
 
 const RAWG_BASE = 'https://api.rawg.io/api'
 
@@ -15,8 +22,20 @@ interface RawgSearchResponse {
   results: RawgGameSummary[]
 }
 
+interface RawgNamed {
+  name: string
+}
+
 interface RawgGameDetail extends RawgGameSummary {
+  slug: string
   description_raw: string | null
+  platforms: Array<{ platform: RawgNamed }> | null
+  developers: RawgNamed[]
+  publishers: RawgNamed[]
+  genres: RawgNamed[]
+  metacritic: number | null
+  playtime: number
+  esrb_rating: RawgNamed | null
 }
 
 // Resolves to null on a 404 so getById can report a missing title instead of throwing.
@@ -54,6 +73,23 @@ export const rawgProvider: MediaProvider = {
       coverImageUrl: r.background_image,
       description: r.description_raw,
       releaseYear: yearFromDate(r.released),
+      tagline: null,
+      genres: r.genres.map((genre) => genre.name),
+      facts: toFacts([
+        [
+          'Platforms',
+          joinNames(
+            r.platforms?.map((p) => p.platform.name),
+            10,
+          ),
+        ],
+        ['Developer', joinNames(r.developers.map((d) => d.name))],
+        ['Publisher', joinNames(r.publishers.map((p) => p.name))],
+        ['Metacritic', r.metacritic ? String(r.metacritic) : null],
+        ['Average playtime', r.playtime ? `${r.playtime} hours` : null],
+        ['Age rating', r.esrb_rating?.name],
+      ]),
+      url: `https://rawg.io/games/${r.slug}`,
     }
   },
 }

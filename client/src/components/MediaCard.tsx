@@ -1,38 +1,41 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { MediaItem } from '../types'
 import { MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+import { CoverArt } from './CoverArt'
+import { MediaDetailsDialog, type DetailsMedia } from './MediaDetailsDialog'
 import { MediaTypeIcon } from './icons'
 
 export function MediaCard({
   mediaItem,
   actions,
 }: {
-  mediaItem: Pick<MediaItem, 'type' | 'title' | 'coverImageUrl' | 'releaseYear'>
+  mediaItem: DetailsMedia & Pick<MediaItem, 'title'>
   actions?: ReactNode
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const openDetails = () => setDetailsOpen(true)
+
   return (
     <article className={`media-card media-card--${mediaItem.type}`}>
-      <div className="media-card-cover">
-        {mediaItem.coverImageUrl ? (
-          <img src={mediaItem.coverImageUrl} alt="" loading="lazy" />
-        ) : (
-          <div className="media-card-placeholder">
-            <MediaTypeIcon type={mediaItem.type} />
-            <span>{mediaItem.title}</span>
-          </div>
-        )}
+      <button className="media-card-cover" onClick={openDetails} tabIndex={-1} aria-hidden="true">
+        <CoverArt media={mediaItem} />
         <span className="media-card-type">
           <MediaTypeIcon type={mediaItem.type} />
           {MEDIA_TYPE_LABELS[mediaItem.type]}
         </span>
-      </div>
+      </button>
       <div className="media-card-body">
         <div className="media-card-heading">
-          <h3 title={mediaItem.title}>{mediaItem.title}</h3>
+          <h3>
+            <button className="media-card-title" onClick={openDetails} title={mediaItem.title}>
+              {mediaItem.title}
+            </button>
+          </h3>
           {mediaItem.releaseYear !== null && <span className="media-card-year">{mediaItem.releaseYear}</span>}
         </div>
         {actions && <div className="media-card-actions">{actions}</div>}
       </div>
+      {detailsOpen && <MediaDetailsDialog media={mediaItem} actions={actions} onClose={() => setDetailsOpen(false)} />}
     </article>
   )
 }

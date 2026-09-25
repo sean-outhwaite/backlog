@@ -384,18 +384,33 @@ section + section {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
 }
 
+/* The cover is a button that opens the details dialog; strip the default button chrome. */
 .media-card-cover {
   position: relative;
+  display: block;
+  width: 100%;
   aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
   background: var(--surface);
+  cursor: pointer;
 }
 
-.media-card-cover img {
+.media-card-cover:active:not(:disabled) {
+  transform: none;
+}
+
+.media-card-cover img,
+.details-cover img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.media-card-cover img {
   transition:
     transform 0.5s ease-out,
     opacity 0.3s,
@@ -416,8 +431,9 @@ section + section {
   pointer-events: none;
 }
 
-.media-card-placeholder {
+.cover-placeholder {
   height: 100%;
+  text-align: left;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -433,7 +449,7 @@ section + section {
   line-height: 1.15;
 }
 
-.media-card-placeholder .icon {
+.cover-placeholder .icon {
   font-size: 30px;
   color: var(--accent);
 }
@@ -474,10 +490,28 @@ section + section {
   font-size: 16px;
   line-height: 1.25;
   margin: 0;
+}
+
+.media-card-title {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.media-card-title:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.media-card-title:active:not(:disabled) {
+  transform: none;
 }
 
 .media-card-heading {
@@ -837,5 +871,261 @@ section + section {
 @keyframes float {
   50% {
     transform: translateY(-14px);
+  }
+}
+
+/* ---------- Details dialog ---------- */
+
+html:has(.details-dialog[open]) {
+  overflow: hidden;
+}
+
+.details-dialog {
+  width: min(780px, calc(100vw - 32px));
+  max-height: calc(100svh - 48px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 30px 80px -20px rgba(8, 6, 13, 0.5);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.details-dialog[open] {
+  animation: dialog-in 0.3s var(--ease-spring) both;
+}
+
+.details-dialog::backdrop {
+  background: rgba(8, 6, 13, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease-out both;
+}
+
+.details {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 28px;
+  padding: 28px;
+}
+
+/* A blurred wash of the cover bleeds in behind the top of the dialog. */
+.details.has-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 260px;
+  z-index: -1;
+  background: var(--cover) center / cover;
+  filter: blur(48px) saturate(1.3);
+  opacity: 0.35;
+  mask-image: linear-gradient(black, transparent);
+  -webkit-mask-image: linear-gradient(black, transparent);
+}
+
+.details-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 15px;
+  z-index: 1;
+}
+
+.details-cover {
+  align-self: start;
+  aspect-ratio: 2 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
+
+.details-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.details-info > * {
+  margin: 0;
+}
+
+.details-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.details-info h2 {
+  margin-top: -6px;
+  padding-right: 32px;
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.details-tagline {
+  margin-top: -6px;
+  color: var(--text-h);
+  font-style: italic;
+}
+
+.details-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.details-loading .spinner {
+  color: var(--accent);
+}
+
+.details-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.details-genres li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.details-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.details-facts dt {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.details-facts dd {
+  margin: 2px 0 0;
+  color: var(--text-h);
+}
+
+.details-description {
+  color: var(--text-h);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.details-actions .recommend-control {
+  flex: 1;
+  min-width: 220px;
+}
+
+.details-source {
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.details-source:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .details-dialog {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 92svh;
+    margin: auto 0 0;
+    border-radius: 24px 24px 0 0;
+    border-bottom: 0;
+  }
+
+  .details-dialog[open] {
+    animation-name: sheet-in;
+  }
+
+  .details {
+    grid-template-columns: 96px 1fr;
+    gap: 16px;
+    padding: 20px 16px 24px;
+  }
+
+  .details-info {
+    display: contents;
+  }
+
+  /* Kicker, title and tagline sit beside the small cover; everything else spans below it. */
+  .details-info > * {
+    grid-column: 1 / -1;
+  }
+
+  .details-cover {
+    grid-row: 1 / span 3;
+    grid-column: 1;
+  }
+
+  .details-kicker,
+  .details-info h2,
+  .details-tagline {
+    grid-column: 2;
+    margin: 0;
+  }
+
+  .details-kicker {
+    align-self: end;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 }
