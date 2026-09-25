@@ -12,15 +12,10 @@ export interface MediaItem {
 }
 
 // Search results come straight from the providers and aren't stored, so they have no id.
-export type MediaSearchResult = Pick<
-  MediaItem,
-  'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description'
->
+export type MediaSearchResult = Pick<MediaItem, 'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description'>
 
 // How the API identifies a title to add or recommend: an existing MediaItem, or a search result.
-export type MediaRef =
-  | { mediaItemId: string }
-  | Pick<MediaItem, 'type' | 'externalId'>
+export type MediaRef = { mediaItemId: string } | Pick<MediaItem, 'type' | 'externalId'>
 
 export interface ListEntry {
   id: string

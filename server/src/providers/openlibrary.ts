@@ -44,16 +44,14 @@ export const openLibraryProvider: MediaProvider = {
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibrarySearchResponse
 
-    return data.docs.map(
-      (doc): MediaSearchResult => ({
-        externalId: workKeyToExternalId(doc.key),
-        type: 'book',
-        title: doc.title,
-        coverImageUrl: toCoverUrl(doc.cover_i),
-        description: null,
-        popularity: doc.readinglog_count ?? 0,
-      }),
-    )
+    return data.docs.map((doc): MediaSearchResult => ({
+      externalId: workKeyToExternalId(doc.key),
+      type: 'book',
+      title: doc.title,
+      coverImageUrl: toCoverUrl(doc.cover_i),
+      description: null,
+      popularity: doc.readinglog_count ?? 0,
+    }))
   },
   async getById(externalId) {
     const response = await fetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, {

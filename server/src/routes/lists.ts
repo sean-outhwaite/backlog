@@ -20,9 +20,7 @@ listsRouter.get(
   }),
 )
 
-const createEntrySchema = z
-  .object({ status: z.enum(['want', 'done']).default('want') })
-  .and(mediaRefSchema)
+const createEntrySchema = z.object({ status: z.enum(['want', 'done']).default('want') }).and(mediaRefSchema)
 
 listsRouter.post(
   '/',
@@ -89,12 +87,7 @@ listsRouter.patch(
       data: {
         status: parsed.data.status,
         notes: parsed.data.notes,
-        completedAt:
-          parsed.data.status === undefined
-            ? undefined
-            : parsed.data.status === 'done'
-              ? new Date()
-              : null,
+        completedAt: parsed.data.status === undefined ? undefined : parsed.data.status === 'done' ? new Date() : null,
       },
       include: { mediaItem: true },
     })

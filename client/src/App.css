@@ -344,17 +344,39 @@ section + section {
 }
 
 /* Stagger the first dozen cards so a grid assembles rather than pops in. */
-.media-card:nth-child(2) { animation-delay: 30ms; }
-.media-card:nth-child(3) { animation-delay: 60ms; }
-.media-card:nth-child(4) { animation-delay: 90ms; }
-.media-card:nth-child(5) { animation-delay: 120ms; }
-.media-card:nth-child(6) { animation-delay: 150ms; }
-.media-card:nth-child(7) { animation-delay: 180ms; }
-.media-card:nth-child(8) { animation-delay: 210ms; }
-.media-card:nth-child(9) { animation-delay: 240ms; }
-.media-card:nth-child(10) { animation-delay: 270ms; }
-.media-card:nth-child(11) { animation-delay: 300ms; }
-.media-card:nth-child(n + 12) { animation-delay: 330ms; }
+.media-card:nth-child(2) {
+  animation-delay: 30ms;
+}
+.media-card:nth-child(3) {
+  animation-delay: 60ms;
+}
+.media-card:nth-child(4) {
+  animation-delay: 90ms;
+}
+.media-card:nth-child(5) {
+  animation-delay: 120ms;
+}
+.media-card:nth-child(6) {
+  animation-delay: 150ms;
+}
+.media-card:nth-child(7) {
+  animation-delay: 180ms;
+}
+.media-card:nth-child(8) {
+  animation-delay: 210ms;
+}
+.media-card:nth-child(9) {
+  animation-delay: 240ms;
+}
+.media-card:nth-child(10) {
+  animation-delay: 270ms;
+}
+.media-card:nth-child(11) {
+  animation-delay: 300ms;
+}
+.media-card:nth-child(n + 12) {
+  animation-delay: 330ms;
+}
 
 .media-card:hover {
   transform: translateY(-4px);
@@ -782,10 +804,22 @@ section + section {
     opacity: 0.7;
   }
 
-  .floater--1 { top: 6%; left: 8%; }
-  .floater--2 { top: 8%; right: 8%; }
-  .floater--3 { bottom: 6%; left: 10%; }
-  .floater--4 { bottom: 8%; right: 10%; }
+  .floater--1 {
+    top: 6%;
+    left: 8%;
+  }
+  .floater--2 {
+    top: 8%;
+    right: 8%;
+  }
+  .floater--3 {
+    bottom: 6%;
+    left: 10%;
+  }
+  .floater--4 {
+    bottom: 8%;
+    right: 10%;
+  }
 }
 
 @keyframes float {

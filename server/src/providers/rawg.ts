@@ -33,16 +33,14 @@ async function rawgFetch<T>(path: string, params: Record<string, string>): Promi
 export const rawgProvider: MediaProvider = {
   async search(query) {
     const data = await rawgFetch<RawgSearchResponse>('/games', { search: query })
-    return (data?.results ?? []).map(
-      (r): MediaSearchResult => ({
-        externalId: String(r.id),
-        type: 'game',
-        title: r.name,
-        coverImageUrl: r.background_image,
-        description: null,
-        popularity: r.added ?? 0,
-      }),
-    )
+    return (data?.results ?? []).map((r): MediaSearchResult => ({
+      externalId: String(r.id),
+      type: 'game',
+      title: r.name,
+      coverImageUrl: r.background_image,
+      description: null,
+      popularity: r.added ?? 0,
+    }))
   },
   async getById(externalId) {
     const r = await rawgFetch<RawgGameDetail>(`/games/${externalId}`, {})

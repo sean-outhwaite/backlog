@@ -43,16 +43,14 @@ function toCoverUrl(posterPath: string | null): string | null {
 export const tmdbMovieProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
-    return (data?.results ?? []).map(
-      (r): MediaSearchResult => ({
-        externalId: String(r.id),
-        type: 'movie',
-        title: r.title,
-        coverImageUrl: toCoverUrl(r.poster_path),
-        description: r.overview,
-        popularity: r.vote_count ?? 0,
-      }),
-    )
+    return (data?.results ?? []).map((r): MediaSearchResult => ({
+      externalId: String(r.id),
+      type: 'movie',
+      title: r.title,
+      coverImageUrl: toCoverUrl(r.poster_path),
+      description: r.overview,
+      popularity: r.vote_count ?? 0,
+    }))
   },
   async getById(externalId) {
     const r = await tmdbFetch<TmdbMovieResult>(`/movie/${externalId}`, {})
@@ -70,16 +68,14 @@ export const tmdbMovieProvider: MediaProvider = {
 export const tmdbTvProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbTvResult>>('/search/tv', { query })
-    return (data?.results ?? []).map(
-      (r): MediaSearchResult => ({
-        externalId: String(r.id),
-        type: 'tv',
-        title: r.name,
-        coverImageUrl: toCoverUrl(r.poster_path),
-        description: r.overview,
-        popularity: r.vote_count ?? 0,
-      }),
-    )
+    return (data?.results ?? []).map((r): MediaSearchResult => ({
+      externalId: String(r.id),
+      type: 'tv',
+      title: r.name,
+      coverImageUrl: toCoverUrl(r.poster_path),
+      description: r.overview,
+      popularity: r.vote_count ?? 0,
+    }))
   },
   async getById(externalId) {
     const r = await tmdbFetch<TmdbTvResult>(`/tv/${externalId}`, {})

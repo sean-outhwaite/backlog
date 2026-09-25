@@ -16,9 +16,7 @@ export function Recommendations() {
       const found = await api.get<Recommendation[]>('/api/recommendations')
       setRecommendations(found)
       setLoading(false)
-      await Promise.all(
-        found.filter((r) => !r.viewedAt).map((r) => api.patch(`/api/recommendations/${r.id}/viewed`)),
-      )
+      await Promise.all(found.filter((r) => !r.viewedAt).map((r) => api.patch(`/api/recommendations/${r.id}/viewed`)))
     }
     void load()
   }, [])

@@ -38,7 +38,11 @@ export function RecommendControl({ media }: { media: MediaRef }) {
           </option>
         ))}
       </select>
-      <button className={status === 'sent' ? 'is-sent' : ''} onClick={() => void handleRecommend()} disabled={!selectedFriendId || status === 'sending'}>
+      <button
+        className={status === 'sent' ? 'is-sent' : ''}
+        onClick={() => void handleRecommend()}
+        disabled={!selectedFriendId || status === 'sending'}
+      >
         {status === 'sending' ? <Spinner /> : status === 'sent' ? 'Sent!' : 'Send'}
       </button>
     </div>

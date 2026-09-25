@@ -31,9 +31,7 @@ export function Search() {
     try {
       const params = new URLSearchParams({ q: query })
       if (typeFilter !== 'all') params.set('type', typeFilter)
-      const found = await api.get<MediaSearchResult[]>(
-        `/api/media/search?${params}`,
-      )
+      const found = await api.get<MediaSearchResult[]>(`/api/media/search?${params}`)
       setResults(found)
       setSearchedQuery(query)
     } catch (err) {
@@ -53,15 +51,9 @@ export function Search() {
 
   return (
     <div>
-      <PageHeader
-        title="Search"
-        subtitle="Movies, shows, books and games, all in one place."
-      />
+      <PageHeader title="Search" subtitle="Movies, shows, books and games, all in one place." />
 
-      <form
-        className="page-toolbar search-bar"
-        onSubmit={(event) => void handleSearch(event)}
-      >
+      <form className="page-toolbar search-bar" onSubmit={(event) => void handleSearch(event)}>
         <label className="search-input">
           <SearchIcon />
           <input
@@ -70,12 +62,7 @@ export function Search() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <select
-          value={typeFilter}
-          onChange={(event) =>
-            setTypeFilter(event.target.value as MediaType | 'all')
-          }
-        >
+        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
           {FILTERABLE_MEDIA_TYPES.map((type) => (
             <option key={type} value={type}>
               {type === 'all' ? 'All types' : MEDIA_TYPE_LABELS[type]}
@@ -108,13 +95,8 @@ export function Search() {
             mediaItem={result}
             actions={
               <>
-                <AddToListButton
-                  added={addedIds.has(resultKey(result))}
-                  onAdd={() => addToList(result)}
-                />
-                <RecommendControl
-                  media={{ type: result.type, externalId: result.externalId }}
-                />
+                <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addToList(result)} />
+                <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
               </>
             }
           />

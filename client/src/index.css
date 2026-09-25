@@ -47,8 +47,7 @@ body {
   min-height: 100svh;
   background:
     radial-gradient(900px 420px at 15% -180px, var(--accent-bg), transparent 70%),
-    radial-gradient(700px 360px at 95% -120px, var(--accent-bg), transparent 70%),
-    var(--bg);
+    radial-gradient(700px 360px at 95% -120px, var(--accent-bg), transparent 70%), var(--bg);
   background-repeat: no-repeat;
 }
 

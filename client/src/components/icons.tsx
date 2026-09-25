@@ -83,8 +83,26 @@ export function SearchIcon() {
 export function LogoMark() {
   return (
     <svg className="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect x="9" y="3" width="16" height="21" rx="3" transform="rotate(10 17 13.5)" fill="currentColor" opacity="0.3" />
-      <rect x="8" y="5" width="16" height="21" rx="3" transform="rotate(-5 16 15.5)" fill="currentColor" opacity="0.55" />
+      <rect
+        x="9"
+        y="3"
+        width="16"
+        height="21"
+        rx="3"
+        transform="rotate(10 17 13.5)"
+        fill="currentColor"
+        opacity="0.3"
+      />
+      <rect
+        x="8"
+        y="5"
+        width="16"
+        height="21"
+        rx="3"
+        transform="rotate(-5 16 15.5)"
+        fill="currentColor"
+        opacity="0.55"
+      />
       <rect x="7" y="8" width="16" height="21" rx="3" fill="currentColor" />
       <path d="M16 8v8l2.5-1.8L21 16V8" fill="var(--bg)" />
     </svg>

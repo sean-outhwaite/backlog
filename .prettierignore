@@ -1,0 +1,3 @@
+# npm rewrites these on every install; let it own their formatting.
+package.json
+package-lock.json

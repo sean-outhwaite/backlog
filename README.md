@@ -40,9 +40,11 @@ cp server/.env.example server/.env
 ```
 
 Fill in `client/.env`:
+
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` from Supabase
 
 Fill in `server/.env`:
+
 - `SUPABASE_URL`, `DATABASE_URL` from Supabase
 - `TMDB_API_KEY` from TMDB
 - `RAWG_API_KEY` from RAWG
