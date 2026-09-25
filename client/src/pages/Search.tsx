@@ -7,8 +7,7 @@ import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import type { MediaSearchResult, MediaType } from '../types'
-
-const MEDIA_TYPES: Array<MediaType | 'all'> = ['all', 'movie', 'tv', 'book', 'game']
+import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 
 // externalId alone isn't unique across types (a TMDB movie and show can share an id).
 function resultKey(result: MediaSearchResult) {
@@ -32,7 +31,9 @@ export function Search() {
     try {
       const params = new URLSearchParams({ q: query })
       if (typeFilter !== 'all') params.set('type', typeFilter)
-      const found = await api.get<MediaSearchResult[]>(`/api/media/search?${params}`)
+      const found = await api.get<MediaSearchResult[]>(
+        `/api/media/search?${params}`,
+      )
       setResults(found)
       setSearchedQuery(query)
     } catch (err) {
@@ -43,15 +44,24 @@ export function Search() {
   }
 
   async function addToList(result: MediaSearchResult) {
-    await api.post('/api/lists', { type: result.type, externalId: result.externalId })
+    await api.post('/api/lists', {
+      type: result.type,
+      externalId: result.externalId,
+    })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
 
   return (
     <div>
-      <PageHeader title="Search" subtitle="Movies, shows, books and games, all in one place." />
+      <PageHeader
+        title="Search"
+        subtitle="Movies, shows, books and games, all in one place."
+      />
 
-      <form className="page-toolbar search-bar" onSubmit={(event) => void handleSearch(event)}>
+      <form
+        className="page-toolbar search-bar"
+        onSubmit={(event) => void handleSearch(event)}
+      >
         <label className="search-input">
           <SearchIcon />
           <input
@@ -60,10 +70,15 @@ export function Search() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
-          {MEDIA_TYPES.map((type) => (
+        <select
+          value={typeFilter}
+          onChange={(event) =>
+            setTypeFilter(event.target.value as MediaType | 'all')
+          }
+        >
+          {FILTERABLE_MEDIA_TYPES.map((type) => (
             <option key={type} value={type}>
-              {type === 'all' ? 'All types' : type}
+              {type === 'all' ? 'All types' : MEDIA_TYPE_LABELS[type]}
             </option>
           ))}
         </select>
@@ -93,8 +108,13 @@ export function Search() {
             mediaItem={result}
             actions={
               <>
-                <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addToList(result)} />
-                <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
+                <AddToListButton
+                  added={addedIds.has(resultKey(result))}
+                  onAdd={() => addToList(result)}
+                />
+                <RecommendControl
+                  media={{ type: result.type, externalId: result.externalId }}
+                />
               </>
             }
           />
