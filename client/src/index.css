@@ -89,7 +89,7 @@ select,
 button {
   font: inherit;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 8px 14px;
   color: var(--text-h);
   background: var(--bg);
