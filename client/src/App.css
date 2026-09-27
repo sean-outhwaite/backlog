@@ -253,44 +253,109 @@
     var(--shadow);
 }
 
-.tabs {
-  display: inline-flex;
-  gap: 2px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+/* Status tabs on the left, type toggles on the right, sharing one baseline rule. */
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
-.tabs button {
-  border-radius: 999px;
-  border-color: transparent;
-  background: transparent;
+.status-tabs {
+  display: flex;
+  gap: 24px;
+}
+
+.status-tabs button {
+  gap: 6px;
+  margin-bottom: -1px;
+  padding: 8px 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
   color: var(--text);
-  padding: 6px 14px;
 }
 
-.tabs button:hover:not(:disabled) {
-  border-color: transparent;
+.status-tabs button:hover:not(:disabled) {
   color: var(--text-h);
 }
 
-.tabs button.active {
-  background: var(--bg);
-  color: var(--accent);
-  font-weight: 600;
-  box-shadow: var(--shadow);
+.status-tabs button:active:not(:disabled) {
+  transform: none;
 }
 
-.tab-count {
-  min-width: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--accent-bg);
-  color: var(--accent);
+.status-tabs button.active {
+  border-bottom-color: var(--accent);
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.status-count {
+  color: var(--text);
   font-size: 12px;
   font-weight: 600;
-  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.status-tabs button.active .status-count {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.type-filter {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding-bottom: 6px;
+}
+
+.type-filter button {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 17px;
+}
+
+.type-filter button:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+.type-filter button.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.type-filter-all {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Too narrow for one row: the tabs keep the rule, and the type toggles drop below it. */
+@media (max-width: 560px) {
+  .list-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    border-bottom: 0;
+  }
+
+  .status-tabs {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .type-filter {
+    margin-left: 0;
+    padding: 8px 0 0;
+  }
 }
 
 .back-link {

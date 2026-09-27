@@ -4,7 +4,7 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { LogoMark } from '../components/icons'
+import { LogoMark, MediaTypeIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
@@ -69,25 +69,37 @@ export function Dashboard() {
         subtitle="Everything you've been meaning to watch, read and play."
       />
 
-      <div className="page-toolbar">
-        <div className="tabs">
+      <div className="list-toolbar">
+        <div className="status-tabs">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.status}
               className={status === tab.status ? 'active' : ''}
+              aria-pressed={status === tab.status}
               onClick={() => setStatus(tab.status)}
             >
-              {tab.label} <span className="tab-count">{countFor(tab.status)}</span>
+              {tab.label}
+              <span className="status-count">{countFor(tab.status)}</span>
             </button>
           ))}
         </div>
-        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
-          {FILTERABLE_MEDIA_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type === 'all' ? 'All types' : MEDIA_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
+        <div className="type-filter" role="group" aria-label="Filter by type">
+          {FILTERABLE_MEDIA_TYPES.map((type) => {
+            const label = type === 'all' ? 'All types' : MEDIA_TYPE_LABELS[type]
+            return (
+              <button
+                key={type}
+                className={typeFilter === type ? 'active' : ''}
+                aria-pressed={typeFilter === type}
+                aria-label={label}
+                title={label}
+                onClick={() => setTypeFilter(type)}
+              >
+                {type === 'all' ? <span className="type-filter-all">All</span> : <MediaTypeIcon type={type} />}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {loading && <LoadingState />}
