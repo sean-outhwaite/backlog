@@ -11,7 +11,7 @@ import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
 const STATUS_TABS: { status: ListStatus; label: string }[] = [
-  { status: 'want', label: 'Up next' },
+  { status: 'want', label: 'Backlog' },
   { status: 'in_progress', label: 'In progress' },
   { status: 'done', label: 'Done' },
 ]
@@ -20,13 +20,13 @@ const STATUS_TABS: { status: ListStatus; label: string }[] = [
 const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string }[]> = {
   want: [
     { to: 'in_progress', label: 'Start' },
-    { to: 'done', label: 'Mark done' },
+    { to: 'done', label: 'Finished' },
   ],
   in_progress: [
-    { to: 'done', label: 'Mark done' },
-    { to: 'want', label: 'Move back to up next' },
+    { to: 'done', label: 'Finished' },
+    { to: 'want', label: 'Move to backlog' },
   ],
-  done: [{ to: 'want', label: 'Move back to up next' }],
+  done: [{ to: 'want', label: 'Move to backlog' }],
 }
 
 export function Dashboard() {
