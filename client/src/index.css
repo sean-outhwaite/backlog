@@ -3,10 +3,15 @@
   --text-h: #08060d;
   --bg: #fff;
   --surface: #faf8fc;
+  --surface-hover: #f1eef6;
   --border: #e5e4e7;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-contrast: #fff;
+  /* Primary buttons: a muted, deep accent fill that carries white text in both themes (about
+     5:1 behind the label, even on hover), lit from above by a soft inner highlight. */
+  --accent-fill: linear-gradient(180deg, #8e5bd0, #7a48b8);
+  --accent-fill-hover: linear-gradient(180deg, #9360d2, #7f4cbd);
+  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(8, 6, 13, 0.25);
   --danger: #d1435b;
   --shadow: 0 1px 2px rgba(8, 6, 13, 0.04), 0 6px 20px -10px rgba(8, 6, 13, 0.18);
   --shadow-lift: 0 2px 4px rgba(8, 6, 13, 0.04), 0 18px 36px -14px rgba(170, 59, 255, 0.4);
@@ -29,10 +34,10 @@
     --text-h: #f3f4f6;
     --bg: #16171d;
     --surface: #1d1e26;
+    --surface-hover: #252633;
     --border: #2e303a;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-contrast: #16171d;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px -10px rgba(0, 0, 0, 0.6);
     --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.3), 0 18px 36px -14px rgba(192, 132, 252, 0.35);
   }
@@ -110,11 +115,13 @@ button {
   justify-content: center;
   gap: 6px;
   font-weight: 500;
+  background: var(--surface);
 }
 
+/* Hover brightens rather than recolours; purple is reserved for primary actions. */
 button:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--surface-hover);
+  color: var(--text-h);
 }
 
 button:active:not(:disabled) {
@@ -132,16 +139,23 @@ button:disabled {
 }
 
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
+  border-color: transparent;
+  background: var(--accent-fill);
+  box-shadow: var(--accent-fill-shadow);
+  color: #fff;
   font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled) {
-  color: var(--accent-contrast);
-  filter: brightness(1.08);
-  box-shadow: 0 6px 16px -6px var(--accent);
+  background: var(--accent-fill-hover);
+  color: #fff;
+}
+
+/* Square, icon-only; needs an aria-label. */
+.btn-icon {
+  flex: none;
+  width: 38px;
+  padding: 0;
 }
 
 .btn-quiet {
@@ -152,7 +166,7 @@ button:disabled {
 
 .btn-quiet:hover:not(:disabled) {
   border-color: transparent;
-  background: var(--accent-bg);
+  background: var(--surface-hover);
 }
 
 .btn-danger:hover:not(:disabled) {

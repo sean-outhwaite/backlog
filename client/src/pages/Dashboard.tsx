@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { LogoMark, MediaTypeIcon } from '../components/icons'
+import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
@@ -27,6 +27,13 @@ const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string }[]> = 
     { to: 'want', label: 'Move to backlog' },
   ],
   done: [{ to: 'want', label: 'Move to backlog' }],
+}
+
+// Keyed by the status an action moves the entry to.
+const ACTION_ICONS: Record<ListStatus, ComponentType> = {
+  in_progress: PlayIcon,
+  done: CheckIcon,
+  want: UndoIcon,
 }
 
 export function Dashboard() {
@@ -122,17 +129,14 @@ export function Dashboard() {
             mediaItem={entry.mediaItem}
             actions={
               <>
-                {STATUS_ACTIONS[entry.status].map((action, index) => (
-                  <button
-                    key={action.to}
-                    className={index === 0 && entry.status !== 'done' ? 'btn-primary' : ''}
-                    onClick={() => void updateStatus(entry, action.to)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-                <button className="btn-quiet btn-danger" onClick={() => void removeEntry(entry)}>
-                  Remove
+                <EntryActions entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                <button
+                  className="btn-quiet btn-danger media-card-remove"
+                  onClick={() => void removeEntry(entry)}
+                  aria-label="Remove from list"
+                  title="Remove from list"
+                >
+                  <TrashIcon />
                 </button>
                 <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
               </>
@@ -140,6 +144,37 @@ export function Dashboard() {
           />
         ))}
       </div>
+    </div>
+  )
+}
+
+// The first move is a labelled button (primary, unless the entry is already done); any others
+// sit beside it as icon shortcuts.
+function EntryActions({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
+  const [main, ...shortcuts] = STATUS_ACTIONS[entry.status]
+  const MainIcon = ACTION_ICONS[main.to]
+
+  return (
+    <div className="entry-actions">
+      <button className={entry.status === 'done' ? '' : 'btn-primary'} onClick={() => onMove(main.to)}>
+        {/* A tick beside "Finished" is noise; it only earns its place as a shortcut. */}
+        {main.to !== 'done' && <MainIcon />}
+        {main.label}
+      </button>
+      {shortcuts.map((action) => {
+        const ShortcutIcon = ACTION_ICONS[action.to]
+        return (
+          <button
+            key={action.to}
+            className="btn-icon"
+            onClick={() => onMove(action.to)}
+            aria-label={action.label}
+            title={action.label}
+          >
+            <ShortcutIcon />
+          </button>
+        )
+      })}
     </div>
   )
 }
