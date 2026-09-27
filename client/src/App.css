@@ -720,6 +720,10 @@ section + section {
   white-space: nowrap;
 }
 
+.entry-move--icon-only .icon {
+  font-size: 1.25em;
+}
+
 /* Two-up phone cards leave ~135px; keep "Move to backlog" on one line. */
 @media (max-width: 480px) {
   .entry-move {

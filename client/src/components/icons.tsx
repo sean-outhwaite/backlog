@@ -81,7 +81,7 @@ export function LogOutIcon() {
 export function PlayIcon() {
   return (
     <Icon>
-      <path d="M7 4v16l13-8z" fill="currentColor" />
+      <path className="play-shape" d="M7 4v16l13-8z" fill="currentColor" />
     </Icon>
   )
 }

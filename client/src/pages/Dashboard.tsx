@@ -17,9 +17,10 @@ const STATUS_TABS: { status: ListStatus; label: string }[] = [
 ]
 
 // The moves offered on each tab's cards; the first is the primary action.
-const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string }[]> = {
+// iconOnly drops the visible label (it stays as the accessible name) where the icon says it all.
+const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string; iconOnly?: boolean }[]> = {
   want: [
-    { to: 'in_progress', label: 'Start' },
+    { to: 'in_progress', label: 'Start', iconOnly: true },
     { to: 'done', label: 'Finished' },
   ],
   in_progress: [
@@ -157,11 +158,17 @@ export function Dashboard() {
 function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
   const main = STATUS_ACTIONS[entry.status][0]
   const MainIcon = ACTION_ICONS[main.to]
+  const classes = ['entry-move', entry.status !== 'done' && 'btn-primary', main.iconOnly && 'entry-move--icon-only']
   return (
-    <button className={`entry-move${entry.status === 'done' ? '' : ' btn-primary'}`} onClick={() => onMove(main.to)}>
+    <button
+      className={classes.filter(Boolean).join(' ')}
+      onClick={() => onMove(main.to)}
+      aria-label={main.iconOnly ? main.label : undefined}
+      title={main.iconOnly ? main.label : undefined}
+    >
       {/* A tick beside "Finished" is noise; it only earns its place as a shortcut. */}
       {main.to !== 'done' && <MainIcon />}
-      {main.label}
+      {!main.iconOnly && main.label}
     </button>
   )
 }
