@@ -547,6 +547,11 @@ section + section {
   color: var(--accent);
 }
 
+.status-badge--in_progress {
+  background: var(--accent);
+  color: var(--accent-bg);
+}
+
 .status-badge--done {
   background: var(--surface);
   color: var(--text);

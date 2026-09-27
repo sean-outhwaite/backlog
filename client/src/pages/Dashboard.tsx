@@ -10,6 +10,25 @@ import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
+const STATUS_TABS: { status: ListStatus; label: string }[] = [
+  { status: 'want', label: 'Up next' },
+  { status: 'in_progress', label: 'In progress' },
+  { status: 'done', label: 'Done' },
+]
+
+// The moves offered on each tab's cards; the first is the primary action.
+const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string }[]> = {
+  want: [
+    { to: 'in_progress', label: 'Start' },
+    { to: 'done', label: 'Mark done' },
+  ],
+  in_progress: [
+    { to: 'done', label: 'Mark done' },
+    { to: 'want', label: 'Move back to up next' },
+  ],
+  done: [{ to: 'want', label: 'Move back to up next' }],
+}
+
 export function Dashboard() {
   const { profile } = useAuth()
   const [entries, setEntries] = useState<ListEntry[]>([])
@@ -52,12 +71,15 @@ export function Dashboard() {
 
       <div className="page-toolbar">
         <div className="tabs">
-          <button className={status === 'want' ? 'active' : ''} onClick={() => setStatus('want')}>
-            Up next <span className="tab-count">{countFor('want')}</span>
-          </button>
-          <button className={status === 'done' ? 'active' : ''} onClick={() => setStatus('done')}>
-            Done <span className="tab-count">{countFor('done')}</span>
-          </button>
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.status}
+              className={status === tab.status ? 'active' : ''}
+              onClick={() => setStatus(tab.status)}
+            >
+              {tab.label} <span className="tab-count">{countFor(tab.status)}</span>
+            </button>
+          ))}
         </div>
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
           {FILTERABLE_MEDIA_TYPES.map((type) => (
@@ -71,13 +93,13 @@ export function Dashboard() {
       {loading && <LoadingState />}
       {!loading && visible.length === 0 && (
         <EmptyState icon={<LogoMark />}>
-          {status === 'want' ? (
+          {status === 'want' && (
             <p>
               Your backlog is empty. <Link to="/search">Find something to add</Link>.
             </p>
-          ) : (
-            <p>Nothing finished yet. Mark something done and it'll show up here.</p>
           )}
+          {status === 'in_progress' && <p>Nothing on the go. Start something from up next and it'll show up here.</p>}
+          {status === 'done' && <p>Nothing finished yet. Mark something done and it'll show up here.</p>}
         </EmptyState>
       )}
 
@@ -88,12 +110,15 @@ export function Dashboard() {
             mediaItem={entry.mediaItem}
             actions={
               <>
-                <button
-                  className={entry.status === 'want' ? 'btn-primary' : ''}
-                  onClick={() => void updateStatus(entry, entry.status === 'want' ? 'done' : 'want')}
-                >
-                  {entry.status === 'want' ? 'Mark done' : 'Move back to up next'}
-                </button>
+                {STATUS_ACTIONS[entry.status].map((action, index) => (
+                  <button
+                    key={action.to}
+                    className={index === 0 && entry.status !== 'done' ? 'btn-primary' : ''}
+                    onClick={() => void updateStatus(entry, action.to)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
                 <button className="btn-quiet btn-danger" onClick={() => void removeEntry(entry)}>
                   Remove
                 </button>

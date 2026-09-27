@@ -7,6 +7,8 @@ import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
 
 export const listsRouter = Router()
 
+const listStatusSchema = z.enum(['want', 'in_progress', 'done'])
+
 listsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -20,7 +22,7 @@ listsRouter.get(
   }),
 )
 
-const createEntrySchema = z.object({ status: z.enum(['want', 'done']).default('want') }).and(mediaRefSchema)
+const createEntrySchema = z.object({ status: listStatusSchema.default('want') }).and(mediaRefSchema)
 
 listsRouter.post(
   '/',
@@ -62,7 +64,7 @@ listsRouter.post(
 )
 
 const updateEntrySchema = z.object({
-  status: z.enum(['want', 'done']).optional(),
+  status: listStatusSchema.optional(),
   notes: z.string().nullable().optional(),
 })
 

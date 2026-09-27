@@ -4,7 +4,13 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
-import type { ListEntry } from '../types'
+import type { ListEntry, ListStatus } from '../types'
+
+const STATUS_LABELS: Record<ListStatus, string> = {
+  want: 'Up next',
+  in_progress: 'In progress',
+  done: 'Done',
+}
 
 export function FriendList() {
   const { id } = useParams<{ id: string }>()
@@ -40,9 +46,7 @@ export function FriendList() {
             key={entry.id}
             mediaItem={entry.mediaItem}
             actions={
-              <span className={`status-badge status-badge--${entry.status}`}>
-                {entry.status === 'done' ? 'Done' : 'Up next'}
-              </span>
+              <span className={`status-badge status-badge--${entry.status}`}>{STATUS_LABELS[entry.status]}</span>
             }
           />
         ))}

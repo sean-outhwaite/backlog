@@ -1,5 +1,5 @@
 export type MediaType = 'movie' | 'tv' | 'book' | 'game'
-export type ListStatus = 'want' | 'done'
+export type ListStatus = 'want' | 'in_progress' | 'done'
 
 export interface MediaItem {
   id: string
