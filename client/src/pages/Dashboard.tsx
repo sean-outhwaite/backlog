@@ -127,9 +127,14 @@ export function Dashboard() {
           <MediaCard
             key={entry.id}
             mediaItem={entry.mediaItem}
+            coverActions={
+              STATUS_ACTIONS[entry.status].length > 1 && (
+                <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+              )
+            }
             actions={
               <>
-                <EntryActions entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
                 <button
                   className="btn-quiet btn-danger media-card-remove"
                   onClick={() => void removeEntry(entry)}
@@ -148,33 +153,33 @@ export function Dashboard() {
   )
 }
 
-// The first move is a labelled button (primary, unless the entry is already done); any others
-// sit beside it as icon shortcuts.
-function EntryActions({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
-  const [main, ...shortcuts] = STATUS_ACTIONS[entry.status]
+// The first move is the card's labelled button (primary, unless the entry is already done).
+function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
+  const main = STATUS_ACTIONS[entry.status][0]
   const MainIcon = ACTION_ICONS[main.to]
-
   return (
-    <div className="entry-actions">
-      <button className={entry.status === 'done' ? '' : 'btn-primary'} onClick={() => onMove(main.to)}>
-        {/* A tick beside "Finished" is noise; it only earns its place as a shortcut. */}
-        {main.to !== 'done' && <MainIcon />}
-        {main.label}
-      </button>
-      {shortcuts.map((action) => {
-        const ShortcutIcon = ACTION_ICONS[action.to]
-        return (
-          <button
-            key={action.to}
-            className="btn-icon"
-            onClick={() => onMove(action.to)}
-            aria-label={action.label}
-            title={action.label}
-          >
-            <ShortcutIcon />
-          </button>
-        )
-      })}
-    </div>
+    <button className={`entry-move${entry.status === 'done' ? '' : ' btn-primary'}`} onClick={() => onMove(main.to)}>
+      {/* A tick beside "Finished" is noise; it only earns its place as a shortcut. */}
+      {main.to !== 'done' && <MainIcon />}
+      {main.label}
+    </button>
   )
+}
+
+// Any further moves become icon shortcuts on the cover.
+function MoveShortcuts({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
+  return STATUS_ACTIONS[entry.status].slice(1).map((action) => {
+    const ShortcutIcon = ACTION_ICONS[action.to]
+    return (
+      <button
+        key={action.to}
+        className="btn-icon cover-action"
+        onClick={() => onMove(action.to)}
+        aria-label={action.label}
+        title={action.label}
+      >
+        <ShortcutIcon />
+      </button>
+    )
+  })
 }

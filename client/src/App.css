@@ -573,6 +573,37 @@ section + section {
   transform: scale(1.04);
 }
 
+.media-card-cover-wrap {
+  position: relative;
+}
+
+/* Mirrors the type tag: same 10px inset, same height, same frosted-dark finish. */
+.media-card-cover-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.media-card-cover-actions .cover-action {
+  width: 29px;
+  height: 29px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(12, 10, 18, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+}
+
+.media-card-cover-actions .cover-action:hover:not(:disabled) {
+  background: rgba(12, 10, 18, 0.8);
+  color: #fff;
+}
+
 /* Soft fade so the type badge stays legible over any cover. */
 .media-card-cover::after {
   content: '';
@@ -685,25 +716,13 @@ section + section {
   margin-top: auto;
 }
 
-.entry-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.entry-actions button {
-  padding-inline: 10px;
-  font-size: 15px;
+.entry-move {
   white-space: nowrap;
-}
-
-.entry-actions > :first-child {
-  flex: 1;
-  min-width: 0;
 }
 
 /* Two-up phone cards leave ~135px; keep "Move to backlog" on one line. */
 @media (max-width: 480px) {
-  .entry-actions button {
+  .entry-move {
     gap: 4px;
     padding-inline: 6px;
     font-size: 14px;
