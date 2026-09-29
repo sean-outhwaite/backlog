@@ -343,6 +343,7 @@
 }
 
 .status-tabs {
+  position: relative;
   display: flex;
   gap: 24px;
 }
@@ -358,7 +359,10 @@
   color: var(--text);
 }
 
-.status-tabs button:hover:not(:disabled) {
+/* A neutral preview of where the accent underline will land. */
+.status-tabs button:hover:not(:disabled, .active) {
+  border-bottom-color: color-mix(in srgb, var(--text) 40%, transparent);
+  background: none;
   color: var(--text-h);
 }
 
@@ -367,9 +371,22 @@
 }
 
 .status-tabs button.active {
-  border-bottom-color: var(--accent);
+  background: none;
   color: var(--text-h);
   font-weight: 600;
+}
+
+/* The active tab's underline, drawn once and slid between tabs (see StatusTabs). */
+.status-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+  transition:
+    transform 0.3s var(--ease-spring),
+    width 0.3s var(--ease-spring);
 }
 
 .status-count {
