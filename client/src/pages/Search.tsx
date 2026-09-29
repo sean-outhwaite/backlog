@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
 import { SearchIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
@@ -22,6 +22,24 @@ export function Search() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [popular, setPopular] = useState<MediaSearchResult[] | null>(null)
+
+  // Before the first search, show what's popular for the selected type instead of an empty page.
+  useEffect(() => {
+    let cancelled = false
+    const params = typeFilter === 'all' ? '' : `?type=${typeFilter}`
+    api
+      .get<MediaSearchResult[]>(`/api/media/popular${params}`)
+      .then((found) => {
+        if (!cancelled) setPopular(found)
+      })
+      .catch(() => {
+        if (!cancelled) setPopular([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [typeFilter])
 
   async function handleSearch(event: FormEvent) {
     event.preventDefault()
@@ -59,7 +77,14 @@ export function Search() {
           <input
             placeholder="Search movies, shows, books, games…"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              // Clearing the box goes back to the popular suggestions.
+              if (!event.target.value) {
+                setSearchedQuery(null)
+                setResults([])
+              }
+            }}
           />
         </label>
         <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as MediaType | 'all')}>
@@ -77,11 +102,13 @@ export function Search() {
       {error && <p className="error-text">{error}</p>}
 
       {loading && results.length === 0 && <LoadingState label="Searching…" />}
-      {!loading && searchedQuery === null && (
+      {!loading && searchedQuery === null && popular === null && <LoadingState label="Loading popular titles…" />}
+      {!loading && searchedQuery === null && popular?.length === 0 && (
         <EmptyState icon={<SearchIcon />}>
           <p>Look something up to start building your backlog.</p>
         </EmptyState>
       )}
+      {!loading && searchedQuery === null && !!popular?.length && <h2>Popular right now</h2>}
       {!loading && searchedQuery !== null && results.length === 0 && (
         <EmptyState icon={<SearchIcon />}>
           <p>Nothing found for “{searchedQuery}”.</p>
@@ -89,7 +116,7 @@ export function Search() {
       )}
 
       <div className={`media-grid${loading ? ' is-stale' : ''}`}>
-        {results.map((result) => (
+        {(searchedQuery === null && !loading ? (popular ?? []) : results).map((result) => (
           <MediaCard
             key={resultKey(result)}
             mediaItem={result}

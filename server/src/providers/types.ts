@@ -35,6 +35,8 @@ export interface MediaDetails extends NormalizedMediaResult {
 
 export interface MediaProvider {
   search(query: string): Promise<MediaSearchResult[]>
+  // What's trending or popular right now, most popular first. Shown before the user searches.
+  popular(): Promise<MediaSearchResult[]>
   getById(externalId: string): Promise<MediaDetails | null>
 }
 

@@ -50,18 +50,31 @@ async function rawgFetch<T>(path: string, params: Record<string, string>): Promi
   return (await response.json()) as T
 }
 
+function toSearchResult(r: RawgGameSummary): MediaSearchResult {
+  return {
+    externalId: String(r.id),
+    type: 'game',
+    title: r.name,
+    coverImageUrl: r.background_image,
+    description: null,
+    releaseYear: yearFromDate(r.released),
+    popularity: r.added ?? 0,
+  }
+}
+
 export const rawgProvider: MediaProvider = {
   async search(query) {
     const data = await rawgFetch<RawgSearchResponse>('/games', { search: query })
-    return (data?.results ?? []).map((r): MediaSearchResult => ({
-      externalId: String(r.id),
-      type: 'game',
-      title: r.name,
-      coverImageUrl: r.background_image,
-      description: null,
-      releaseYear: yearFromDate(r.released),
-      popularity: r.added ?? 0,
-    }))
+    return (data?.results ?? []).map(toSearchResult)
+  },
+  // RAWG has no trending feed; the most-added games released in the past year is the closest.
+  async popular() {
+    const today = new Date()
+    const yearAgo = new Date(today)
+    yearAgo.setFullYear(today.getFullYear() - 1)
+    const dates = `${yearAgo.toISOString().slice(0, 10)},${today.toISOString().slice(0, 10)}`
+    const data = await rawgFetch<RawgSearchResponse>('/games', { dates, ordering: '-added', page_size: '20' })
+    return (data?.results ?? []).map(toSearchResult)
   },
   async getById(externalId) {
     const r = await rawgFetch<RawgGameDetail>(`/games/${externalId}`, {})

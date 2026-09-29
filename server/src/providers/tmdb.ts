@@ -98,18 +98,38 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? '' : 's'}`
 }
 
+function toMovieResult(r: TmdbMovieResult): MediaSearchResult {
+  return {
+    externalId: String(r.id),
+    type: 'movie',
+    title: r.title,
+    coverImageUrl: toCoverUrl(r.poster_path),
+    description: r.overview,
+    releaseYear: yearFromDate(r.release_date),
+    popularity: r.vote_count ?? 0,
+  }
+}
+
+function toTvResult(r: TmdbTvResult): MediaSearchResult {
+  return {
+    externalId: String(r.id),
+    type: 'tv',
+    title: r.name,
+    coverImageUrl: toCoverUrl(r.poster_path),
+    description: r.overview,
+    releaseYear: yearFromDate(r.first_air_date),
+    popularity: r.vote_count ?? 0,
+  }
+}
+
 export const tmdbMovieProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
-    return (data?.results ?? []).map((r): MediaSearchResult => ({
-      externalId: String(r.id),
-      type: 'movie',
-      title: r.title,
-      coverImageUrl: toCoverUrl(r.poster_path),
-      description: r.overview,
-      releaseYear: yearFromDate(r.release_date),
-      popularity: r.vote_count ?? 0,
-    }))
+    return (data?.results ?? []).map(toMovieResult)
+  },
+  async popular() {
+    const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/trending/movie/week', {})
+    return (data?.results ?? []).map(toMovieResult)
   },
   async getById(externalId) {
     const r = await tmdbFetch<TmdbMovieDetail>(`/movie/${externalId}`, { append_to_response: 'credits' })
@@ -138,15 +158,11 @@ export const tmdbMovieProvider: MediaProvider = {
 export const tmdbTvProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbTvResult>>('/search/tv', { query })
-    return (data?.results ?? []).map((r): MediaSearchResult => ({
-      externalId: String(r.id),
-      type: 'tv',
-      title: r.name,
-      coverImageUrl: toCoverUrl(r.poster_path),
-      description: r.overview,
-      releaseYear: yearFromDate(r.first_air_date),
-      popularity: r.vote_count ?? 0,
-    }))
+    return (data?.results ?? []).map(toTvResult)
+  },
+  async popular() {
+    const data = await tmdbFetch<TmdbSearchResponse<TmdbTvResult>>('/trending/tv/week', {})
+    return (data?.results ?? []).map(toTvResult)
   },
   async getById(externalId) {
     const r = await tmdbFetch<TmdbTvDetail>(`/tv/${externalId}`, { append_to_response: 'aggregate_credits' })

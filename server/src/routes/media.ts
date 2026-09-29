@@ -3,16 +3,45 @@ import { z } from 'zod'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { allMediaTypes, providersByType } from '../providers/index.js'
+import type { MediaType } from '@prisma/client'
 import type { MediaSearchResult } from '../providers/types.js'
 import { externalIdSchema } from '../lib/mediaItems.js'
 import { rankSearchResults } from '../lib/searchRanking.js'
 
 const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
+const POPULAR_PER_TYPE_WHEN_UNFILTERED = 6
+const POPULAR_CACHE_MS = 60 * 60 * 1000
 
 const searchQuerySchema = z.object({
   q: z.string().min(1),
   type: z.enum(['movie', 'tv', 'book', 'game']).optional(),
 })
+
+const popularQuerySchema = z.object({
+  type: z.enum(['movie', 'tv', 'book', 'game']).optional(),
+})
+
+// Popular lists are the same for everyone and change slowly, so cache each provider's for
+// an hour rather than hitting four external APIs every time someone opens Search.
+const popularCache = new Map<MediaType, { results: MediaSearchResult[]; expiresAt: number }>()
+
+async function popularFor(type: MediaType): Promise<MediaSearchResult[]> {
+  const cached = popularCache.get(type)
+  if (cached && cached.expiresAt > Date.now()) return cached.results
+  const results = await providersByType[type].popular()
+  popularCache.set(type, { results, expiresAt: Date.now() + POPULAR_CACHE_MS })
+  return results
+}
+
+// Interleaves lists (a1, b1, c1, a2, b2, ...) so an unfiltered view mixes every type.
+function interleave<T>(lists: T[][]): T[] {
+  const merged: T[] = []
+  const longest = Math.max(0, ...lists.map((list) => list.length))
+  for (let i = 0; i < longest; i++) {
+    for (const list of lists) if (i < list.length) merged.push(list[i])
+  }
+  return merged
+}
 
 const detailsParamsSchema = z.object({
   type: z.enum(['movie', 'tv', 'book', 'game']),
@@ -55,6 +84,36 @@ mediaRouter.get(
     }
 
     res.json(rankSearchResults(results, q))
+  }),
+)
+
+mediaRouter.get(
+  '/popular',
+  asyncHandler(async (req, res) => {
+    const parsed = popularQuerySchema.safeParse(req.query)
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() })
+      return
+    }
+    const { type } = parsed.data
+    const types = type ? [type] : allMediaTypes
+
+    const settled = await Promise.allSettled(types.map(popularFor))
+    const lists: MediaSearchResult[][] = []
+    settled.forEach((outcome, i) => {
+      if (outcome.status === 'fulfilled') {
+        lists.push(type ? outcome.value : outcome.value.slice(0, POPULAR_PER_TYPE_WHEN_UNFILTERED))
+      } else {
+        console.warn(`Popular provider for "${types[i]}" failed:`, outcome.reason)
+      }
+    })
+
+    if (lists.length === 0) {
+      res.status(502).json({ error: 'All providers failed' })
+      return
+    }
+
+    res.json(interleave(lists))
   }),
 )
 

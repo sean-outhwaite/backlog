@@ -22,6 +22,10 @@ interface OpenLibrarySearchResponse {
   docs: OpenLibrarySearchDoc[]
 }
 
+interface OpenLibraryTrendingResponse {
+  works: OpenLibrarySearchDoc[]
+}
+
 interface OpenLibraryWork {
   title: string
   description?: string | { value: string }
@@ -74,6 +78,18 @@ function toGenres(subjects: string[] | undefined): string[] {
   return genres
 }
 
+function toSearchResult(doc: OpenLibrarySearchDoc): MediaSearchResult {
+  return {
+    externalId: workKeyToExternalId(doc.key),
+    type: 'book',
+    title: doc.title,
+    coverImageUrl: toCoverUrl(doc.cover_i),
+    description: null,
+    releaseYear: doc.first_publish_year ?? null,
+    popularity: doc.readinglog_count ?? 0,
+  }
+}
+
 export const openLibraryProvider: MediaProvider = {
   async search(query) {
     const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
@@ -85,15 +101,15 @@ export const openLibraryProvider: MediaProvider = {
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibrarySearchResponse
 
-    return data.docs.map((doc): MediaSearchResult => ({
-      externalId: workKeyToExternalId(doc.key),
-      type: 'book',
-      title: doc.title,
-      coverImageUrl: toCoverUrl(doc.cover_i),
-      description: null,
-      releaseYear: doc.first_publish_year ?? null,
-      popularity: doc.readinglog_count ?? 0,
-    }))
+    return data.docs.map(toSearchResult)
+  },
+  async popular() {
+    const response = await fetch(`${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20`, {
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+    })
+    if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
+    const data = (await response.json()) as OpenLibraryTrendingResponse
+    return data.works.map(toSearchResult)
   },
   async getById(externalId) {
     const [response, indexEntry] = await Promise.all([
