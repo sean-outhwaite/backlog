@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
@@ -40,7 +40,10 @@ const ACTION_ICONS: Record<ListStatus, ComponentType> = {
 export function Dashboard() {
   const { profile } = useAuth()
   const [entries, setEntries] = useState<ListEntry[]>([])
-  const [status, setStatus] = useState<ListStatus>('want')
+  // The tab lives in the URL so it survives a reload and other views can link to a tab.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const status = STATUS_TABS.find((tab) => tab.status === searchParams.get('status'))?.status ?? 'want'
+  const setStatus = (next: ListStatus) => setSearchParams(next === 'want' ? {} : { status: next }, { replace: true })
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [loading, setLoading] = useState(true)
 

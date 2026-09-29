@@ -2,6 +2,10 @@ import { supabase } from './supabaseClient'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000'
 
+// Fired on window after any successful change to the user's list, so views outside the page
+// that made the change (like the sidebar's in-progress panel) can refresh.
+export const LISTS_CHANGED_EVENT = 'lists-changed'
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const {
     data: { session },
@@ -20,6 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await response.json().catch(() => ({}))
     throw new Error(body.error ? JSON.stringify(body.error) : `Request failed: ${response.status}`)
   }
+  if (init?.method && path.startsWith('/api/lists')) window.dispatchEvent(new Event(LISTS_CHANGED_EVENT))
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }

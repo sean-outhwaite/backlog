@@ -84,6 +84,199 @@
   display: none;
 }
 
+/* In progress: one card sitting on top of the account menu at the foot of the sidebar. */
+.in-progress-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: auto;
+  padding: 10px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.in-progress-panel:hover {
+  background: var(--surface-hover);
+}
+
+.in-progress-panel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Beats the account menu's own margin-top: auto, which would split the space between them. */
+.app-sidebar .in-progress-panel + .user-menu {
+  margin-top: 8px;
+}
+
+.in-progress-label {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* A stack of up to three covers, fanned from their bottom edges. The frame is wide enough for
+   the outer covers' swing, and the front cover sits in the middle of it. */
+.in-progress-covers {
+  position: relative;
+  width: 96px;
+  height: 150px;
+}
+
+.in-progress-covers[data-count='2'] {
+  width: 148px;
+}
+
+.in-progress-covers[data-count='3'] {
+  width: 180px;
+}
+
+.in-progress-cover {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 96px;
+  height: 144px;
+  margin-left: -48px;
+  overflow: hidden;
+  /* A white edge, like a print's border, keeps overlapping covers distinct in either theme. */
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: var(--surface-hover);
+  box-shadow: var(--shadow);
+  transform-origin: 50% 100%;
+  transform: translateX(var(--fan-x, 0)) rotate(var(--fan-r, 0));
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.in-progress-cover:not([data-slot='0']) {
+  filter: brightness(0.92);
+}
+
+.in-progress-covers[data-count='1'] .in-progress-cover {
+  --fan-hover-r: -3deg;
+}
+
+.in-progress-covers[data-count='2'] [data-slot='0'] {
+  --fan-x: 8px;
+  --fan-r: 4deg;
+  --fan-hover-x: 12px;
+  --fan-hover-r: 6deg;
+}
+
+.in-progress-covers[data-count='2'] [data-slot='1'] {
+  --fan-x: -10px;
+  --fan-r: -6deg;
+  --fan-hover-x: -16px;
+  --fan-hover-r: -10deg;
+}
+
+.in-progress-covers[data-count='3'] [data-slot='1'] {
+  --fan-x: -20px;
+  --fan-r: -9deg;
+  --fan-hover-x: -24px;
+  --fan-hover-r: -11deg;
+}
+
+.in-progress-covers[data-count='3'] [data-slot='2'] {
+  --fan-x: 20px;
+  --fan-r: 9deg;
+  --fan-hover-x: 24px;
+  --fan-hover-r: 11deg;
+}
+
+/* Hovering the card spreads the fan a little further (or tilts a lone cover). */
+.in-progress-panel:hover .in-progress-cover {
+  transform: translateX(var(--fan-hover-x, var(--fan-x, 0))) rotate(var(--fan-hover-r, var(--fan-r, 0)));
+}
+
+.in-progress-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The generated stand-in is built for full-size cards; at this size keep just the icon. */
+.in-progress-cover .cover-placeholder {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.in-progress-cover .cover-placeholder span {
+  display: none;
+}
+
+.in-progress-cover .cover-placeholder .icon {
+  font-size: 28px;
+}
+
+.in-progress-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.in-progress-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 100%;
+}
+
+/* How many others are in progress. Its height matches the title's line box (14px at 1.3),
+   so with both top-aligned it sits centred on the first line however far the title wraps. */
+.in-progress-count {
+  flex: none;
+  padding: 1px 7px;
+  line-height: 16px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.in-progress-title {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.in-progress-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+/* Only on tall enough screens: the sidebar doesn't scroll, and the nav comes first. */
+@media (max-height: 700px) {
+  .in-progress-panel {
+    display: none;
+  }
+
+  .app-sidebar .in-progress-panel + .user-menu {
+    margin-top: auto;
+  }
+}
+
 /* The account menu sits at the foot of the sidebar, so its panel opens upwards. */
 .app-sidebar .user-menu {
   margin-top: auto;
@@ -240,6 +433,14 @@
 
   .app-sidebar .user-menu {
     margin: 0 0 0 auto;
+  }
+
+  .in-progress-panel {
+    display: none;
+  }
+
+  .app-sidebar .in-progress-panel + .user-menu {
+    margin-top: 0;
   }
 
   .app-sidebar .user-menu-trigger {

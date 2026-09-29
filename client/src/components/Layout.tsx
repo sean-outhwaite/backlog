@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { InProgressPanel } from './InProgressPanel'
 import { ListIcon, LogoMark, SearchIcon, SparklesIcon, UsersIcon } from './icons'
 import { UserMenu } from './UserMenu'
 
@@ -30,6 +31,7 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        <InProgressPanel />
         <UserMenu />
       </aside>
       <main className="app-main">
