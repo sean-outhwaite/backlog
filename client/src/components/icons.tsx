@@ -112,6 +112,35 @@ export function SearchIcon() {
   )
 }
 
+export function ListIcon() {
+  return (
+    <Icon>
+      <path d="M10 6h10M10 12h10M10 18h10" />
+      <path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11" />
+      <circle cx="5" cy="18" r="1" />
+    </Icon>
+  )
+}
+
+export function UsersIcon() {
+  return (
+    <Icon>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.5A6.5 6.5 0 0 1 21.5 20" />
+    </Icon>
+  )
+}
+
+export function SparklesIcon() {
+  return (
+    <Icon>
+      <path d="M10 3.5 11.8 8.2 16.5 10l-4.7 1.8L10 16.5l-1.8-4.7L3.5 10l4.7-1.8z" />
+      <path d="M18 14v6M15 17h6" />
+    </Icon>
+  )
+}
+
 // A little stack of cards: the backlog piling up.
 export function LogoMark() {
   return (
