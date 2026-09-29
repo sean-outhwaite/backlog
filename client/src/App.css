@@ -996,6 +996,25 @@ section + section {
   font-style: italic;
 }
 
+/* The empty state widened to hold a grid of popular titles under its message. */
+.empty-state--popular {
+  align-items: stretch;
+  gap: 20px;
+  padding: 28px 24px 24px;
+  text-align: left;
+}
+
+/* Auto margins centre the message, which the stretched layout would otherwise pin left. */
+.empty-state--popular > p {
+  margin: 0 auto;
+  font-style: italic;
+  text-align: center;
+}
+
+.media-grid + .empty-state--popular {
+  margin-top: 40px;
+}
+
 /* ---------- Friends ---------- */
 
 .invite-link-row {

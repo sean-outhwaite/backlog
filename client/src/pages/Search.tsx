@@ -1,18 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
 import { SearchIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
+import { resultKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import type { MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
-
-// externalId alone isn't unique across types (a TMDB movie and show can share an id).
-function resultKey(result: MediaSearchResult) {
-  return `${result.type}:${result.externalId}`
-}
 
 export function Search() {
   const [query, setQuery] = useState('')
@@ -22,24 +18,9 @@ export function Search() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [popular, setPopular] = useState<MediaSearchResult[] | null>(null)
 
   // Before the first search, show what's popular for the selected type instead of an empty page.
-  useEffect(() => {
-    let cancelled = false
-    const params = typeFilter === 'all' ? '' : `?type=${typeFilter}`
-    api
-      .get<MediaSearchResult[]>(`/api/media/popular${params}`)
-      .then((found) => {
-        if (!cancelled) setPopular(found)
-      })
-      .catch(() => {
-        if (!cancelled) setPopular([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [typeFilter])
+  const popular = usePopular(typeFilter)
 
   async function handleSearch(event: FormEvent) {
     event.preventDefault()

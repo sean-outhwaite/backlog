@@ -9,9 +9,17 @@ export function PageHeader({ title, subtitle }: { title: ReactNode; subtitle?: R
   )
 }
 
-export function EmptyState({ icon, children }: { icon?: ReactNode; children: ReactNode }) {
+export function EmptyState({
+  icon,
+  className,
+  children,
+}: {
+  icon?: ReactNode
+  className?: string
+  children: ReactNode
+}) {
   return (
-    <div className="empty-state">
+    <div className={className ? `empty-state ${className}` : 'empty-state'}>
       {icon && <div className="empty-state-icon">{icon}</div>}
       {children}
     </div>
