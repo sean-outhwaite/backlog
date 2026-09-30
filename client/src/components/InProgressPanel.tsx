@@ -8,6 +8,11 @@ import { MediaTypeIcon } from './icons'
 
 const MAX_FANNED = 3
 
+// A series shows the volume the reader is up to (the front of its card's stack), not volume one.
+function coverMedia(entry: ListEntry) {
+  return { ...entry.mediaItem, coverImageUrl: entry.covers?.[0] ?? entry.mediaItem.coverImageUrl }
+}
+
 // The latest thing you're in the middle of, filling the foot of the sidebar, with a count of
 // the rest. The whole card links to the In progress tab. Hidden when there's nothing in progress.
 export function InProgressPanel() {
@@ -33,6 +38,7 @@ export function InProgressPanel() {
 
   if (entries.length === 0) return null
   const [latest] = entries
+  const latestCover = coverMedia(latest).coverImageUrl
   const othersCount = entries.length - 1
   // Up to three covers fanned out, latest in front. Rendered back to front so the DOM order
   // stacks them without z-index; data-slot says where each sits in the fan.
@@ -45,10 +51,10 @@ export function InProgressPanel() {
       aria-label={`In progress: ${latest.mediaItem.title}${othersCount ? ` and ${othersCount} more` : ''}`}
     >
       {/* The front cover, blurred right out, tints the card with its colours. */}
-      {latest.mediaItem.coverImageUrl && (
+      {latestCover && (
         <span
           className="in-progress-glow"
-          style={{ backgroundImage: `url(${JSON.stringify(latest.mediaItem.coverImageUrl)})` }}
+          style={{ backgroundImage: `url(${JSON.stringify(latestCover)})` }}
           aria-hidden="true"
         />
       )}
@@ -60,7 +66,7 @@ export function InProgressPanel() {
         {fanned
           .map((entry, slot) => (
             <span key={entry.id} className="in-progress-cover" data-slot={slot}>
-              <CoverArt media={entry.mediaItem} />
+              <CoverArt media={coverMedia(entry)} />
             </span>
           ))
           .reverse()}
