@@ -54,6 +54,15 @@ export function MediaTypeIcon({ type }: { type: MediaType }) {
   }
 }
 
+export function SeriesIcon() {
+  return (
+    <Icon>
+      <path d="m12 3 9 5-9 5-9-5z" />
+      <path d="m3 13 9 5 9-5" />
+    </Icon>
+  )
+}
+
 export function CheckIcon() {
   return (
     <Icon>

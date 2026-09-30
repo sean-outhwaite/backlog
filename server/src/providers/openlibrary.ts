@@ -5,6 +5,8 @@ import {
   yearFromDate,
   type MediaProvider,
   type MediaSearchResult,
+  type SeriesDetails,
+  type SeriesVolumeResult,
 } from './types.js'
 
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org'
@@ -16,6 +18,20 @@ interface OpenLibrarySearchDoc {
   cover_i?: number
   first_publish_year?: number
   readinglog_count?: number
+  // Parallel arrays, one element per series the work belongs to.
+  series_key?: string[]
+  series_name?: string[]
+  series_position?: string[]
+}
+
+const SEARCH_FIELDS = 'key,title,cover_i,first_publish_year,readinglog_count,series_key,series_name,series_position'
+
+// Series volumes are few (Berserk has 43), so one page covers all but the longest runs.
+const MAX_SERIES_VOLUMES = 200
+
+interface OpenLibrarySeries {
+  name: string
+  description?: string | { value: string } | null
 }
 
 interface OpenLibrarySearchResponse {
@@ -87,7 +103,19 @@ function toSearchResult(doc: OpenLibrarySearchDoc): MediaSearchResult {
     description: null,
     releaseYear: doc.first_publish_year ?? null,
     popularity: doc.readinglog_count ?? 0,
+    series:
+      doc.series_key?.[0] && doc.series_name?.[0]
+        ? { externalId: doc.series_key[0], title: doc.series_name[0] }
+        : undefined,
   }
+}
+
+// A work's position in the given series. Box sets and omnibuses have ranges ("1-7") rather
+// than a number; they aren't single volumes, so they're left out.
+function seriesPosition(doc: OpenLibrarySearchDoc, seriesKey: string): number | null {
+  const index = doc.series_key?.indexOf(seriesKey) ?? -1
+  const position = index >= 0 ? doc.series_position?.[index] : undefined
+  return position && /^\d+(\.\d+)?$/.test(position.trim()) ? Number(position) : null
 }
 
 export const openLibraryProvider: MediaProvider = {
@@ -95,7 +123,7 @@ export const openLibraryProvider: MediaProvider = {
     const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
     url.searchParams.set('q', query)
     url.searchParams.set('limit', '20')
-    url.searchParams.set('fields', 'key,title,cover_i,first_publish_year,readinglog_count')
+    url.searchParams.set('fields', SEARCH_FIELDS)
 
     const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
@@ -110,6 +138,39 @@ export const openLibraryProvider: MediaProvider = {
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibraryTrendingResponse
     return data.works.map(toSearchResult)
+  },
+  async getSeries(externalId) {
+    const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
+    url.searchParams.set('q', `series_key:${externalId}`)
+    url.searchParams.set('limit', String(MAX_SERIES_VOLUMES))
+    url.searchParams.set('fields', SEARCH_FIELDS)
+
+    const signal = AbortSignal.timeout(PROVIDER_TIMEOUT_MS)
+    const [seriesResponse, searchResponse] = await Promise.all([
+      fetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, { signal }),
+      fetch(url, { signal }),
+    ])
+    if (!seriesResponse.ok) return null
+    if (!searchResponse.ok) throw new Error(`Open Library request failed: ${searchResponse.status}`)
+    const series = (await seriesResponse.json()) as OpenLibrarySeries
+    const data = (await searchResponse.json()) as OpenLibrarySearchResponse
+
+    const volumes = data.docs
+      .map((doc): SeriesVolumeResult | null => {
+        const position = seriesPosition(doc, externalId)
+        return position === null ? null : { ...toSearchResult(doc), position }
+      })
+      .filter((volume): volume is SeriesVolumeResult => volume !== null)
+      .sort((a, b) => a.position - b.position)
+    if (volumes.length === 0) return null
+
+    return {
+      externalId,
+      title: series.name,
+      description: toDescription(series.description ?? undefined),
+      url: `${OPEN_LIBRARY_BASE}/series/${externalId}`,
+      volumes,
+    } satisfies SeriesDetails
   },
   async getById(externalId) {
     const [response, indexEntry] = await Promise.all([

@@ -4,7 +4,7 @@ import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { allMediaTypes, providersByType } from '../providers/index.js'
 import type { MediaType } from '@prisma/client'
-import type { MediaSearchResult } from '../providers/types.js'
+import { toFacts, type MediaDetails, type MediaSearchResult } from '../providers/types.js'
 import { externalIdSchema } from '../lib/mediaItems.js'
 import { rankSearchResults } from '../lib/searchRanking.js'
 
@@ -47,6 +47,35 @@ const detailsParamsSchema = z.object({
   type: z.enum(['movie', 'tv', 'book', 'game']),
   externalId: externalIdSchema,
 })
+
+const detailsQuerySchema = z.object({
+  kind: z.enum(['title', 'series']).default('title'),
+})
+
+// A series' details, shaped like a title's so the details view can show either.
+async function seriesDetails(type: MediaType, externalId: string): Promise<MediaDetails | null> {
+  const getSeries = providersByType[type].getSeries
+  const series = getSeries ? await getSeries(externalId) : null
+  if (!series) return null
+  const [first] = series.volumes
+  const years = series.volumes.map((volume) => volume.releaseYear).filter((year): year is number => year !== null)
+  const span = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : null
+  return {
+    externalId,
+    type,
+    title: series.title,
+    coverImageUrl: first.coverImageUrl,
+    description: series.description,
+    releaseYear: first.releaseYear,
+    tagline: null,
+    genres: [],
+    facts: toFacts([
+      ['Volumes', String(series.volumes.length)],
+      ['Published', span],
+    ]),
+    url: series.url,
+  }
+}
 
 export const mediaRouter = Router()
 
@@ -123,13 +152,17 @@ mediaRouter.get(
   '/details/:type/:externalId',
   asyncHandler(async (req, res) => {
     const parsed = detailsParamsSchema.safeParse(req.params)
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+    const query = detailsQuerySchema.safeParse(req.query)
+    if (!parsed.success || !query.success) {
+      res.status(400).json({ error: (parsed.error ?? query.error)?.flatten() })
       return
     }
     const { type, externalId } = parsed.data
 
-    const details = await providersByType[type].getById(externalId)
+    const details =
+      query.data.kind === 'series'
+        ? await seriesDetails(type, externalId)
+        : await providersByType[type].getById(externalId)
     if (!details) {
       res.status(404).json({ error: 'Not found' })
       return

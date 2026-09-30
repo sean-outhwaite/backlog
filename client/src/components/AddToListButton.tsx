@@ -1,8 +1,22 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { CheckIcon, PlusIcon } from './icons'
 import { Spinner } from './Spinner'
 
-export function AddToListButton({ added, onAdd }: { added: boolean; onAdd: () => Promise<void> }) {
+export function AddToListButton({
+  added,
+  onAdd,
+  label = 'Add to list',
+  icon = <PlusIcon />,
+  primary = true,
+  title,
+}: {
+  added: boolean
+  onAdd: () => Promise<void>
+  label?: string
+  icon?: ReactNode
+  primary?: boolean
+  title?: string
+}) {
   const [adding, setAdding] = useState(false)
   const [failed, setFailed] = useState(false)
 
@@ -36,15 +50,16 @@ export function AddToListButton({ added, onAdd }: { added: boolean; onAdd: () =>
   } else {
     content = (
       <>
-        <PlusIcon />
-        {failed ? 'Try again' : 'Add to list'}
+        {icon}
+        {failed ? 'Try again' : label}
       </>
     )
   }
 
   return (
     <button
-      className={`btn-primary add-button${added ? ' is-added' : ''}`}
+      className={`${primary ? 'btn-primary ' : ''}add-button${added ? ' is-added' : ''}`}
+      title={title}
       onClick={() => void handleClick()}
       disabled={adding || added}
       aria-busy={adding}

@@ -4,6 +4,7 @@ import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { isUniqueConstraintError, prisma } from '../lib/prisma.js'
 import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
+import { derivedSeriesStatus, withProgress } from '../lib/series.js'
 
 export const listsRouter = Router()
 
@@ -18,7 +19,7 @@ listsRouter.get(
       include: { mediaItem: true },
       orderBy: { addedAt: 'desc' },
     })
-    res.json(entries)
+    res.json(await withProgress(entries))
   }),
 )
 
@@ -59,7 +60,8 @@ listsRouter.post(
         where: { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } },
       })
     }
-    res.status(201).json({ ...entry, mediaItem })
+    const [withMedia] = await withProgress([{ ...entry, mediaItem }])
+    res.status(201).json(withMedia)
   }),
 )
 
@@ -93,7 +95,89 @@ listsRouter.patch(
       },
       include: { mediaItem: true },
     })
-    res.json(entry)
+    const [withMedia] = await withProgress([entry])
+    res.json(withMedia)
+  }),
+)
+
+// A series entry's volumes in order, each with this user's status for it.
+listsRouter.get(
+  '/:id/volumes',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const entryId = req.params.id
+    const [volumes, progress] = await Promise.all([
+      prisma.seriesVolume.findMany({
+        where: { series: { listEntries: { some: { id: entryId, userId } } } },
+        include: { volume: true },
+        orderBy: { position: 'asc' },
+      }),
+      prisma.volumeProgress.findMany({ where: { entryId, entry: { userId } } }),
+    ])
+    const statusByVolume = new Map(progress.map((row) => [row.volumeId, row.status]))
+    res.json(
+      volumes.map(({ volume, position }) => ({ ...volume, position, status: statusByVolume.get(volume.id) ?? 'want' })),
+    )
+  }),
+)
+
+const updateVolumeSchema = z.object({ status: listStatusSchema })
+
+// Sets one volume's status, then moves the series entry along to match (see derivedSeriesStatus).
+listsRouter.put(
+  '/:id/volumes/:volumeId',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const parsed = updateVolumeSchema.safeParse(req.body)
+    const volumeId = z.string().uuid().safeParse(req.params.volumeId)
+    if (!parsed.success || !volumeId.success) {
+      res.status(400).json({ error: (parsed.error ?? volumeId.error)?.flatten() })
+      return
+    }
+    const entryId = req.params.id
+    const { status } = parsed.data
+
+    const [entry, link] = await Promise.all([
+      prisma.listEntry.findUnique({ where: { id: entryId }, include: { mediaItem: true } }),
+      prisma.seriesVolume.findFirst({
+        where: { volumeId: volumeId.data, series: { listEntries: { some: { id: entryId, userId } } } },
+      }),
+    ])
+    if (!entry || entry.userId !== userId || !link) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+
+    const key = { entryId_volumeId: { entryId, volumeId: link.volumeId } }
+    const data = { status, completedAt: status === 'done' ? new Date() : null }
+    if (status === 'want') {
+      await prisma.volumeProgress.deleteMany({ where: { entryId, volumeId: link.volumeId } })
+    } else {
+      try {
+        await prisma.volumeProgress.create({ data: { entryId, volumeId: link.volumeId, ...data } })
+      } catch (error) {
+        if (!isUniqueConstraintError(error)) throw error
+        await prisma.volumeProgress.update({ where: key, data })
+      }
+    }
+
+    const [total, byStatus] = await Promise.all([
+      prisma.seriesVolume.count({ where: { seriesId: link.seriesId } }),
+      prisma.volumeProgress.groupBy({ by: ['status'], where: { entryId }, _count: true }),
+    ])
+    const done = byStatus.find((row) => row.status === 'done')?._count ?? 0
+    const started = byStatus.reduce((sum, row) => sum + row._count, 0)
+    const nextStatus = derivedSeriesStatus(entry.status, { total, done, started })
+
+    let updated = entry
+    if (nextStatus !== entry.status) {
+      const changed = await prisma.listEntry.update({
+        where: { id: entryId },
+        data: { status: nextStatus, completedAt: nextStatus === 'done' ? new Date() : null },
+      })
+      updated = { ...changed, mediaItem: entry.mediaItem }
+    }
+    res.json({ ...updated, progress: { done, total } })
   }),
 )
 

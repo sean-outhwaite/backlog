@@ -1088,6 +1088,38 @@ section + section {
   font-size: 13px;
 }
 
+/* A series' volumes read: a count pill in the type tag's finish, over a bar along the cover's foot. */
+.media-card-progress-count {
+  position: absolute;
+  left: 10px;
+  bottom: 14px;
+  z-index: 1;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(12, 10, 18, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.media-card-progress-bar {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 4px;
+  background: rgba(12, 10, 18, 0.45);
+}
+
+.media-card-progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease-out;
+}
+
 .media-card-body {
   flex: 1;
   display: flex;
@@ -1699,6 +1731,130 @@ html:has(.details-dialog[open]) {
   color: var(--text-h);
   line-height: 1.6;
   white-space: pre-line;
+}
+
+/* ---------- Series volumes ---------- */
+
+.series-volumes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.series-volumes-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.series-volumes-header h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.series-volumes-header span {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.series-volumes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 10px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.series-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.series-volume:hover:not(:disabled) {
+  background: none;
+  color: var(--text-h);
+}
+
+.series-volume-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  transition:
+    box-shadow 0.15s,
+    opacity 0.15s;
+}
+
+.series-volume-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.series-volume-cover .cover-placeholder {
+  padding: 6px;
+  font-size: 10px;
+}
+
+.series-volume-cover .cover-placeholder span {
+  display: none;
+}
+
+/* Unread volumes recede so what's been read stands out. */
+.series-volume--want .series-volume-cover {
+  opacity: 0.55;
+}
+
+.series-volume--want:hover .series-volume-cover {
+  opacity: 0.85;
+}
+
+.series-volume--in_progress .series-volume-cover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.series-volume--in_progress,
+.series-volume--done {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.series-volume-mark {
+  position: absolute;
+  inset: auto 4px 4px auto;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  z-index: 1;
+  animation: pop 0.35s var(--ease-spring) both;
+}
+
+.series-volume--done .series-volume-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .details-actions {

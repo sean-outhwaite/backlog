@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
+import { SeriesVolumes } from '../components/SeriesVolumes'
 import { LoadingState } from '../components/Spinner'
 import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
@@ -119,6 +120,8 @@ export function Dashboard() {
           <MediaCard
             key={entry.id}
             mediaItem={entry.mediaItem}
+            progress={entry.progress}
+            details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
             coverActions={
               STATUS_ACTIONS[entry.status].length > 1 && (
                 <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />

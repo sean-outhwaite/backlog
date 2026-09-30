@@ -1,22 +1,26 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { fetchMediaDetails } from '../lib/mediaDetails'
-import { MEDIA_SOURCE_NAMES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
 import type { MediaDetails, MediaItem } from '../types'
 import { CoverArt } from './CoverArt'
 import { MediaTypeIcon } from './icons'
 import { Spinner } from './Spinner'
 
-export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'>
+export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'> &
+  Partial<Pick<MediaItem, 'kind'>>
 
 // Shows what the card already knows straight away, then fills in the rest from the provider.
 export function MediaDetailsDialog({
   media,
   actions,
+  children,
   onClose,
 }: {
   media: DetailsMedia
   actions?: ReactNode
+  // Extra content below the description, such as a series' volumes.
+  children?: ReactNode
   onClose: () => void
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -32,13 +36,13 @@ export function MediaDetailsDialog({
 
   useEffect(() => {
     let cancelled = false
-    fetchMediaDetails(media.type, media.externalId)
+    fetchMediaDetails(media.type, media.externalId, media.kind)
       .then((found) => !cancelled && setDetails(found))
       .catch(() => !cancelled && setFailed(true))
     return () => {
       cancelled = true
     }
-  }, [media.type, media.externalId])
+  }, [media.type, media.externalId, media.kind])
 
   const close = () => dialogRef.current?.close()
   const coverStyle = media.coverImageUrl ? ({ '--cover': `url("${media.coverImageUrl}")` } as CSSProperties) : undefined
@@ -64,7 +68,7 @@ export function MediaDetailsDialog({
         <div className="details-info">
           <p className="details-kicker">
             <MediaTypeIcon type={media.type} />
-            {MEDIA_TYPE_LABELS[media.type]}
+            {mediaLabel(media)}
             {(details?.releaseYear ?? media.releaseYear) && <> · {details?.releaseYear ?? media.releaseYear}</>}
           </p>
           <h2 id="details-title">{media.title}</h2>
@@ -99,6 +103,8 @@ export function MediaDetailsDialog({
               {details.description && <p className="details-description">{details.description}</p>}
             </>
           )}
+
+          {children}
 
           {actions && <div className="details-actions">{actions}</div>}
 

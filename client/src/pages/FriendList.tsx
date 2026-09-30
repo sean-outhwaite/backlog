@@ -45,6 +45,7 @@ export function FriendList() {
           <MediaCard
             key={entry.id}
             mediaItem={entry.mediaItem}
+            progress={entry.progress}
             actions={
               <span className={`status-badge status-badge--${entry.status}`}>{STATUS_LABELS[entry.status]}</span>
             }

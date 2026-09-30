@@ -20,6 +20,13 @@ enum MediaType {
   game
 }
 
+// A series is stored as a MediaItem of its own (so it can be listed and recommended like any
+// title), with its volumes, themselves ordinary title MediaItems, linked via SeriesVolume.
+enum MediaKind {
+  title
+  series
+}
+
 enum ListStatus {
   want
   in_progress
@@ -31,42 +38,72 @@ model Profile {
   username  String?  @unique
   createdAt DateTime @default(now())
 
-  listEntries       ListEntry[]
-  inviteLink        InviteLink?
-  friendshipsAsA    Friendship[]     @relation("FriendshipUserA")
-  friendshipsAsB    Friendship[]     @relation("FriendshipUserB")
+  listEntries             ListEntry[]
+  inviteLink              InviteLink?
+  friendshipsAsA          Friendship[]     @relation("FriendshipUserA")
+  friendshipsAsB          Friendship[]     @relation("FriendshipUserB")
   recommendationsSent     Recommendation[] @relation("RecommendationFrom")
   recommendationsReceived Recommendation[] @relation("RecommendationTo")
 }
 
 model MediaItem {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   source        MediaSource
   externalId    String
   type          MediaType
+  kind          MediaKind   @default(title)
   title         String
   coverImageUrl String?
   description   String?
   releaseYear   Int?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime    @default(now())
 
   listEntries     ListEntry[]
   recommendations Recommendation[]
+  volumes         SeriesVolume[]   @relation("SeriesVolumes")
+  inSeries        SeriesVolume[]   @relation("VolumeSeries")
+  volumeProgress  VolumeProgress[]
 
-  @@unique([source, type, externalId])
+  // kind is in the key because a provider's series and title ids are separate namespaces.
+  @@unique([source, type, kind, externalId])
+}
+
+model SeriesVolume {
+  seriesId String
+  volumeId String
+  position Float
+
+  series MediaItem @relation("SeriesVolumes", fields: [seriesId], references: [id])
+  volume MediaItem @relation("VolumeSeries", fields: [volumeId], references: [id])
+
+  @@id([seriesId, volumeId])
+}
+
+// One user's progress through one volume of a series on their list. No row means "want".
+model VolumeProgress {
+  entryId     String
+  volumeId    String
+  status      ListStatus
+  completedAt DateTime?
+
+  entry  ListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  volume MediaItem @relation(fields: [volumeId], references: [id])
+
+  @@id([entryId, volumeId])
 }
 
 model ListEntry {
-  id           String     @id @default(uuid())
-  userId       String
-  mediaItemId  String
-  status       ListStatus @default(want)
-  notes        String?
-  addedAt      DateTime   @default(now())
-  completedAt  DateTime?
+  id          String     @id @default(uuid())
+  userId      String
+  mediaItemId String
+  status      ListStatus @default(want)
+  notes       String?
+  addedAt     DateTime   @default(now())
+  completedAt DateTime?
 
-  user      Profile   @relation(fields: [userId], references: [id])
-  mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+  user           Profile          @relation(fields: [userId], references: [id])
+  mediaItem      MediaItem        @relation(fields: [mediaItemId], references: [id])
+  volumeProgress VolumeProgress[]
 
   @@unique([userId, mediaItemId])
 }

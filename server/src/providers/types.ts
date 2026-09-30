@@ -15,6 +15,26 @@ export interface NormalizedMediaResult {
 // roughly the same scale: thousands for hits, single digits for obscure titles.
 export interface MediaSearchResult extends NormalizedMediaResult {
   popularity: number
+  // Set when the provider knows this title is part of a series (only Open Library does today).
+  series?: SeriesRef
+}
+
+export interface SeriesRef {
+  externalId: string
+  title: string
+}
+
+export interface SeriesVolumeResult extends MediaSearchResult {
+  position: number
+}
+
+// A series and its volumes in reading order, only ever from providers that implement getSeries.
+export interface SeriesDetails {
+  externalId: string
+  title: string
+  description: string | null
+  url: string
+  volumes: SeriesVolumeResult[]
 }
 
 // A labelled, display-ready detail ("Director": "Denis Villeneuve", "Platforms": "PC, PS5").
@@ -38,6 +58,7 @@ export interface MediaProvider {
   // What's trending or popular right now, most popular first. Shown before the user searches.
   popular(): Promise<MediaSearchResult[]>
   getById(externalId: string): Promise<MediaDetails | null>
+  getSeries?(externalId: string): Promise<SeriesDetails | null>
 }
 
 // Builds a facts list, dropping entries whose value is missing or empty.

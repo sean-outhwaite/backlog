@@ -3,6 +3,7 @@ import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { areFriends } from '../lib/friendship.js'
+import { withProgress } from '../lib/series.js'
 
 export const friendsRouter = Router()
 
@@ -37,6 +38,6 @@ friendsRouter.get(
       include: { mediaItem: true },
       orderBy: { addedAt: 'desc' },
     })
-    res.json(entries)
+    res.json(await withProgress(entries))
   }),
 )

@@ -1,11 +1,14 @@
 export type MediaType = 'movie' | 'tv' | 'book' | 'game'
 export type ListStatus = 'want' | 'in_progress' | 'done'
+// A series (e.g. a manga run) is a MediaItem of its own, whose volumes are ordinary titles.
+export type MediaKind = 'title' | 'series'
 
 export interface MediaItem {
   id: string
   source: 'tmdb' | 'openlibrary' | 'rawg'
   externalId: string
   type: MediaType
+  kind: MediaKind
   title: string
   coverImageUrl: string | null
   description: string | null
@@ -13,10 +16,11 @@ export interface MediaItem {
 }
 
 // Search results come straight from the providers and aren't stored, so they have no id.
+// They're always single titles; `series` is set when the title belongs to one that can be added.
 export type MediaSearchResult = Pick<
   MediaItem,
   'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description' | 'releaseYear'
->
+> & { series?: { externalId: string; title: string } }
 
 // Live details for one title, fetched from its provider when its details view opens; never stored.
 export interface MediaFact {
@@ -32,7 +36,7 @@ export interface MediaDetails extends MediaSearchResult {
 }
 
 // How the API identifies a title to add or recommend: an existing MediaItem, or a search result.
-export type MediaRef = { mediaItemId: string } | Pick<MediaItem, 'type' | 'externalId'>
+export type MediaRef = { mediaItemId: string } | (Pick<MediaItem, 'type' | 'externalId'> & { kind?: MediaKind })
 
 export interface ListEntry {
   id: string
@@ -43,6 +47,14 @@ export interface ListEntry {
   addedAt: string
   completedAt: string | null
   mediaItem: MediaItem
+  // Series entries only: how many of the series' volumes are done.
+  progress?: { done: number; total: number }
+}
+
+// One volume of a series entry, with the user's status for it.
+export interface SeriesVolume extends MediaItem {
+  position: number
+  status: ListStatus
 }
 
 export interface Profile {

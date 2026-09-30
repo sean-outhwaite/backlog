@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
-import { SearchIcon } from '../components/icons'
+import { SearchIcon, SeriesIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
@@ -9,6 +9,10 @@ import { resultKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import type { MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+
+function seriesKey(type: MediaType, seriesExternalId: string) {
+  return `${type}:series:${seriesExternalId}`
+}
 
 export function Search() {
   const [query, setQuery] = useState('')
@@ -46,6 +50,12 @@ export function Search() {
       externalId: result.externalId,
     })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
+  }
+
+  // Keyed by series rather than result, so every volume's card shows the series as added.
+  async function addSeries(result: MediaSearchResult, series: NonNullable<MediaSearchResult['series']>) {
+    await api.post('/api/lists', { type: result.type, externalId: series.externalId, kind: 'series' })
+    setAddedIds((prev) => new Set(prev).add(seriesKey(result.type, series.externalId)))
   }
 
   return (
@@ -104,6 +114,16 @@ export function Search() {
             actions={
               <>
                 <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addToList(result)} />
+                {result.series && (
+                  <AddToListButton
+                    added={addedIds.has(seriesKey(result.type, result.series.externalId))}
+                    onAdd={() => addSeries(result, result.series!)}
+                    label="Add series"
+                    icon={<SeriesIcon />}
+                    primary={false}
+                    title={`Add the whole ${result.series.title} series, and track it volume by volume`}
+                  />
+                )}
                 <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
               </>
             }

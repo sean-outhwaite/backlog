@@ -1,19 +1,25 @@
 import { useState, type ReactNode } from 'react'
 import type { MediaItem } from '../types'
-import { MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+import { mediaLabel } from '../lib/mediaTypes'
 import { CoverArt } from './CoverArt'
 import { MediaDetailsDialog, type DetailsMedia } from './MediaDetailsDialog'
-import { MediaTypeIcon } from './icons'
+import { MediaTypeIcon, SeriesIcon } from './icons'
 
 export function MediaCard({
   mediaItem,
   actions,
   coverActions,
+  progress,
+  details,
 }: {
   mediaItem: DetailsMedia & Pick<MediaItem, 'title'>
   actions?: ReactNode
   // Small icon buttons pinned to the cover's top-right, level with the type tag.
   coverActions?: ReactNode
+  // A series' volumes done, shown along the foot of the cover.
+  progress?: { done: number; total: number }
+  // Extra content for the details dialog, such as a series' volumes.
+  details?: ReactNode
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const openDetails = () => setDetailsOpen(true)
@@ -25,9 +31,19 @@ export function MediaCard({
         <button className="media-card-cover" onClick={openDetails} tabIndex={-1} aria-hidden="true">
           <CoverArt media={mediaItem} />
           <span className="media-card-type">
-            <MediaTypeIcon type={mediaItem.type} />
-            {MEDIA_TYPE_LABELS[mediaItem.type]}
+            {mediaItem.kind === 'series' ? <SeriesIcon /> : <MediaTypeIcon type={mediaItem.type} />}
+            {mediaLabel(mediaItem)}
           </span>
+          {progress && progress.total > 0 && (
+            <>
+              <span className="media-card-progress-count">
+                {progress.done} / {progress.total}
+              </span>
+              <span className="media-card-progress-bar">
+                <span style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+              </span>
+            </>
+          )}
         </button>
         {coverActions && <div className="media-card-cover-actions">{coverActions}</div>}
       </div>
@@ -52,7 +68,9 @@ export function MediaCard({
             </>
           }
           onClose={() => setDetailsOpen(false)}
-        />
+        >
+          {details}
+        </MediaDetailsDialog>
       )}
     </article>
   )
