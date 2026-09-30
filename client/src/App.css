@@ -1088,6 +1088,82 @@ section + section {
   font-size: 13px;
 }
 
+/* A series' volumes from where the reader is up to, fanned up and to the right over a blurred
+   wash of the front one. The covers sit high enough to leave the foot of the cover clear for
+   the progress pill. */
+.cover-stack {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.cover-stack::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: var(--cover) center / cover;
+  filter: blur(18px) brightness(0.55) saturate(1.2);
+}
+
+.cover-stack-item {
+  position: absolute;
+  top: 25%;
+  left: 9%;
+  width: 60%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  /* The same white print edge as the sidebar's fanned covers keeps each volume distinct. */
+  border: 2px solid #fff;
+  border-radius: 6px;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
+  transform-origin: 50% 100%;
+  transform: translate(var(--stack-x, 0), var(--stack-y, 0)) rotate(var(--stack-r, 0));
+  transition: transform 0.35s var(--ease-spring);
+}
+
+.cover-stack[data-count='2'] .cover-stack-item {
+  left: 14%;
+}
+
+.cover-stack[data-count='1'] .cover-stack-item {
+  left: 20%;
+}
+
+.cover-stack-item:not([data-slot='0']) {
+  filter: brightness(0.85);
+}
+
+.cover-stack-item[data-slot='1'] {
+  --stack-x: 11%;
+  --stack-y: -7%;
+  --stack-r: 3deg;
+}
+
+.cover-stack-item[data-slot='2'] {
+  --stack-x: 22%;
+  --stack-y: -14%;
+  --stack-r: 6deg;
+}
+
+/* Hovering spreads the pile a little rather than zooming, as single covers do. */
+.media-card:hover .media-card-cover .cover-stack img {
+  transform: none;
+}
+
+.media-card:hover .cover-stack-item[data-slot='0'] {
+  --stack-r: -2deg;
+}
+
+.media-card:hover .cover-stack-item[data-slot='1'] {
+  --stack-x: 14%;
+  --stack-r: 4deg;
+}
+
+.media-card:hover .cover-stack-item[data-slot='2'] {
+  --stack-x: 27%;
+  --stack-r: 8deg;
+}
+
 /* A series' volumes read: a count pill in the type tag's finish, over a bar along the cover's foot. */
 .media-card-progress-count {
   position: absolute;

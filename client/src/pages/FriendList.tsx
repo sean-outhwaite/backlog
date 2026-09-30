@@ -46,6 +46,7 @@ export function FriendList() {
             key={entry.id}
             mediaItem={entry.mediaItem}
             progress={entry.progress}
+            stackCovers={entry.covers}
             actions={
               <span className={`status-badge status-badge--${entry.status}`}>{STATUS_LABELS[entry.status]}</span>
             }

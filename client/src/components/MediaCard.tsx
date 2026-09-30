@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import type { MediaItem } from '../types'
 import { mediaLabel } from '../lib/mediaTypes'
 import { CoverArt } from './CoverArt'
@@ -10,6 +10,7 @@ export function MediaCard({
   actions,
   coverActions,
   progress,
+  stackCovers,
   details,
 }: {
   mediaItem: DetailsMedia & Pick<MediaItem, 'title'>
@@ -18,6 +19,8 @@ export function MediaCard({
   coverActions?: ReactNode
   // A series' volumes done, shown along the foot of the cover.
   progress?: { done: number; total: number }
+  // A series' volume covers from where the reader is up to, stacked in place of the single cover.
+  stackCovers?: string[]
   // Extra content for the details dialog, such as a series' volumes.
   details?: ReactNode
 }) {
@@ -29,7 +32,7 @@ export function MediaCard({
       {/* Cover actions sit beside the cover button, not in it: buttons can't nest. */}
       <div className="media-card-cover-wrap">
         <button className="media-card-cover" onClick={openDetails} tabIndex={-1} aria-hidden="true">
-          <CoverArt media={mediaItem} />
+          {stackCovers?.length ? <CoverStack covers={stackCovers} /> : <CoverArt media={mediaItem} />}
           <span className="media-card-type">
             {mediaItem.kind === 'series' ? <SeriesIcon /> : <MediaTypeIcon type={mediaItem.type} />}
             {mediaLabel(mediaItem)}
@@ -73,5 +76,22 @@ export function MediaCard({
         </MediaDetailsDialog>
       )}
     </article>
+  )
+}
+
+// Volumes fanned back to front over a blurred wash of the front one, so a series reads as a pile of
+// books at a glance. Rendered back to front so DOM order stacks them; data-slot is the depth.
+function CoverStack({ covers }: { covers: string[] }) {
+  const style = { '--cover': `url(${JSON.stringify(covers[0])})` } as CSSProperties
+  return (
+    <span className="cover-stack" style={style} data-count={covers.length}>
+      {covers
+        .map((url, slot) => (
+          <span key={url} className="cover-stack-item" data-slot={slot}>
+            <img src={url} alt="" loading="lazy" />
+          </span>
+        ))
+        .reverse()}
+    </span>
   )
 }

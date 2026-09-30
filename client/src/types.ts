@@ -49,6 +49,8 @@ export interface ListEntry {
   mediaItem: MediaItem
   // Series entries only: how many of the series' volumes are done.
   progress?: { done: number; total: number }
+  // Series entries only: the first few volumes' covers, stacked up on the card.
+  covers?: string[]
 }
 
 // One volume of a series entry, with the user's status for it.

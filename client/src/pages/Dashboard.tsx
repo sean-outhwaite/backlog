@@ -121,6 +121,7 @@ export function Dashboard() {
             key={entry.id}
             mediaItem={entry.mediaItem}
             progress={entry.progress}
+            stackCovers={entry.covers}
             details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
             coverActions={
               STATUS_ACTIONS[entry.status].length > 1 && (
