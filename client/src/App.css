@@ -86,20 +86,51 @@
 
 /* In progress: one card sitting on top of the account menu at the foot of the sidebar. */
 .in-progress-panel {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   margin-top: auto;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent) 14%, var(--bg)),
+    color-mix(in srgb, var(--accent) 4%, var(--bg)) 70%
+  );
+  box-shadow: var(--shadow);
   color: inherit;
   text-decoration: none;
-  transition: background-color 0.15s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.3s var(--ease-spring);
 }
 
 .in-progress-panel:hover {
-  background: var(--surface-hover);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+/* The front cover blown up and blurred behind everything, so the card picks up its colours. */
+.in-progress-glow {
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background-position: center;
+  background-size: cover;
+  filter: blur(28px) saturate(1.6);
+  opacity: 0.26;
+  transition: opacity 0.3s;
+}
+
+.in-progress-panel:hover .in-progress-glow {
+  opacity: 0.38;
 }
 
 .in-progress-panel:focus-visible {
@@ -113,16 +144,51 @@
 }
 
 .in-progress-label {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A "live" dot with a ring that keeps radiating out of it. */
+.in-progress-pulse {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.in-progress-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.8);
+  }
 }
 
 /* A stack of up to three covers, fanned from their bottom edges. The frame is wide enough for
    the outer covers' swing, and the front cover sits in the middle of it. */
 .in-progress-covers {
   position: relative;
+  align-self: center;
+  margin: 2px 0 4px;
   width: 96px;
   height: 150px;
 }

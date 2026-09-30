@@ -44,7 +44,18 @@ export function InProgressPanel() {
       className="in-progress-panel"
       aria-label={`In progress: ${latest.mediaItem.title}${othersCount ? ` and ${othersCount} more` : ''}`}
     >
-      <span className="in-progress-label">In progress</span>
+      {/* The front cover, blurred right out, tints the card with its colours. */}
+      {latest.mediaItem.coverImageUrl && (
+        <span
+          className="in-progress-glow"
+          style={{ backgroundImage: `url(${JSON.stringify(latest.mediaItem.coverImageUrl)})` }}
+          aria-hidden="true"
+        />
+      )}
+      <span className="in-progress-label">
+        <span className="in-progress-pulse" aria-hidden="true" />
+        In progress
+      </span>
       <span className="in-progress-covers" data-count={fanned.length}>
         {fanned
           .map((entry, slot) => (
