@@ -76,8 +76,12 @@
 
 .app-nav a.active {
   background: var(--accent-bg);
-  color: var(--accent);
+  color: var(--text-h);
   font-weight: 600;
+}
+
+.app-nav a.active .icon {
+  color: var(--accent);
 }
 
 .app-nav-short-label {
