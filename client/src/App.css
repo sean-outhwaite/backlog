@@ -44,12 +44,31 @@
 }
 
 .app-nav {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
+/* The active item's highlight, drawn once and slid between items (see Layout). */
+.app-nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--link-w);
+  height: var(--link-h);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  pointer-events: none;
+  transform: translate(var(--link-x), var(--link-y));
+  transition:
+    transform 0.35s var(--ease-spring),
+    width 0.35s var(--ease-spring),
+    height 0.35s var(--ease-spring);
+}
+
 .app-nav a {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -75,13 +94,30 @@
 }
 
 .app-nav a.active {
-  background: var(--accent-bg);
+  background: none;
   color: var(--text-h);
   font-weight: 600;
 }
 
 .app-nav a.active .icon {
   color: var(--accent);
+}
+
+/* The newly selected icon gives a little bounce. It's the shapes inside that move, not the icon
+   box, so the indicator's measurement of the icon (in the bottom bar) isn't thrown off. */
+.app-nav a.active .icon > * {
+  transform-box: view-box;
+  transform-origin: center;
+  animation: nav-icon-pop 0.45s var(--ease-spring);
+}
+
+@keyframes nav-icon-pop {
+  from {
+    transform: scale(0.6) rotate(-12deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
 }
 
 .app-nav-short-label {
@@ -570,12 +606,16 @@
     background: none;
   }
 
-  .app-nav a:hover .icon {
+  .app-nav a:hover:not(.active) .icon {
     background: var(--surface-hover);
   }
 
-  .app-nav a.active .icon {
-    background: var(--accent-bg);
+  /* In the bottom bar the highlight hugs just the icon. */
+  .app-nav-indicator {
+    width: var(--icon-w);
+    height: var(--icon-h);
+    border-radius: 999px;
+    transform: translate(var(--icon-x), var(--icon-y));
   }
 
   .app-nav-label {
