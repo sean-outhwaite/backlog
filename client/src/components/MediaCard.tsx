@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import type { MediaItem } from '../types'
-import { mediaLabel } from '../lib/mediaTypes'
+import { mediaLabel, SERIES_WORDS } from '../lib/mediaTypes'
 import { CoverArt } from './CoverArt'
 import { MediaDetailsDialog, type DetailsMedia } from './MediaDetailsDialog'
 import { MediaTypeIcon, SeriesIcon } from './icons'
@@ -11,7 +11,10 @@ export function MediaCard({
   coverActions,
   progress,
   stackCovers,
+  partCount,
   details,
+  offerSeries,
+  onSeriesAdded,
 }: {
   mediaItem: DetailsMedia & Pick<MediaItem, 'title'>
   actions?: ReactNode
@@ -21,8 +24,12 @@ export function MediaCard({
   progress?: { done: number; total: number }
   // A series' volume covers from where the reader is up to, stacked in place of the single cover.
   stackCovers?: string[]
+  // How many volumes/films a series has, shown beside the year.
+  partCount?: number
   // Extra content for the details dialog, such as a series' volumes.
   details?: ReactNode
+  offerSeries?: boolean
+  onSeriesAdded?: () => void
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const openDetails = () => setDetailsOpen(true)
@@ -57,13 +64,21 @@ export function MediaCard({
               {mediaItem.title}
             </button>
           </h3>
-          {mediaItem.releaseYear !== null && <span className="media-card-year">{mediaItem.releaseYear}</span>}
+          {(mediaItem.releaseYear !== null || partCount) && (
+            <span className="media-card-year">
+              {[mediaItem.releaseYear, partCount && `${partCount} ${SERIES_WORDS[mediaItem.type].parts}`]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
         </div>
         {actions && <div className="media-card-actions">{actions}</div>}
       </div>
       {detailsOpen && (
         <MediaDetailsDialog
           media={mediaItem}
+          offerSeries={offerSeries}
+          onSeriesAdded={onSeriesAdded}
           actions={
             <>
               {coverActions}

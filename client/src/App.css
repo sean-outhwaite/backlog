@@ -1809,6 +1809,32 @@ html:has(.details-dialog[open]) {
   white-space: pre-line;
 }
 
+/* "Part of the James Bond Collection", with a button to add the whole series. */
+.details-series {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.details-series > .icon {
+  flex: none;
+  color: var(--accent);
+}
+
+.details-series > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.details-series strong {
+  color: var(--text-h);
+}
+
 /* ---------- Series volumes ---------- */
 
 .series-volumes {

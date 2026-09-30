@@ -27,7 +27,12 @@ export function usePopular(type: MediaType | 'all', enabled = true): MediaSearch
   return enabled ? popular : null
 }
 
-// externalId alone isn't unique across types (a TMDB movie and show can share an id).
+export function seriesKey(type: MediaType, seriesExternalId: string) {
+  return `${type}:series:${seriesExternalId}`
+}
+
+// externalId alone isn't unique across types (a TMDB movie and show can share an id), or
+// between a provider's series and titles.
 export function resultKey(result: MediaSearchResult) {
-  return `${result.type}:${result.externalId}`
+  return result.kind === 'series' ? seriesKey(result.type, result.externalId) : `${result.type}:${result.externalId}`
 }

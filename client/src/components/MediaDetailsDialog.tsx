@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { api } from '../lib/api'
 import { fetchMediaDetails } from '../lib/mediaDetails'
 import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
-import type { MediaDetails, MediaItem } from '../types'
+import type { MediaDetails, MediaItem, SeriesRef } from '../types'
 import { CoverArt } from './CoverArt'
-import { MediaTypeIcon } from './icons'
+import { AddToListButton } from './AddToListButton'
+import { MediaTypeIcon, SeriesIcon } from './icons'
 import { Spinner } from './Spinner'
 
 export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'> &
@@ -15,17 +17,23 @@ export function MediaDetailsDialog({
   media,
   actions,
   children,
+  offerSeries = true,
+  onSeriesAdded,
   onClose,
 }: {
   media: DetailsMedia
   actions?: ReactNode
   // Extra content below the description, such as a series' volumes.
   children?: ReactNode
+  // Whether to offer adding the series this title belongs to (off where the card already does).
+  offerSeries?: boolean
+  onSeriesAdded?: () => void
   onClose: () => void
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [details, setDetails] = useState<MediaDetails | null>(null)
   const [failed, setFailed] = useState(false)
+  const [seriesAdded, setSeriesAdded] = useState(false)
 
   useEffect(() => {
     // Guarded because StrictMode runs this twice, and showModal throws on an open dialog.
@@ -43,6 +51,12 @@ export function MediaDetailsDialog({
       cancelled = true
     }
   }, [media.type, media.externalId, media.kind])
+
+  async function addSeries(series: SeriesRef) {
+    await api.post('/api/lists', { type: media.type, externalId: series.externalId, kind: 'series' })
+    setSeriesAdded(true)
+    onSeriesAdded?.()
+  }
 
   const close = () => dialogRef.current?.close()
   const coverStyle = media.coverImageUrl ? ({ '--cover': `url("${media.coverImageUrl}")` } as CSSProperties) : undefined
@@ -101,6 +115,21 @@ export function MediaDetailsDialog({
                 </dl>
               )}
               {details.description && <p className="details-description">{details.description}</p>}
+              {details.series && offerSeries && media.kind !== 'series' && (
+                <div className="details-series">
+                  <SeriesIcon />
+                  <span>
+                    Part of <strong>{details.series.title}</strong>
+                  </span>
+                  <AddToListButton
+                    added={seriesAdded}
+                    onAdd={() => addSeries(details.series!)}
+                    label="Add series"
+                    icon={<SeriesIcon />}
+                    primary={false}
+                  />
+                </div>
+              )}
             </>
           )}
 

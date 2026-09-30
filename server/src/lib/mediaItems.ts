@@ -59,7 +59,7 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
 
 // A series' MediaItem is created along with its volumes, the first time anyone adds it. The
 // volumes are stored from the series listing rather than via getById (one request instead of
-// one per volume), so they have no description; the details view fetches that live anyway.
+// one per volume), so some lack a description; the details view fetches that live anyway.
 async function resolveSeries(type: MediaType, externalId: string): Promise<MediaItem | null> {
   const source = sourceByType[type]
   const where = { source_type_kind_externalId: { source, type, kind: 'series' as const, externalId } }
@@ -80,6 +80,7 @@ async function resolveSeries(type: MediaType, externalId: string): Promise<Media
       externalId: volume.externalId,
       title: volume.title,
       coverImageUrl: volume.coverImageUrl,
+      description: volume.description,
       releaseYear: volume.releaseYear,
     })),
     skipDuplicates: true,
@@ -100,7 +101,7 @@ async function resolveSeries(type: MediaType, externalId: string): Promise<Media
         kind: 'series',
         externalId,
         title: details.title,
-        coverImageUrl: first.coverImageUrl,
+        coverImageUrl: details.coverImageUrl ?? first.coverImageUrl,
         description: details.description,
         releaseYear: first.releaseYear,
       },

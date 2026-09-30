@@ -5,14 +5,10 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { resultKey, usePopular } from '../hooks/usePopular'
+import { resultKey, seriesKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import type { MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
-
-function seriesKey(type: MediaType, seriesExternalId: string) {
-  return `${type}:series:${seriesExternalId}`
-}
 
 export function Search() {
   const [query, setQuery] = useState('')
@@ -48,6 +44,7 @@ export function Search() {
     await api.post('/api/lists', {
       type: result.type,
       externalId: result.externalId,
+      kind: result.kind,
     })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
@@ -111,9 +108,16 @@ export function Search() {
           <MediaCard
             key={resultKey(result)}
             mediaItem={result}
+            stackCovers={result.covers}
+            partCount={result.volumeCount}
+            offerSeries={!result.series}
             actions={
               <>
-                <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addToList(result)} />
+                <AddToListButton
+                  added={addedIds.has(resultKey(result))}
+                  onAdd={() => addToList(result)}
+                  label={result.kind === 'series' ? 'Add series' : undefined}
+                />
                 {result.series && (
                   <AddToListButton
                     added={addedIds.has(seriesKey(result.type, result.series.externalId))}
@@ -124,7 +128,7 @@ export function Search() {
                     title={`Add the whole ${result.series.title} series, and track it volume by volume`}
                   />
                 )}
-                <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
+                <RecommendControl media={{ type: result.type, externalId: result.externalId, kind: result.kind }} />
               </>
             }
           />

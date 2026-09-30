@@ -53,6 +53,8 @@ interface OpenLibraryWork {
 // Per-work fields the search index aggregates across all editions.
 interface OpenLibraryIndexEntry {
   author_name?: string[]
+  series_key?: string[]
+  series_name?: string[]
   first_publish_year?: number
   number_of_pages_median?: number
 }
@@ -168,6 +170,7 @@ export const openLibraryProvider: MediaProvider = {
       externalId,
       title: series.name,
       description: toDescription(series.description ?? undefined),
+      coverImageUrl: null,
       url: `${OPEN_LIBRARY_BASE}/series/${externalId}`,
       volumes,
     } satisfies SeriesDetails
@@ -194,6 +197,10 @@ export const openLibraryProvider: MediaProvider = {
         ['Pages', indexEntry?.number_of_pages_median ? `About ${indexEntry.number_of_pages_median}` : null],
       ]),
       url: `${OPEN_LIBRARY_BASE}/works/${externalId}`,
+      series:
+        indexEntry?.series_key?.[0] && indexEntry.series_name?.[0]
+          ? { externalId: indexEntry.series_key[0], title: indexEntry.series_name[0] }
+          : undefined,
     }
   },
 }
@@ -204,7 +211,7 @@ export const openLibraryProvider: MediaProvider = {
 async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntry | null> {
   const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
   url.searchParams.set('q', `key:/works/${externalId}`)
-  url.searchParams.set('fields', 'author_name,first_publish_year,number_of_pages_median')
+  url.searchParams.set('fields', 'author_name,first_publish_year,number_of_pages_median,series_key,series_name')
 
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })

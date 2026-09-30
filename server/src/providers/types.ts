@@ -15,8 +15,12 @@ export interface NormalizedMediaResult {
 // roughly the same scale: thousands for hits, single digits for obscure titles.
 export interface MediaSearchResult extends NormalizedMediaResult {
   popularity: number
-  // Set when the provider knows this title is part of a series (only Open Library does today).
+  // Set when the provider knows this title is part of a series (Open Library search results).
   series?: SeriesRef
+  // Set on results that are a whole series (from searchSeries) rather than a single title.
+  kind?: 'series'
+  volumeCount?: number
+  covers?: string[]
 }
 
 export interface SeriesRef {
@@ -33,6 +37,8 @@ export interface SeriesDetails {
   externalId: string
   title: string
   description: string | null
+  // The series' own artwork, where it has any (TMDB collections do; otherwise use volume one's).
+  coverImageUrl: string | null
   url: string
   volumes: SeriesVolumeResult[]
 }
@@ -51,6 +57,8 @@ export interface MediaDetails extends NormalizedMediaResult {
   genres: string[]
   facts: MediaFact[]
   url: string
+  // The series this title belongs to, when the provider says and it can be added whole.
+  series?: SeriesRef
 }
 
 export interface MediaProvider {
@@ -59,6 +67,32 @@ export interface MediaProvider {
   popular(): Promise<MediaSearchResult[]>
   getById(externalId: string): Promise<MediaDetails | null>
   getSeries?(externalId: string): Promise<SeriesDetails | null>
+  // Whole series matching a query, for providers whose title results don't say which series
+  // they're in (TMDB movies). Open Library's do, so it adds series from its title results instead.
+  searchSeries?(query: string): Promise<MediaSearchResult[]>
+}
+
+const STACKED_COVERS = 3
+
+// A series as a search result: popularity is its most popular volume's, so a famous series
+// ranks alongside its famous titles.
+export function toSeriesSearchResult(series: SeriesDetails): MediaSearchResult {
+  const [first] = series.volumes
+  return {
+    externalId: series.externalId,
+    type: first.type,
+    kind: 'series',
+    title: series.title,
+    coverImageUrl: series.coverImageUrl ?? first.coverImageUrl,
+    description: series.description,
+    releaseYear: first.releaseYear,
+    popularity: Math.max(...series.volumes.map((volume) => volume.popularity)),
+    volumeCount: series.volumes.length,
+    covers: series.volumes
+      .map((volume) => volume.coverImageUrl)
+      .filter((url): url is string => url !== null)
+      .slice(0, STACKED_COVERS),
+  }
 }
 
 // Builds a facts list, dropping entries whose value is missing or empty.

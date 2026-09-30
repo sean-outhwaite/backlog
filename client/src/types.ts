@@ -16,11 +16,22 @@ export interface MediaItem {
 }
 
 // Search results come straight from the providers and aren't stored, so they have no id.
-// They're always single titles; `series` is set when the title belongs to one that can be added.
+// `series` is set when a title belongs to a series that can be added whole.
 export type MediaSearchResult = Pick<
   MediaItem,
   'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description' | 'releaseYear'
-> & { series?: { externalId: string; title: string } }
+> & {
+  series?: SeriesRef
+  // Set on results that are a whole series rather than a single title.
+  kind?: 'series'
+  volumeCount?: number
+  covers?: string[]
+}
+
+export interface SeriesRef {
+  externalId: string
+  title: string
+}
 
 // Live details for one title, fetched from its provider when its details view opens; never stored.
 export interface MediaFact {
@@ -33,6 +44,7 @@ export interface MediaDetails extends MediaSearchResult {
   genres: string[]
   facts: MediaFact[]
   url: string
+  series?: SeriesRef
 }
 
 // How the API identifies a title to add or recommend: an existing MediaItem, or a search result.

@@ -5,7 +5,10 @@ import {
   toFacts,
   yearFromDate,
   type MediaProvider,
+  toSeriesSearchResult,
   type MediaSearchResult,
+  type SeriesDetails,
+  type SeriesVolumeResult,
 } from './types.js'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
@@ -39,6 +42,7 @@ interface TmdbCredits {
 }
 
 interface TmdbMovieDetail extends TmdbMovieResult {
+  belongs_to_collection: { id: number; name: string } | null
   tagline: string | null
   runtime: number | null
   genres: TmdbNamed[]
@@ -63,6 +67,21 @@ interface TmdbTvDetail extends TmdbTvResult {
 interface TmdbSearchResponse<T> {
   results: T[]
 }
+
+interface TmdbCollection {
+  id: number
+  name: string
+  overview: string | null
+  poster_path: string | null
+}
+
+interface TmdbCollectionDetail extends TmdbCollection {
+  parts: TmdbMovieResult[]
+}
+
+// Collection search is noisy (fan-made and one-film collections), and its results carry no
+// popularity or film count, so only the best few are expanded into full series.
+const COLLECTIONS_TO_EXPAND = 3
 
 // Resolves to null on a 404 so getById can report a missing title instead of throwing.
 async function tmdbFetch<T>(path: string, params: Record<string, string>): Promise<T | null> {
@@ -122,6 +141,28 @@ function toTvResult(r: TmdbTvResult): MediaSearchResult {
   }
 }
 
+// A collection's films in release order, numbered from 1. Only films that are out: undated or
+// future entries (like "Untitled James Bond Film") can't be watched yet. A collection with
+// fewer than two isn't a series worth tracking.
+async function getCollection(externalId: string): Promise<SeriesDetails | null> {
+  const collection = await tmdbFetch<TmdbCollectionDetail>(`/collection/${externalId}`, {})
+  if (!collection?.id) return null
+  const today = new Date().toISOString().slice(0, 10)
+  const volumes = collection.parts
+    .filter((part): part is TmdbMovieResult & { release_date: string } => !!part.release_date && part.release_date <= today)
+    .sort((a, b) => a.release_date.localeCompare(b.release_date))
+    .map((part, index): SeriesVolumeResult => ({ ...toMovieResult(part), position: index + 1 }))
+  if (volumes.length < 2) return null
+  return {
+    externalId,
+    title: collection.name,
+    description: collection.overview || null,
+    coverImageUrl: toCoverUrl(collection.poster_path),
+    url: `https://www.themoviedb.org/collection/${collection.id}`,
+    volumes,
+  }
+}
+
 export const tmdbMovieProvider: MediaProvider = {
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
@@ -130,6 +171,16 @@ export const tmdbMovieProvider: MediaProvider = {
   async popular() {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/trending/movie/week', {})
     return (data?.results ?? []).map(toMovieResult)
+  },
+  getSeries: getCollection,
+  async searchSeries(query) {
+    const data = await tmdbFetch<TmdbSearchResponse<TmdbCollection>>('/search/collection', { query })
+    const expanded = await Promise.allSettled(
+      (data?.results ?? []).slice(0, COLLECTIONS_TO_EXPAND).map((collection) => getCollection(String(collection.id))),
+    )
+    return expanded.flatMap((outcome) =>
+      outcome.status === 'fulfilled' && outcome.value ? [toSeriesSearchResult(outcome.value)] : [],
+    )
   },
   async getById(externalId) {
     const r = await tmdbFetch<TmdbMovieDetail>(`/movie/${externalId}`, { append_to_response: 'credits' })
@@ -151,6 +202,9 @@ export const tmdbMovieProvider: MediaProvider = {
         ['Rating', formatRating(r.vote_average, r.vote_count)],
       ]),
       url: `https://www.themoviedb.org/movie/${r.id}`,
+      series: r.belongs_to_collection
+        ? { externalId: String(r.belongs_to_collection.id), title: r.belongs_to_collection.name }
+        : undefined,
     }
   },
 }

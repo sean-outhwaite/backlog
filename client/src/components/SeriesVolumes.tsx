@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
-import type { ListEntry, ListStatus, SeriesVolume } from '../types'
+import { SERIES_WORDS } from '../lib/mediaTypes'
+import type { ListEntry, ListStatus, MediaType, SeriesVolume } from '../types'
 import { CoverArt } from './CoverArt'
 import { CheckIcon, PlayIcon } from './icons'
 import { Spinner } from './Spinner'
 
-// Tapping a volume steps it along: to read, reading, read, and back round.
+// Tapping a volume steps it along: not started, reading, read, and back round.
 const NEXT_STATUS: Record<ListStatus, ListStatus> = { want: 'in_progress', in_progress: 'done', done: 'want' }
-const STATUS_LABELS: Record<ListStatus, string> = { want: 'Not started', in_progress: 'Reading', done: 'Read' }
 
-function volumeLabel(volume: SeriesVolume) {
-  return `Vol. ${volume.position}`
+function statusLabel(type: MediaType, status: ListStatus) {
+  const words = SERIES_WORDS[type]
+  return { want: words.notStarted, in_progress: words.doing, done: words.done }[status]
 }
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
 // A series entry's volumes, each toggled through its own status. Changing a volume can move the
 // whole entry to another tab (see derivedSeriesStatus on the server), which would unmount the
@@ -71,14 +74,16 @@ export function SeriesVolumes({ entry, onChanged }: { entry: ListEntry; onChange
 
   const done = volumes.filter((volume) => volume.status === 'done').length
   const next = volumes.find((volume) => volume.status !== 'done')
+  const { type } = entry.mediaItem
+  const words = SERIES_WORDS[type]
 
   return (
-    <section className="series-volumes" aria-label="Volumes">
+    <section className="series-volumes" aria-label={capitalize(words.parts)}>
       <div className="series-volumes-header">
-        <h3>Volumes</h3>
+        <h3>{capitalize(words.parts)}</h3>
         <span>
-          {done} of {volumes.length} read
-          {next && done > 0 && <> · next up {volumeLabel(next)}</>}
+          {done} of {volumes.length} {words.done}
+          {next && done > 0 && <> · next up {words.partLabel(next)}</>}
         </span>
       </div>
       <ol className="series-volumes-grid">
@@ -87,8 +92,8 @@ export function SeriesVolumes({ entry, onChanged }: { entry: ListEntry; onChange
             <button
               className={`series-volume series-volume--${volume.status}`}
               onClick={() => void setStatus(volume, NEXT_STATUS[volume.status])}
-              aria-label={`${volumeLabel(volume)}: ${STATUS_LABELS[volume.status]}`}
-              title={`${volumeLabel(volume)}: ${STATUS_LABELS[volume.status]}. Tap to mark ${STATUS_LABELS[NEXT_STATUS[volume.status]].toLowerCase()}.`}
+              aria-label={`${words.partLabel(volume)}: ${statusLabel(type, volume.status)}`}
+              title={`${words.partLabel(volume)}: ${statusLabel(type, volume.status)}. Tap to mark ${statusLabel(type, NEXT_STATUS[volume.status])}.`}
             >
               <span className="series-volume-cover">
                 <CoverArt media={volume} />
