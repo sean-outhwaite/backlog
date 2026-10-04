@@ -922,38 +922,79 @@ section + section {
   animation: rise-in 0.45s ease-out both;
 }
 
+/* Dashboard cards sit in a wrapper that dnd-kit moves while they're dragged. */
+.sortable-entry {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.sortable-entry > .media-card {
+  flex: 1;
+}
+
+.sortable-entry:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.sortable-entry.is-dragging {
+  position: relative;
+  z-index: 10;
+  cursor: grabbing;
+}
+
+.sortable-entry.is-dragging > .media-card {
+  transform: scale(1.04) rotate(-1deg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
 /* Stagger the first dozen cards so a grid assembles rather than pops in. */
-.media-card:nth-child(2) {
+.media-card:nth-child(2),
+.sortable-entry:nth-child(2) > .media-card {
   animation-delay: 30ms;
 }
-.media-card:nth-child(3) {
+.media-card:nth-child(3),
+.sortable-entry:nth-child(3) > .media-card {
   animation-delay: 60ms;
 }
-.media-card:nth-child(4) {
+.media-card:nth-child(4),
+.sortable-entry:nth-child(4) > .media-card {
   animation-delay: 90ms;
 }
-.media-card:nth-child(5) {
+.media-card:nth-child(5),
+.sortable-entry:nth-child(5) > .media-card {
   animation-delay: 120ms;
 }
-.media-card:nth-child(6) {
+.media-card:nth-child(6),
+.sortable-entry:nth-child(6) > .media-card {
   animation-delay: 150ms;
 }
-.media-card:nth-child(7) {
+.media-card:nth-child(7),
+.sortable-entry:nth-child(7) > .media-card {
   animation-delay: 180ms;
 }
-.media-card:nth-child(8) {
+.media-card:nth-child(8),
+.sortable-entry:nth-child(8) > .media-card {
   animation-delay: 210ms;
 }
-.media-card:nth-child(9) {
+.media-card:nth-child(9),
+.sortable-entry:nth-child(9) > .media-card {
   animation-delay: 240ms;
 }
-.media-card:nth-child(10) {
+.media-card:nth-child(10),
+.sortable-entry:nth-child(10) > .media-card {
   animation-delay: 270ms;
 }
-.media-card:nth-child(11) {
+.media-card:nth-child(11),
+.sortable-entry:nth-child(11) > .media-card {
   animation-delay: 300ms;
 }
-.media-card:nth-child(n + 12) {
+.media-card:nth-child(n + 12),
+.sortable-entry:nth-child(n + 12) > .media-card {
   animation-delay: 330ms;
 }
 

@@ -58,6 +58,8 @@ export interface ListEntry {
   notes: string | null
   addedAt: string
   completedAt: string | null
+  // Ascending order of the user's list.
+  position: number
   mediaItem: MediaItem
   // Series entries only: how many of the series' volumes are done.
   progress?: { done: number; total: number }

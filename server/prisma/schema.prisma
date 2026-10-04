@@ -100,12 +100,16 @@ model ListEntry {
   notes       String?
   addedAt     DateTime   @default(now())
   completedAt DateTime?
+  // Where the entry sits in the user's list, ascending. Reordering sets it to the midpoint of its new
+  // neighbours; new entries go on top (see newEntryPosition in routes/lists).
+  position    Float
 
   user           Profile          @relation(fields: [userId], references: [id])
   mediaItem      MediaItem        @relation(fields: [mediaItemId], references: [id])
   volumeProgress VolumeProgress[]
 
   @@unique([userId, mediaItemId])
+  @@index([userId, position])
 }
 
 model InviteLink {

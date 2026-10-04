@@ -10,6 +10,10 @@ export const listsRouter = Router()
 
 const listStatusSchema = z.enum(['want', 'in_progress', 'done'])
 
+// New entries go on top of the list: a position below every earlier one, without a query to find
+// the current minimum. Matches the migration's backfill of existing rows (-addedAt in seconds).
+const newEntryPosition = () => -Date.now() / 1000
+
 listsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -17,7 +21,7 @@ listsRouter.get(
     const entries = await prisma.listEntry.findMany({
       where: { userId },
       include: { mediaItem: true },
-      orderBy: { addedAt: 'desc' },
+      orderBy: { position: 'asc' },
     })
     res.json(await withProgress(entries))
   }),
@@ -51,6 +55,7 @@ listsRouter.post(
           mediaItemId: mediaItem.id,
           status: parsed.data.status,
           completedAt: parsed.data.status === 'done' ? new Date() : null,
+          position: newEntryPosition(),
         },
       })
     } catch (error) {
@@ -68,6 +73,8 @@ listsRouter.post(
 const updateEntrySchema = z.object({
   status: listStatusSchema.optional(),
   notes: z.string().nullable().optional(),
+  // Set by the client when the entry is dragged: the midpoint of its new neighbours' positions.
+  position: z.number().finite().optional(),
 })
 
 listsRouter.patch(
@@ -91,6 +98,7 @@ listsRouter.patch(
       data: {
         status: parsed.data.status,
         notes: parsed.data.notes,
+        position: parsed.data.position,
         completedAt: parsed.data.status === undefined ? undefined : parsed.data.status === 'done' ? new Date() : null,
       },
       include: { mediaItem: true },

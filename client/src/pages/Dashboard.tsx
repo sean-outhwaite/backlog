@@ -1,4 +1,31 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react'
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+  type ReactNode,
+  type SyntheticEvent,
+} from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
@@ -64,6 +91,26 @@ export function Dashboard() {
     setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
   }
 
+  // Drops the entry between its new visible neighbours. Entries hidden by the tab or type filter
+  // keep their positions, so the order of what's shown is all that changes.
+  async function moveEntry(activeId: string, overId: string) {
+    const from = visible.findIndex((e) => e.id === activeId)
+    const to = visible.findIndex((e) => e.id === overId)
+    if (from < 0 || to < 0 || from === to) return
+    const moved = arrayMove(visible, from, to)
+    const before = moved[to - 1]
+    const after = moved[to + 1]
+    const position = before && after ? (before.position + after.position) / 2 : before ? before.position + 1 : after.position - 1
+
+    const byPosition = (a: ListEntry, b: ListEntry) => a.position - b.position
+    setEntries((prev) => prev.map((e) => (e.id === activeId ? { ...e, position } : e)).sort(byPosition))
+    try {
+      await api.patch<ListEntry>(`/api/lists/${activeId}`, { position })
+    } catch {
+      load()
+    }
+  }
+
   async function removeEntry(entry: ListEntry) {
     await api.delete(`/api/lists/${entry.id}`)
     setEntries((prev) => prev.filter((e) => e.id !== entry.id))
@@ -115,37 +162,119 @@ export function Dashboard() {
         </EmptyState>
       )}
 
-      <div className="media-grid">
+      <SortableGrid ids={visible.map((entry) => entry.id)} onMove={(from, to) => void moveEntry(from, to)}>
         {visible.map((entry) => (
-          <MediaCard
-            key={entry.id}
-            mediaItem={entry.mediaItem}
-            progress={entry.progress}
-            stackCovers={entry.covers}
-            onSeriesAdded={load}
-            details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
-            coverActions={
-              STATUS_ACTIONS[entry.status].length > 1 && (
-                <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-              )
-            }
-            actions={
-              <>
-                <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                <button
-                  className="btn-quiet btn-danger media-card-remove"
-                  onClick={() => void removeEntry(entry)}
-                  aria-label="Remove from list"
-                  title="Remove from list"
-                >
-                  <TrashIcon />
-                </button>
-                <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
-              </>
-            }
-          />
+          <SortableEntry key={entry.id} id={entry.id}>
+            <MediaCard
+              mediaItem={entry.mediaItem}
+              progress={entry.progress}
+              stackCovers={entry.covers}
+              onSeriesAdded={load}
+              details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+              coverActions={
+                STATUS_ACTIONS[entry.status].length > 1 && (
+                  <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                )
+              }
+              actions={
+                <>
+                  <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                  <button
+                    className="btn-quiet btn-danger media-card-remove"
+                    onClick={() => void removeEntry(entry)}
+                    aria-label="Remove from list"
+                    title="Remove from list"
+                  >
+                    <TrashIcon />
+                  </button>
+                  <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
+                </>
+              }
+            />
+          </SortableEntry>
         ))}
-      </div>
+      </SortableGrid>
+    </div>
+  )
+}
+
+// Cards are dragged by the whole card. A mouse drag starts after a few pixels so clicks still
+// work, and a touch one after a long press so the page still scrolls. From the keyboard, a focused
+// card is picked up with space and moved with the arrow keys.
+function SortableGrid({
+  ids,
+  onMove,
+  children,
+}: {
+  ids: string[]
+  onMove: (activeId: string, overId: string) => void
+  children: ReactNode
+}) {
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+  // The card is still under the pointer when it's dropped, so the release would otherwise land as a
+  // click on it and open its details.
+  const justDropped = useRef(false)
+  const dropped = () => {
+    justDropped.current = true
+    setTimeout(() => (justDropped.current = false))
+  }
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    dropped()
+    if (over && active.id !== over.id) onMove(String(active.id), String(over.id))
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragCancel={dropped}>
+      <SortableContext items={ids} strategy={rectSortingStrategy}>
+        <div
+          className="media-grid"
+          onClickCapture={(event) => {
+            if (!justDropped.current) return
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+        >
+          {children}
+        </div>
+      </SortableContext>
+    </DndContext>
+  )
+}
+
+function SortableEntry({ id, children }: { id: string; children: ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    attributes: { role: 'group', roleDescription: 'sortable card' },
+  })
+  // The details dialog is portalled out of the card, but React still bubbles its events through
+  // here, so a press inside it mustn't pick the card up.
+  const { onKeyDown, ...pressListeners } = listeners ?? {}
+  const pointerListeners = Object.fromEntries(
+    Object.entries(pressListeners).map(([name, handler]) => [
+      name,
+      (event: SyntheticEvent) => {
+        if (event.currentTarget.contains(event.target as Node)) handler(event)
+      },
+    ]),
+  )
+  return (
+    <div
+      ref={setNodeRef}
+      className={`sortable-entry${isDragging ? ' is-dragging' : ''}`}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      {...attributes}
+      {...pointerListeners}
+      // Only when the card itself has focus: space or enter on one of its buttons is that button's.
+      onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.target === event.currentTarget) onKeyDown?.(event)
+      }}
+    >
+      {children}
     </div>
   )
 }
