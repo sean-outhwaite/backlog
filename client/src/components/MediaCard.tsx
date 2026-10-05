@@ -9,6 +9,7 @@ export function MediaCard({
   mediaItem,
   actions,
   coverActions,
+  coverMain,
   progress,
   stackCovers,
   partCount,
@@ -20,6 +21,8 @@ export function MediaCard({
   actions?: ReactNode
   // Small icon buttons pinned to the cover's top-right, level with the type tag.
   coverActions?: ReactNode
+  // The card's main action, laid over the cover's bottom-right corner.
+  coverMain?: ReactNode
   // A series' volumes done, shown along the foot of the cover.
   progress?: { done: number; total: number }
   // A series' volume covers from where the reader is up to, stacked in place of the single cover.
@@ -56,6 +59,7 @@ export function MediaCard({
           )}
         </button>
         {coverActions && <div className="media-card-cover-actions">{coverActions}</div>}
+        {coverMain && <div className="media-card-cover-main">{coverMain}</div>}
       </div>
       <div className="media-card-body">
         <div className="media-card-heading">
@@ -82,6 +86,7 @@ export function MediaCard({
           actions={
             <>
               {coverActions}
+              {coverMain}
               {actions}
             </>
           }

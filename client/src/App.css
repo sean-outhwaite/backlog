@@ -1072,6 +1072,44 @@ section + section {
   color: #fff;
 }
 
+.entry-menu {
+  position: relative;
+}
+
+.entry-menu .cover-action[aria-expanded='true'] {
+  background: rgba(12, 10, 18, 0.8);
+}
+
+.entry-menu-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: var(--shadow-lift);
+  transform-origin: top right;
+  animation: menu-in 0.18s var(--ease-spring) both;
+}
+
+.entry-menu-item {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 7px 12px 7px 10px;
+  border-radius: 7px;
+  color: var(--danger);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Marking done turns its tick green on hover. A bright green, to stand out on the dark frosted button. */
+.media-card-cover-actions .cover-action--done:hover:not(:disabled) {
+  color: #4ade80;
+}
+
 /* Soft fade so the type badge stays legible over any cover. */
 .media-card-cover::after {
   content: '';
@@ -1300,6 +1338,37 @@ section + section {
   font-size: 1.25em;
 }
 
+/* Over the cover: a see-through frosted purple that firms up on hover. Bottom-right, so it clears a
+   series' progress count in the bottom-left. */
+.media-card-cover-main {
+  position: absolute;
+  right: 10px;
+  bottom: 14px;
+  z-index: 1;
+}
+
+.media-card-cover-main .entry-move {
+  min-width: 104px;
+  height: 34px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(76, 29, 149, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.35);
+}
+
+.media-card-cover-main .entry-move:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(76, 29, 149, 0.55);
+}
+
+/* A pale teal, not the light theme's deep one, which disappears into the purple. */
+.media-card-cover-main .entry-move:hover:not(:disabled) .play-shape {
+  fill: #99f6e4;
+  stroke: #99f6e4;
+}
+
 /* Two-up phone cards leave ~135px; keep "Move to backlog" on one line. */
 @media (max-width: 480px) {
   .entry-move {
@@ -1309,12 +1378,9 @@ section + section {
   }
 }
 
-.media-card-remove {
-  align-self: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  font-size: 16px;
+/* With no friends to recommend to, a Backlog card has no actions left in its body. */
+.media-card-actions:empty {
+  display: none;
 }
 
 .media-card-actions p {
@@ -1406,6 +1472,82 @@ section + section {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+/* ---------- Undo toast ---------- */
+
+/* Inverted colours so it stands apart from the page in either theme. */
+.undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 6px 6px 16px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--text-h);
+  box-shadow: var(--shadow-lift);
+  color: var(--bg);
+  font-size: 14px;
+  transform: translateX(-50%);
+  animation: toast-in 0.3s var(--ease-spring) both;
+}
+
+/* Runs down over the undo window. */
+.undo-toast::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: color-mix(in srgb, var(--accent) 60%, var(--bg));
+  transform-origin: left;
+  animation: toast-countdown var(--toast-duration) linear both;
+}
+
+.undo-toast-message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.undo-toast-action {
+  flex: none;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: color-mix(in srgb, var(--accent) 60%, var(--bg));
+  font-weight: 600;
+}
+
+.undo-toast-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 60%, var(--bg));
+}
+
+/* Clear of the phone layout's bottom nav bar. */
+@media (max-width: 720px) {
+  .undo-toast {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+@keyframes toast-countdown {
+  to {
+    transform: scaleX(0);
   }
 }
 

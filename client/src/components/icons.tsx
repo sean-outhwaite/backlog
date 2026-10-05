@@ -112,6 +112,14 @@ export function TrashIcon() {
   )
 }
 
+export function MoreIcon() {
+  return (
+    <Icon>
+      <path d="M5 12h.01M12 12h.01M19 12h.01" strokeWidth="3" />
+    </Icon>
+  )
+}
+
 export function SearchIcon() {
   return (
     <Icon>

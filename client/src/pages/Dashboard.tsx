@@ -28,11 +28,13 @@ import {
 } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
+import { EntryMenu } from '../components/EntryMenu'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { SeriesVolumes } from '../components/SeriesVolumes'
 import { LoadingState } from '../components/Spinner'
-import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } from '../components/icons'
+import { UndoToast } from '../components/UndoToast'
+import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
@@ -57,6 +59,9 @@ const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string; iconOn
   ],
   done: [{ to: 'want', label: 'Move to backlog' }],
 }
+
+// How long a removal can be undone before it's sent to the server.
+const UNDO_MS = 5000
 
 // Keyed by the status an action moves the entry to.
 const ACTION_ICONS: Record<ListStatus, ComponentType> = {
@@ -111,13 +116,43 @@ export function Dashboard() {
     }
   }
 
-  async function removeEntry(entry: ListEntry) {
-    await api.delete(`/api/lists/${entry.id}`)
-    setEntries((prev) => prev.filter((e) => e.id !== entry.id))
+  // Removing hides the entry straight away but holds off deleting it, so Undo can bring it back with
+  // its position and series progress intact. Only one removal is pending at a time: starting another,
+  // or leaving the page, sends the pending one now.
+  const [removing, setRemoving] = useState<ListEntry | null>(null)
+  const pendingRemoval = useRef<{ timer: number; commit: () => void } | null>(null)
+
+  function flushRemoval() {
+    const pending = pendingRemoval.current
+    if (!pending) return
+    window.clearTimeout(pending.timer)
+    pending.commit()
   }
 
-  const countFor = (s: ListStatus) => entries.filter((entry) => entry.status === s).length
-  const visible = entries.filter(
+  useEffect(() => flushRemoval, [])
+
+  function removeEntry(entry: ListEntry) {
+    flushRemoval()
+    const commit = () => {
+      pendingRemoval.current = null
+      setRemoving((current) => (current?.id === entry.id ? null : current))
+      setEntries((prev) => prev.filter((e) => e.id !== entry.id))
+      // If the delete fails, reloading puts the entry back.
+      api.delete(`/api/lists/${entry.id}`).catch(load)
+    }
+    pendingRemoval.current = { timer: window.setTimeout(commit, UNDO_MS), commit }
+    setRemoving(entry)
+  }
+
+  function undoRemoval() {
+    if (pendingRemoval.current) window.clearTimeout(pendingRemoval.current.timer)
+    pendingRemoval.current = null
+    setRemoving(null)
+  }
+
+  const listed = entries.filter((entry) => entry.id !== removing?.id)
+  const countFor = (s: ListStatus) => listed.filter((entry) => entry.status === s).length
+  const visible = listed.filter(
     (entry) => entry.status === status && (typeFilter === 'all' || entry.mediaItem.type === typeFilter),
   )
 
@@ -171,22 +206,23 @@ export function Dashboard() {
               stackCovers={entry.covers}
               onSeriesAdded={load}
               details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
-              coverActions={
-                STATUS_ACTIONS[entry.status].length > 1 && (
-                  <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+              // Start sits over the cover; the other tabs' main moves stay in the card body.
+              coverMain={
+                entry.status === 'want' && (
+                  <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
                 )
+              }
+              coverActions={
+                <>
+                  <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                  <EntryMenu onRemove={() => void removeEntry(entry)} />
+                </>
               }
               actions={
                 <>
-                  <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                  <button
-                    className="btn-quiet btn-danger media-card-remove"
-                    onClick={() => void removeEntry(entry)}
-                    aria-label="Remove from list"
-                    title="Remove from list"
-                  >
-                    <TrashIcon />
-                  </button>
+                  {entry.status !== 'want' && (
+                    <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                  )}
                   <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
                 </>
               }
@@ -194,6 +230,15 @@ export function Dashboard() {
           </SortableEntry>
         ))}
       </SortableGrid>
+
+      {removing && (
+        <UndoToast
+          key={removing.id}
+          message={`Removed ${removing.mediaItem.title}`}
+          duration={UNDO_MS}
+          onUndo={undoRemoval}
+        />
+      )}
     </div>
   )
 }
@@ -305,7 +350,7 @@ function MoveShortcuts({ entry, onMove }: { entry: ListEntry; onMove: (to: ListS
     return (
       <button
         key={action.to}
-        className="btn-icon cover-action"
+        className={`btn-icon cover-action cover-action--${action.to}`}
         onClick={() => onMove(action.to)}
         aria-label={action.label}
         title={action.label}
