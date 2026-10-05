@@ -6,7 +6,7 @@ import { UserMenu } from './UserMenu'
 
 // shortLabel is what the mobile bottom bar shows, where there's only room for a word.
 const NAV_ITEMS: { to: string; label: string; shortLabel: string; icon: ComponentType; end?: boolean }[] = [
-  { to: '/', label: 'My list', shortLabel: 'List', icon: ListIcon, end: true },
+  { to: '/', label: 'My backlog', shortLabel: 'List', icon: ListIcon, end: true },
   { to: '/search', label: 'Search', shortLabel: 'Search', icon: SearchIcon },
   { to: '/friends', label: 'Friends', shortLabel: 'Friends', icon: UsersIcon },
   { to: '/recommendations', label: 'Recommendations', shortLabel: 'For you', icon: SparklesIcon },

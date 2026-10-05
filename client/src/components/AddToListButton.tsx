@@ -5,7 +5,7 @@ import { Spinner } from './Spinner'
 export function AddToListButton({
   added,
   onAdd,
-  label = 'Add to list',
+  label = 'Backlog',
   icon = <PlusIcon />,
   primary = true,
   title,
