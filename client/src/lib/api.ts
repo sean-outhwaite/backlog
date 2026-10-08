@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000'
+// In production the API is served from the same origin as the client (see vercel.json).
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'http://localhost:4000' : '')
 
 // Fired on window after any successful change to the user's list, so views outside the page
 // that made the change (like the sidebar's in-progress panel) can refresh.
