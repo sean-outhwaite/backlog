@@ -1741,6 +1741,28 @@ section + section {
   }
 }
 
+.auth-google {
+  width: 100%;
+  gap: 10px;
+}
+
+/* "or" between the Google button and the email form, with a rule either side. */
+.auth-card > .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
 .auth-sent {
   padding: 12px;
   border-radius: 12px;
