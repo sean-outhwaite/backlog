@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import type { ListEntry, MediaItem } from '@prisma/client'
 import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
@@ -137,9 +138,42 @@ listsRouter.get(
   }),
 )
 
+// A user's series entry and one of its volumes' link to it, or null if either isn't theirs.
+async function findEntryVolume(userId: string, entryId: string, volumeId: string) {
+  const [entry, link] = await Promise.all([
+    prisma.listEntry.findUnique({ where: { id: entryId }, include: { mediaItem: true } }),
+    prisma.seriesVolume.findFirst({
+      where: { volumeId, series: { listEntries: { some: { id: entryId, userId } } } },
+    }),
+  ])
+  return entry && entry.userId === userId && link ? { entry, link } : null
+}
+
+// After a series entry's volumes change, moves the entry itself along to match (see
+// derivedSeriesStatus) and returns it with its progress, as the volume routes respond.
+async function syncSeriesStatus(entry: ListEntry & { mediaItem: MediaItem }, seriesId: string) {
+  const [total, byStatus] = await Promise.all([
+    prisma.seriesVolume.count({ where: { seriesId } }),
+    prisma.volumeProgress.groupBy({ by: ['status'], where: { entryId: entry.id }, _count: true }),
+  ])
+  const done = byStatus.find((row) => row.status === 'done')?._count ?? 0
+  const started = byStatus.reduce((sum, row) => sum + row._count, 0)
+  const nextStatus = derivedSeriesStatus(entry.status, { total, done, started })
+
+  let updated = entry
+  if (nextStatus !== entry.status) {
+    const changed = await prisma.listEntry.update({
+      where: { id: entry.id },
+      data: { status: nextStatus, completedAt: nextStatus === 'done' ? new Date() : null },
+    })
+    updated = { ...changed, mediaItem: entry.mediaItem }
+  }
+  return { ...updated, progress: { done, total } }
+}
+
 const updateVolumeSchema = z.object({ status: listStatusSchema })
 
-// Sets one volume's status, then moves the series entry along to match (see derivedSeriesStatus).
+// Sets one volume's status, then moves the series entry along to match.
 listsRouter.put(
   '/:id/volumes/:volumeId',
   asyncHandler(async (req, res) => {
@@ -153,16 +187,12 @@ listsRouter.put(
     const entryId = req.params.id
     const { status } = parsed.data
 
-    const [entry, link] = await Promise.all([
-      prisma.listEntry.findUnique({ where: { id: entryId }, include: { mediaItem: true } }),
-      prisma.seriesVolume.findFirst({
-        where: { volumeId: volumeId.data, series: { listEntries: { some: { id: entryId, userId } } } },
-      }),
-    ])
-    if (!entry || entry.userId !== userId || !link) {
+    const found = await findEntryVolume(userId, entryId, volumeId.data)
+    if (!found) {
       res.status(404).json({ error: 'Not found' })
       return
     }
+    const { entry, link } = found
 
     const key = { entryId_volumeId: { entryId, volumeId: link.volumeId } }
     const data = { status, completedAt: status === 'done' ? new Date() : null }
@@ -177,23 +207,49 @@ listsRouter.put(
       }
     }
 
-    const [total, byStatus] = await Promise.all([
-      prisma.seriesVolume.count({ where: { seriesId: link.seriesId } }),
-      prisma.volumeProgress.groupBy({ by: ['status'], where: { entryId }, _count: true }),
-    ])
-    const done = byStatus.find((row) => row.status === 'done')?._count ?? 0
-    const started = byStatus.reduce((sum, row) => sum + row._count, 0)
-    const nextStatus = derivedSeriesStatus(entry.status, { total, done, started })
+    res.json(await syncSeriesStatus(entry, link.seriesId))
+  }),
+)
 
-    let updated = entry
-    if (nextStatus !== entry.status) {
-      const changed = await prisma.listEntry.update({
-        where: { id: entryId },
-        data: { status: nextStatus, completedAt: nextStatus === 'done' ? new Date() : null },
-      })
-      updated = { ...changed, mediaItem: entry.mediaItem }
+// Marks every volume before this one done, for catching up on a series read ahead of the app.
+// Volumes already done keep their original completedAt.
+listsRouter.post(
+  '/:id/volumes/:volumeId/done-before',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const volumeId = z.string().uuid().safeParse(req.params.volumeId)
+    if (!volumeId.success) {
+      res.status(400).json({ error: volumeId.error.flatten() })
+      return
     }
-    res.json({ ...updated, progress: { done, total } })
+    const entryId = req.params.id
+
+    const found = await findEntryVolume(userId, entryId, volumeId.data)
+    if (!found) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    const { entry, link } = found
+
+    const earlier = await prisma.seriesVolume.findMany({
+      where: { seriesId: link.seriesId, position: { lt: link.position } },
+      select: { volumeId: true },
+    })
+    const volumeIds = earlier.map((volume) => volume.volumeId)
+    const completedAt = new Date()
+    // Started volumes are updated, untouched ones (no row yet) created: disjoint rows, so in parallel.
+    await Promise.all([
+      prisma.volumeProgress.updateMany({
+        where: { entryId, volumeId: { in: volumeIds }, status: { not: 'done' } },
+        data: { status: 'done', completedAt },
+      }),
+      prisma.volumeProgress.createMany({
+        data: volumeIds.map((id) => ({ entryId, volumeId: id, status: 'done' as const, completedAt })),
+        skipDuplicates: true,
+      }),
+    ])
+
+    res.json(await syncSeriesStatus(entry, link.seriesId))
   }),
 )
 

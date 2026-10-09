@@ -2178,6 +2178,167 @@ html:has(.details-dialog[open]) {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
+/* The volume shown in the panel. Neutral, so it doesn't read as the in-progress accent ring. */
+.series-volume.is-selected .series-volume-cover {
+  outline: 2px solid var(--text-h);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.series-volume.is-selected {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+/* The selected volume's details, above the grid. */
+.volume-panel {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.volume-panel-cover {
+  flex: none;
+  /* Not stretched to the panel's height, which would override the aspect ratio. */
+  align-self: flex-start;
+  width: 84px;
+  aspect-ratio: 2 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.volume-panel-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.volume-panel-cover .cover-placeholder {
+  padding: 8px;
+  font-size: 11px;
+}
+
+.volume-panel-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.volume-panel-kicker {
+  margin: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.volume-panel-kicker strong {
+  color: var(--accent);
+}
+
+.volume-panel-info h4 {
+  margin: -4px 0 0;
+  color: var(--text-h);
+  font-size: 16px;
+}
+
+.volume-panel-description {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.volume-panel-description.is-empty {
+  color: var(--text);
+}
+
+.volume-panel-description.is-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.volume-panel-description-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* A text link rather than a button, so it reads as part of the description. */
+.volume-panel-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.volume-panel-more:hover:not(:disabled) {
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.volume-panel-more:active:not(:disabled) {
+  transform: none;
+}
+
+/* Not started / reading / read, as one segmented control. */
+.volume-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.volume-status button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.volume-status button.active,
+.volume-status button.active:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.volume-panel-catch-up {
+  margin-left: -10px;
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .volume-panel {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .volume-panel-cover {
+    width: 64px;
+  }
+}
+
 .details-actions {
   display: flex;
   flex-wrap: wrap;

@@ -15,13 +15,13 @@ export function mediaLabel(media: { type: MediaType; kind?: MediaKind }): string
 // How a series of each type talks about its parts and progress.
 export const SERIES_WORDS: Record<
   MediaType,
-  { parts: string; done: string; doing: string; notStarted: string; partLabel: (volume: SeriesVolume) => string }
+  { parts: string; part: string; done: string; doing: string; notStarted: string; partLabel: (volume: SeriesVolume) => string }
 > = {
   // Volume titles are often just the series name and a number, sometimes not in English.
-  book: { parts: 'volumes', done: 'read', doing: 'reading', notStarted: 'not started', partLabel: (v) => `Vol. ${v.position}` },
-  movie: { parts: 'films', done: 'watched', doing: 'watching', notStarted: 'not watched', partLabel: (v) => v.title },
-  tv: { parts: 'seasons', done: 'watched', doing: 'watching', notStarted: 'not watched', partLabel: (v) => v.title },
-  game: { parts: 'games', done: 'played', doing: 'playing', notStarted: 'not played', partLabel: (v) => v.title },
+  book: { parts: 'volumes', part: 'Vol.', done: 'read', doing: 'reading', notStarted: 'not started', partLabel: (v) => `Vol. ${v.position}` },
+  movie: { parts: 'films', part: 'Film', done: 'watched', doing: 'watching', notStarted: 'not watched', partLabel: (v) => v.title },
+  tv: { parts: 'seasons', part: 'Season', done: 'watched', doing: 'watching', notStarted: 'not watched', partLabel: (v) => v.title },
+  game: { parts: 'games', part: 'Game', done: 'played', doing: 'playing', notStarted: 'not played', partLabel: (v) => v.title },
 }
 
 export const FILTERABLE_MEDIA_TYPES: Array<MediaType | 'all'> = [
