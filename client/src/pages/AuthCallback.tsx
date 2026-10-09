@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
+import { invalidateFriends } from '../lib/friends'
 
 const PENDING_INVITE_KEY = 'pendingInviteToken'
 
@@ -24,6 +25,7 @@ export function AuthCallback() {
         localStorage.removeItem(PENDING_INVITE_KEY)
         // Own/expired invite links fail here; that's fine, just continue signed in.
         await api.post(`/api/invites/${pendingInviteToken}/redeem`).catch(() => {})
+        invalidateFriends()
       }
 
       navigate(profile?.username ? '/' : '/onboarding', { replace: true })

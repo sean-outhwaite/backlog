@@ -144,7 +144,10 @@ export function Search() {
                     title={`Add the whole ${result.series.title} series, and track it volume by volume`}
                   />
                 )}
-                <RecommendControl media={{ type: result.type, externalId: result.externalId, kind: result.kind }} />
+                <RecommendControl
+                  media={{ type: result.type, externalId: result.externalId, kind: result.kind }}
+                  title={result.title}
+                />
               </>
             }
           />

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
+import { invalidateFriends } from '../lib/friends'
 
 const PENDING_INVITE_KEY = 'pendingInviteToken'
 
@@ -23,7 +24,10 @@ export function InviteRedeem() {
     api
       .post(`/api/invites/${token}/redeem`)
       .catch(() => {})
-      .then(() => navigate('/friends', { replace: true }))
+      .then(() => {
+        invalidateFriends()
+        navigate('/friends', { replace: true })
+      })
   }, [loading, session, token, navigate])
 
   return <LoadingState label="Connecting you with your friend…" />

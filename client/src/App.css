@@ -1553,25 +1553,11 @@ section + section {
 
 /* ---------- Recommend control ---------- */
 
-.recommend-control {
-  display: flex;
-  gap: 6px;
-}
-
-.recommend-control select {
-  flex: 1;
-  min-width: 0;
-  padding-inline: 10px;
+.recommend-button {
   font-size: 14px;
 }
 
-.recommend-control button {
-  min-width: 58px;
-  font-size: 14px;
-}
-
-.recommend-control button.is-sent {
-  opacity: 1;
+.recommend-button.is-sent {
   color: var(--accent);
   background: var(--accent-bg);
   border-color: transparent;
@@ -1864,7 +1850,8 @@ section + section {
 
 /* ---------- Details dialog ---------- */
 
-html:has(.details-dialog[open]) {
+html:has(.details-dialog[open]),
+html:has(.recommend-dialog[open]) {
   overflow: hidden;
 }
 
@@ -2348,11 +2335,6 @@ html:has(.details-dialog[open]) {
   border-top: 1px solid var(--border);
 }
 
-.details-actions .recommend-control {
-  flex: 1;
-  min-width: 220px;
-}
-
 .details-source {
   align-self: flex-start;
   font-size: 14px;
@@ -2470,4 +2452,206 @@ html:has(.details-dialog[open]) {
 
 .legal-updated {
   font-size: 14px;
+}
+
+/* ---------- Recommend dialog ---------- */
+
+.recommend-dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(640px, calc(100svh - 48px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 30px 80px -20px rgba(8, 6, 13, 0.5);
+  overflow: hidden;
+}
+
+.recommend-dialog[open] {
+  display: flex;
+  animation: dialog-in 0.3s var(--ease-spring) both;
+}
+
+.recommend-dialog::backdrop {
+  background: rgba(8, 6, 13, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease-out both;
+}
+
+.recommend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 20px;
+}
+
+.recommend > * {
+  margin: 0;
+}
+
+.recommend-header {
+  position: relative;
+  padding-right: 40px;
+}
+
+.recommend-header h2 {
+  margin: 0;
+}
+
+.recommend-title {
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.recommend-close {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 15px;
+}
+
+.recommend-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.recommend-search .icon {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+}
+
+.recommend-search input {
+  width: 100%;
+  padding-left: 36px;
+}
+
+/* The list scrolls; header, note and buttons stay put. */
+.recommend-friends {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -8px;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.recommend-friend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.recommend-friend:hover {
+  background: var(--surface-hover);
+}
+
+.recommend-friend:has(input:checked) {
+  background: var(--accent-bg);
+}
+
+.recommend-friend:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.recommend-friend-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.recommend-friend input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.recommend-empty {
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.recommend-message {
+  flex: none;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 15px;
+  resize: none;
+}
+
+.recommend-message:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.recommend-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.recommend-footer .btn-primary {
+  min-width: 96px;
+}
+
+/* On phones, a sheet pinned to the bottom of the screen, within thumb reach. */
+@media (max-width: 560px) {
+  .recommend-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: 85svh;
+    margin: auto 0 0;
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .recommend-dialog[open] {
+    animation: sheet-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+
+  .recommend {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .recommend-footer button {
+    flex: 1;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
 }

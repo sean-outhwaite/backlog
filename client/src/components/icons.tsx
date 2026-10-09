@@ -187,3 +187,12 @@ export function LogoMark() {
     </svg>
   )
 }
+
+export function SendIcon() {
+  return (
+    <Icon>
+      <path d="M21 3 10 14" />
+      <path d="m21 3-6.5 18-4.5-7-7-4.5z" />
+    </Icon>
+  )
+}

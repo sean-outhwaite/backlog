@@ -4,7 +4,6 @@ import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
-import { areFriends } from '../lib/friendship.js'
 
 export const recommendationsRouter = Router()
 
@@ -23,7 +22,12 @@ recommendationsRouter.get(
 
 const createRecommendationSchema = z
   .object({
-    toUserId: z.string(),
+    // Deduplicated so a repeated id can't send the same friend two copies.
+    toUserIds: z
+      .array(z.string())
+      .min(1)
+      .max(50)
+      .transform((ids) => [...new Set(ids)]),
     message: z.string().max(280).optional(),
   })
   .and(mediaRefSchema)
@@ -37,32 +41,42 @@ recommendationsRouter.post(
       res.status(400).json({ error: parsed.error.flatten() })
       return
     }
+    const { toUserIds, message } = parsed.data
 
-    if (!(await areFriends(userId, parsed.data.toUserId))) {
-      res.status(403).json({ error: 'Not friends with this user' })
+    // One query for every recipient, rather than an areFriends round trip each.
+    const [friendships, mediaItem, fromUser] = await Promise.all([
+      prisma.friendship.findMany({
+        where: {
+          OR: [
+            { userAId: userId, userBId: { in: toUserIds } },
+            { userBId: userId, userAId: { in: toUserIds } },
+          ],
+        },
+      }),
+      resolveMediaItem(parsed.data),
+      prisma.profile.findUniqueOrThrow({ where: { id: userId } }),
+    ])
+
+    const friendIds = new Set(friendships.map((f) => (f.userAId === userId ? f.userBId : f.userAId)))
+    if (toUserIds.some((id) => !friendIds.has(id))) {
+      res.status(403).json({ error: 'Not friends with every recipient' })
       return
     }
-
-    const mediaItem = await resolveMediaItem(parsed.data)
     if (!mediaItem) {
       res.status(404).json({ error: 'Media item not found' })
       return
     }
 
-    // Run in parallel and assemble the response by hand: `include` would turn the INSERT
-    // into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
-    const [recommendation, fromUser] = await Promise.all([
-      prisma.recommendation.create({
-        data: {
-          fromUserId: userId,
-          toUserId: parsed.data.toUserId,
-          mediaItemId: mediaItem.id,
-          message: parsed.data.message,
-        },
-      }),
-      prisma.profile.findUniqueOrThrow({ where: { id: userId } }),
-    ])
-    res.status(201).json({ ...recommendation, fromUser, mediaItem })
+    // Separate creates in parallel and the response assembled by hand: createMany and `include`
+    // each turn the INSERT into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
+    const recommendations = await Promise.all(
+      toUserIds.map((toUserId) =>
+        prisma.recommendation.create({
+          data: { fromUserId: userId, toUserId, mediaItemId: mediaItem.id, message },
+        }),
+      ),
+    )
+    res.status(201).json(recommendations.map((recommendation) => ({ ...recommendation, fromUser, mediaItem })))
   }),
 )
 

@@ -223,7 +223,7 @@ export function Dashboard() {
                   {entry.status !== 'want' && (
                     <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
                   )}
-                  <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} />
+                  <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
                 </>
               }
             />

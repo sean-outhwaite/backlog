@@ -52,7 +52,7 @@ export function Recommendations() {
           actions={
             <>
               <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addPopularToList(result)} />
-              <RecommendControl media={{ type: result.type, externalId: result.externalId }} />
+              <RecommendControl media={{ type: result.type, externalId: result.externalId }} title={result.title} />
             </>
           }
         />
