@@ -1741,9 +1741,11 @@ section + section {
   }
 }
 
+/* Google renders its own button inside; this keeps the space while it loads and centres it. */
 .auth-google {
-  width: 100%;
-  gap: 10px;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
 }
 
 /* "or" between the Google button and the email form, with a rule either side. */
