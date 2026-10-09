@@ -1,19 +1,24 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { AuthShell } from '../components/AuthShell'
+import { ProfileUnavailable } from '../components/RequireAuth'
+import { LoadingState } from '../components/Spinner'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
 import type { Profile } from '../types'
 
 export function Onboarding() {
-  const { loading, session, profile, refreshProfile } = useAuth()
+  const { loading, session, profile, profileUnavailable, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (!loading && !session) return <Navigate to="/sign-in" replace />
+  if (loading) return <LoadingState />
+  if (!session) return <Navigate to="/sign-in" replace />
   if (profile?.username) return <Navigate to="/" replace />
+  // Without the profile we can't tell whether you already have a username; saving one here could overwrite it.
+  if (profileUnavailable) return <ProfileUnavailable />
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
