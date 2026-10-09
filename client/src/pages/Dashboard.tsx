@@ -18,7 +18,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type ComponentType,
@@ -26,25 +25,21 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
 import { EntryMenu } from '../components/EntryMenu'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { SeriesVolumes } from '../components/SeriesVolumes'
+import { StatusTabs } from '../components/StatusTabs'
 import { LoadingState } from '../components/Spinner'
 import { UndoToast } from '../components/UndoToast'
 import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
+import { useStatusParam } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 import type { ListEntry, ListStatus, MediaType } from '../types'
-
-const STATUS_TABS: { status: ListStatus; label: string }[] = [
-  { status: 'want', label: 'Backlog' },
-  { status: 'in_progress', label: 'In progress' },
-  { status: 'done', label: 'Done' },
-]
 
 // The moves offered on each tab's cards; the first is the primary action.
 // iconOnly drops the visible label (it stays as the accessible name) where the icon says it all.
@@ -73,10 +68,7 @@ const ACTION_ICONS: Record<ListStatus, ComponentType> = {
 export function Dashboard() {
   const { profile } = useAuth()
   const [entries, setEntries] = useState<ListEntry[]>([])
-  // The tab lives in the URL so it survives a reload and other views can link to a tab.
-  const [searchParams, setSearchParams] = useSearchParams()
-  const status = STATUS_TABS.find((tab) => tab.status === searchParams.get('status'))?.status ?? 'want'
-  const setStatus = (next: ListStatus) => setSearchParams(next === 'want' ? {} : { status: next }, { replace: true })
+  const [status, setStatus] = useStatusParam()
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [loading, setLoading] = useState(true)
 
@@ -359,60 +351,4 @@ function MoveShortcuts({ entry, onMove }: { entry: ListEntry; onMove: (to: ListS
       </button>
     )
   })
-}
-
-// The accent underline is one element that slides to whichever tab is active, measured from the
-// DOM since the tabs are content-width. It re-measures on resize too, as counts arrive and the
-// active tab's bolder label change widths.
-function StatusTabs({
-  status,
-  onChange,
-  countFor,
-}: {
-  status: ListStatus
-  onChange: (status: ListStatus) => void
-  countFor: (status: ListStatus) => number
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const tabRefs = useRef<Partial<Record<ListStatus, HTMLButtonElement | null>>>({})
-  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null)
-
-  useLayoutEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const measure = () => {
-      const tab = tabRefs.current[status]
-      if (tab) setIndicator({ left: tab.offsetLeft, width: tab.offsetWidth })
-    }
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [status])
-
-  return (
-    <div className="status-tabs" ref={containerRef}>
-      {STATUS_TABS.map((tab) => (
-        <button
-          key={tab.status}
-          ref={(el) => {
-            tabRefs.current[tab.status] = el
-          }}
-          className={status === tab.status ? 'active' : ''}
-          aria-pressed={status === tab.status}
-          onClick={() => onChange(tab.status)}
-        >
-          {tab.label}
-          <span className="status-count">{countFor(tab.status)}</span>
-        </button>
-      ))}
-      {indicator && (
-        <span
-          className="status-indicator"
-          aria-hidden="true"
-          style={{ transform: `translateX(${indicator.left}px)`, width: indicator.width }}
-        />
-      )}
-    </div>
-  )
 }

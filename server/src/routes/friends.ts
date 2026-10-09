@@ -33,12 +33,16 @@ friendsRouter.get(
       return
     }
 
-    const entries = await prisma.listEntry.findMany({
-      where: { userId: friendId },
-      include: { mediaItem: true },
-      orderBy: { addedAt: 'desc' },
-    })
-    res.json(await withProgress(entries))
+    // The profile is only for the page's heading; fetched alongside the list so it costs no extra round trip.
+    const [friend, entries] = await Promise.all([
+      prisma.profile.findUnique({ where: { id: friendId }, select: { id: true, username: true } }),
+      prisma.listEntry.findMany({
+        where: { userId: friendId },
+        include: { mediaItem: true },
+        orderBy: { addedAt: 'desc' },
+      }),
+    ])
+    res.json({ friend, entries: await withProgress(entries) })
   }),
 )
 

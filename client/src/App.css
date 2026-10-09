@@ -1387,27 +1387,6 @@ section + section {
   margin: 0;
 }
 
-.status-badge {
-  align-self: flex-start;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--accent-bg);
-  color: var(--accent);
-}
-
-.status-badge--in_progress {
-  background: var(--accent);
-  color: var(--accent-bg);
-}
-
-.status-badge--done {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
 /* ---------- Add to list ---------- */
 
 .add-button {
