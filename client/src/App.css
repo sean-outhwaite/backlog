@@ -1746,6 +1746,9 @@ section + section {
   display: flex;
   justify-content: center;
   min-height: 44px;
+  /* Google's button is a light-scheme iframe; in dark mode a scheme mismatch makes the browser
+     paint an opaque white backdrop behind it. Matching the scheme keeps it transparent. */
+  color-scheme: light;
 }
 
 /* "or" between the Google button and the email form, with a rule either side. */
