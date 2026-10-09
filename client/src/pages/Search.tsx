@@ -1,13 +1,13 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
 import { SearchIcon, SeriesIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { resultKey, seriesKey, usePopular } from '../hooks/usePopular'
+import { listedKeys, resultKey, seriesKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import type { MediaSearchResult, MediaType } from '../types'
+import type { ListEntry, MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 
 export function Search() {
@@ -18,6 +18,13 @@ export function Search() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    api
+      .get<ListEntry[]>('/api/lists')
+      .then((entries) => setAddedIds((prev) => new Set([...prev, ...listedKeys(entries)])))
+      .catch(() => {})
+  }, [])
 
   // Before the first search, show what's popular for the selected type instead of an empty page.
   const popular = usePopular(typeFilter)

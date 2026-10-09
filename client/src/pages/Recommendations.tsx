@@ -4,7 +4,7 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { resultKey, usePopular } from '../hooks/usePopular'
+import { listedKeys, resultKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import type { ListEntry, MediaSearchResult, Recommendation } from '../types'
 
@@ -25,6 +25,8 @@ export function Recommendations() {
       ])
       const onList = new Set(entries.map((entry) => entry.mediaItemId))
       setRecommendations(found)
+      // Recommendations are keyed by mediaItemId and popular titles by resultKey; both start from your list.
+      setAddedIds((prev) => new Set([...prev, ...onList, ...listedKeys(entries)]))
       setHasPending(found.some((rec) => !onList.has(rec.mediaItemId)))
       setLoading(false)
       await Promise.all(found.filter((r) => !r.viewedAt).map((r) => api.patch(`/api/recommendations/${r.id}/viewed`)))

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import type { MediaSearchResult, MediaType } from '../types'
+import type { ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 
 // What's popular right now, for filling pages that would otherwise be empty. null while
 // loading (or while disabled); an empty array if nothing could be fetched.
@@ -33,6 +33,11 @@ export function seriesKey(type: MediaType, seriesExternalId: string) {
 
 // externalId alone isn't unique across types (a TMDB movie and show can share an id), or
 // between a provider's series and titles.
-export function resultKey(result: MediaSearchResult) {
+export function resultKey(result: Pick<MediaItem, 'type' | 'externalId'> & Partial<Pick<MediaItem, 'kind'>>) {
   return result.kind === 'series' ? seriesKey(result.type, result.externalId) : `${result.type}:${result.externalId}`
+}
+
+// The keys of everything on your list, so results already there show as added on arrival.
+export function listedKeys(entries: ListEntry[]) {
+  return new Set(entries.map((entry) => resultKey(entry.mediaItem)))
 }
