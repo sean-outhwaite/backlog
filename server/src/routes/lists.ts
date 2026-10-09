@@ -3,7 +3,7 @@ import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { isUniqueConstraintError, prisma } from '../lib/prisma.js'
-import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
+import { mediaRefSchema, refreshSeries, resolveMediaItem } from '../lib/mediaItems.js'
 import { derivedSeriesStatus, withProgress } from '../lib/series.js'
 
 export const listsRouter = Router()
@@ -108,19 +108,27 @@ listsRouter.patch(
   }),
 )
 
-// A series entry's volumes in order, each with this user's status for it.
+// A series entry's volumes in order, each with this user's status for it. Opening a series is
+// when its volume list is brought up to date, if it's gone stale (see refreshSeries).
 listsRouter.get(
   '/:id/volumes',
   asyncHandler(async (req, res) => {
     const { userId } = req as unknown as AuthedRequest
     const entryId = req.params.id
+    const series = await prisma.mediaItem.findFirst({ where: { listEntries: { some: { id: entryId, userId } } } })
+    if (!series) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    await refreshSeries(series)
+
     const [volumes, progress] = await Promise.all([
       prisma.seriesVolume.findMany({
-        where: { series: { listEntries: { some: { id: entryId, userId } } } },
+        where: { seriesId: series.id },
         include: { volume: true },
         orderBy: { position: 'asc' },
       }),
-      prisma.volumeProgress.findMany({ where: { entryId, entry: { userId } } }),
+      prisma.volumeProgress.findMany({ where: { entryId } }),
     ])
     const statusByVolume = new Map(progress.map((row) => [row.volumeId, row.status]))
     res.json(

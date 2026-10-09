@@ -30,16 +30,23 @@ export function SeriesVolumes({ entry, onChanged }: { entry: ListEntry; onChange
     onChangedRef.current = onChanged
   })
 
+  const knownTotal = entry.progress?.total
   useEffect(() => {
     let cancelled = false
     api
       .get<SeriesVolume[]>(`/api/lists/${entry.id}/volumes`)
-      .then((found) => !cancelled && setVolumes(found))
+      .then((found) => {
+        if (cancelled) return
+        // Loading the volumes can bring the series up to date on the server, adding new ones and
+        // moving a finished entry back to in progress, so the list behind needs reloading too.
+        if (knownTotal !== undefined && found.length !== knownTotal) changed.current = true
+        setVolumes(found)
+      })
       .catch(() => !cancelled && setFailed(true))
     return () => {
       cancelled = true
     }
-  }, [entry.id])
+  }, [entry.id, knownTotal])
 
   useEffect(
     () => () => {

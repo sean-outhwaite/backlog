@@ -57,6 +57,9 @@ model MediaItem {
   description   String?
   releaseYear   Int?
   createdAt     DateTime    @default(now())
+  // Series only: when its volumes were last re-fetched from the provider (see refreshSeries).
+  // Null means never, so series added before this column existed are refreshed on next use.
+  refreshedAt   DateTime?
 
   listEntries     ListEntry[]
   recommendations Recommendation[]
