@@ -196,3 +196,23 @@ export function SendIcon() {
     </Icon>
   )
 }
+
+export function UserMinusIcon() {
+  return (
+    <Icon>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 11h6" />
+    </Icon>
+  )
+}
+
+export function RefreshIcon() {
+  return (
+    <Icon>
+      <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8" />
+      <path d="M4 3v5h5" />
+      <path d="M4 13a8 8 0 0 0 14.3 4.9L20 16" />
+      <path d="M20 21v-5h-5" />
+    </Icon>
+  )
+}

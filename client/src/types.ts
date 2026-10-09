@@ -79,6 +79,12 @@ export interface Profile {
   createdAt: string
 }
 
+export interface InvitePreview {
+  owner: Pick<Profile, 'id' | 'username'>
+  isOwn: boolean
+  alreadyFriends: boolean
+}
+
 export interface InviteLink {
   id: string
   ownerId: string

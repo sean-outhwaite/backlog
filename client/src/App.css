@@ -1665,6 +1665,38 @@ section + section {
   transform: translateX(4px);
 }
 
+.friend-item {
+  position: relative;
+}
+
+/* Room on the right for the remove button, which sits over the card. */
+.friend-item .friend-card {
+  padding-right: 56px;
+}
+
+.friend-remove {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  height: 36px;
+  transform: translateY(-50%);
+}
+
+.friend-remove:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.97);
+}
+
+/* The arrow moves left of the remove button; it no longer needs to nudge on hover. */
+.friend-item .friend-arrow {
+  display: none;
+}
+
+.invite-reset {
+  margin-top: 8px;
+  margin-left: -10px;
+  font-size: 14px;
+}
+
 /* ---------- Signed-out screens ---------- */
 
 .auth-page {
@@ -1851,7 +1883,7 @@ section + section {
 /* ---------- Details dialog ---------- */
 
 html:has(.details-dialog[open]),
-html:has(.recommend-dialog[open]) {
+html:has(.modal-dialog[open]) {
   overflow: hidden;
 }
 
@@ -2454,9 +2486,9 @@ html:has(.recommend-dialog[open]) {
   font-size: 14px;
 }
 
-/* ---------- Recommend dialog ---------- */
+/* ---------- Modal dialogs (recommend, confirm) ---------- */
 
-.recommend-dialog {
+.modal-dialog {
   width: min(420px, calc(100vw - 32px));
   max-height: min(640px, calc(100svh - 48px));
   padding: 0;
@@ -2468,12 +2500,12 @@ html:has(.recommend-dialog[open]) {
   overflow: hidden;
 }
 
-.recommend-dialog[open] {
+.modal-dialog[open] {
   display: flex;
   animation: dialog-in 0.3s var(--ease-spring) both;
 }
 
-.recommend-dialog::backdrop {
+.modal-dialog::backdrop {
   background: rgba(8, 6, 13, 0.55);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -2628,7 +2660,7 @@ html:has(.recommend-dialog[open]) {
 
 /* On phones, a sheet pinned to the bottom of the screen, within thumb reach. */
 @media (max-width: 560px) {
-  .recommend-dialog {
+  .modal-dialog {
     width: 100%;
     max-width: none;
     max-height: 85svh;
@@ -2637,7 +2669,7 @@ html:has(.recommend-dialog[open]) {
     border-radius: 20px 20px 0 0;
   }
 
-  .recommend-dialog[open] {
+  .modal-dialog[open] {
     animation: sheet-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
   }
 
@@ -2654,4 +2686,80 @@ html:has(.recommend-dialog[open]) {
   from {
     transform: translateY(100%);
   }
+}
+
+/* ---------- Confirm dialog ---------- */
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px;
+}
+
+.confirm h2 {
+  margin: 0;
+}
+
+.confirm-body p {
+  margin: 0 0 6px;
+}
+
+.confirm .error-text {
+  margin: 0;
+}
+
+.confirm-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-danger-solid {
+  border-color: transparent;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 85%, black);
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .confirm {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
+  .confirm-footer button {
+    flex: 1;
+  }
+}
+
+/* ---------- Invite confirmation ---------- */
+
+/* A link that looks like a button, for leaving the signed-out screens. */
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.btn-quiet.button-link:hover {
+  background: var(--surface-hover);
+  color: var(--text-h);
+}
+
+.invite-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }

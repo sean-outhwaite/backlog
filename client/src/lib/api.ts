@@ -7,6 +7,16 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'ht
 // that made the change (like the sidebar's in-progress panel) can refresh.
 export const LISTS_CHANGED_EVENT = 'lists-changed'
 
+// The server answered with an error, as opposed to the request not getting through at all.
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const {
     data: { session },
@@ -23,7 +33,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new Error(body.error ? JSON.stringify(body.error) : `Request failed: ${response.status}`)
+    throw new ApiError(body.error ? JSON.stringify(body.error) : `Request failed: ${response.status}`, response.status)
   }
   if (init?.method && path.startsWith('/api/lists')) window.dispatchEvent(new Event(LISTS_CHANGED_EVENT))
   if (response.status === 204) return undefined as T

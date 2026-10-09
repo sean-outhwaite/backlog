@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { RefreshIcon, UserMinusIcon } from '../components/icons'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { api } from '../lib/api'
+import { invalidateFriends } from '../lib/friends'
 import type { InviteLink, Profile } from '../types'
 
 export function Friends() {
   const [invite, setInvite] = useState<InviteLink | null>(null)
   const [friends, setFriends] = useState<Profile[]>([])
   const [copied, setCopied] = useState(false)
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const [removing, setRemoving] = useState<Profile | null>(null)
 
   useEffect(() => {
     api.get<InviteLink>('/api/invites/mine').then(setInvite)
@@ -20,6 +25,17 @@ export function Friends() {
     await navigator.clipboard.writeText(inviteUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function resetInvite() {
+    setInvite(await api.post<InviteLink>('/api/invites/mine/reset'))
+    setCopied(false)
+  }
+
+  async function removeFriend(friend: Profile) {
+    await api.delete(`/api/friends/${friend.id}`)
+    invalidateFriends()
+    setFriends((prev) => prev.filter((f) => f.id !== friend.id))
   }
 
   return (
@@ -35,6 +51,10 @@ export function Friends() {
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
+        <button className="invite-reset btn-quiet" onClick={() => setConfirmingReset(true)} disabled={!invite}>
+          <RefreshIcon />
+          Reset link
+        </button>
       </section>
 
       <section>
@@ -46,7 +66,7 @@ export function Friends() {
         )}
         <ul className="friend-list">
           {friends.map((friend) => (
-            <li key={friend.id}>
+            <li key={friend.id} className="friend-item">
               <Link to={`/friends/${friend.id}`} className="friend-card">
                 <span className="avatar" aria-hidden="true">
                   {friend.username?.[0]?.toUpperCase()}
@@ -56,10 +76,44 @@ export function Friends() {
                   →
                 </span>
               </Link>
+              {/* Beside the link rather than in it: a button can't sit inside a link. */}
+              <button
+                className="friend-remove btn-icon btn-quiet btn-danger"
+                onClick={() => setRemoving(friend)}
+                aria-label={`Remove ${friend.username ?? 'friend'}`}
+                title="Remove friend"
+              >
+                <UserMinusIcon />
+              </button>
             </li>
           ))}
         </ul>
       </section>
+
+      {confirmingReset && (
+        <ConfirmDialog
+          title="Reset your invite link?"
+          confirmLabel="Reset link"
+          onConfirm={resetInvite}
+          onClose={() => setConfirmingReset(false)}
+        >
+          <p>Your current link will stop working, so anyone you've sent it to will need the new one.</p>
+          <p>Friends you already have stay friends.</p>
+        </ConfirmDialog>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title={`Remove ${removing.username ?? 'this friend'}?`}
+          confirmLabel="Remove"
+          danger
+          onConfirm={() => removeFriend(removing)}
+          onClose={() => setRemoving(null)}
+        >
+          <p>You'll stop seeing each other's lists and can't send each other recommendations.</p>
+          <p>To be friends again, one of you will need to share an invite link.</p>
+        </ConfirmDialog>
+      )}
     </div>
   )
 }

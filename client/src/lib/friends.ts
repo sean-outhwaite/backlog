@@ -23,3 +23,6 @@ export function getFriends(): Promise<Profile[]> {
 export function invalidateFriends() {
   cached = null
 }
+
+// An invite link opened while signed out, kept across sign-in so AuthCallback can return to it.
+export const PENDING_INVITE_KEY = 'pendingInviteToken'

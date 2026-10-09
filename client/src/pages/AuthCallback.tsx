@@ -2,10 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { LoadingState } from '../components/Spinner'
-import { api } from '../lib/api'
-import { invalidateFriends } from '../lib/friends'
-
-const PENDING_INVITE_KEY = 'pendingInviteToken'
+import { PENDING_INVITE_KEY } from '../lib/friends'
 
 export function AuthCallback() {
   const { loading, session, profile } = useAuth()
@@ -14,24 +11,20 @@ export function AuthCallback() {
   useEffect(() => {
     if (loading) return
 
-    async function finish() {
-      if (!session) {
-        navigate('/sign-in', { replace: true })
-        return
-      }
-
-      const pendingInviteToken = localStorage.getItem(PENDING_INVITE_KEY)
-      if (pendingInviteToken) {
-        localStorage.removeItem(PENDING_INVITE_KEY)
-        // Own/expired invite links fail here; that's fine, just continue signed in.
-        await api.post(`/api/invites/${pendingInviteToken}/redeem`).catch(() => {})
-        invalidateFriends()
-      }
-
-      navigate(profile?.username ? '/' : '/onboarding', { replace: true })
+    if (!session) {
+      navigate('/sign-in', { replace: true })
+      return
     }
 
-    void finish()
+    // Back to the invite that sent you to sign in, which asks before adding the friend.
+    const pendingInviteToken = localStorage.getItem(PENDING_INVITE_KEY)
+    if (pendingInviteToken) {
+      localStorage.removeItem(PENDING_INVITE_KEY)
+      navigate(`/invite/${encodeURIComponent(pendingInviteToken)}`, { replace: true })
+      return
+    }
+
+    navigate(profile?.username ? '/' : '/onboarding', { replace: true })
   }, [loading, session, profile, navigate])
 
   return <LoadingState label="Signing you in…" />

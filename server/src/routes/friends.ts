@@ -41,3 +41,25 @@ friendsRouter.get(
     res.json(await withProgress(entries))
   }),
 )
+
+// Removes the friendship whichever way round it was stored. Recommendations already sent stay.
+friendsRouter.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const friendId = req.params.id
+    const { count } = await prisma.friendship.deleteMany({
+      where: {
+        OR: [
+          { userAId: userId, userBId: friendId },
+          { userAId: friendId, userBId: userId },
+        ],
+      },
+    })
+    if (count === 0) {
+      res.status(404).json({ error: 'Not friends with this user' })
+      return
+    }
+    res.status(204).end()
+  }),
+)

@@ -115,7 +115,7 @@ function RecommendDialog({
   return createPortal(
     <dialog
       ref={dialogRef}
-      className="recommend-dialog"
+      className="modal-dialog"
       aria-labelledby={headingId}
       onClose={(event) => {
         // React bubbles close through the portal to its owner; from inside the details dialog it

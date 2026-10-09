@@ -3,7 +3,7 @@ import { Router } from 'express'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
-import { createFriendshipIfMissing } from '../lib/friendship.js'
+import { areFriends, createFriendshipIfMissing } from '../lib/friendship.js'
 
 export const invitesRouter = Router()
 
@@ -17,6 +17,41 @@ invitesRouter.get(
       update: {},
     })
     res.json(invite)
+  }),
+)
+
+// A new token, so the old link stops working. Friends already made through it stay friends.
+invitesRouter.post(
+  '/mine/reset',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const token = randomBytes(9).toString('base64url')
+    const invite = await prisma.inviteLink.upsert({
+      where: { ownerId: userId },
+      create: { ownerId: userId, token },
+      update: { token },
+    })
+    res.json(invite)
+  }),
+)
+
+// Who a link is from, so opening it can ask before making you friends.
+invitesRouter.get(
+  '/:token',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const invite = await prisma.inviteLink.findUnique({ where: { token: req.params.token } })
+    if (!invite) {
+      res.status(404).json({ error: 'Invite not found' })
+      return
+    }
+
+    const isOwn = invite.ownerId === userId
+    const [owner, alreadyFriends] = await Promise.all([
+      prisma.profile.findUniqueOrThrow({ where: { id: invite.ownerId } }),
+      isOwn ? false : areFriends(userId, invite.ownerId),
+    ])
+    res.json({ owner: { id: owner.id, username: owner.username }, isOwn, alreadyFriends })
   }),
 )
 
