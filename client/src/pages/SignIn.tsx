@@ -1,5 +1,5 @@
 import { useCallback, useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { AuthShell } from '../components/AuthShell'
 import { GoogleSignInButton, googleSignInEnabled } from '../components/GoogleSignInButton'
@@ -67,6 +67,10 @@ export function SignIn() {
       )}
 
       {error && <p className="error-text">{error}</p>}
+
+      <p className="auth-footer">
+        <Link to="/privacy">Privacy policy</Link>
+      </p>
     </AuthShell>
   )
 }

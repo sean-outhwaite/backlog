@@ -1768,6 +1768,15 @@ section + section {
   border-top: 1px solid var(--border);
 }
 
+.auth-card > .auth-footer {
+  margin: 20px 0 0;
+  font-size: 13px;
+}
+
+.auth-footer a {
+  color: var(--text);
+}
+
 .auth-sent {
   padding: 12px;
   border-radius: 12px;
@@ -2257,4 +2266,47 @@ html:has(.details-dialog[open]) {
   from {
     opacity: 0;
   }
+}
+
+.legal-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.legal-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-h);
+  text-decoration: none;
+}
+
+.legal-page h2 {
+  margin-top: 28px;
+  font-size: 18px;
+}
+
+.legal-page p,
+.legal-page li {
+  line-height: 1.6;
+}
+
+.legal-page ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.legal-page strong {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.legal-updated {
+  font-size: 14px;
 }
