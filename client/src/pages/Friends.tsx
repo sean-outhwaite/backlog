@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { EntryMenu } from '../components/EntryMenu'
 import { RefreshIcon, UserMinusIcon } from '../components/icons'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { api } from '../lib/api'
@@ -77,14 +78,15 @@ export function Friends() {
                 </span>
               </Link>
               {/* Beside the link rather than in it: a button can't sit inside a link. */}
-              <button
-                className="friend-remove btn-icon btn-quiet btn-danger"
-                onClick={() => setRemoving(friend)}
-                aria-label={`Remove ${friend.username ?? 'friend'}`}
-                title="Remove friend"
-              >
-                <UserMinusIcon />
-              </button>
+              <div className="friend-menu">
+                <EntryMenu
+                  onRemove={() => setRemoving(friend)}
+                  label="Remove friend"
+                  icon={<UserMinusIcon />}
+                  triggerClassName="btn-quiet"
+                  triggerLabel={`More actions for ${friend.username ?? 'this friend'}`}
+                />
+              </div>
             </li>
           ))}
         </ul>

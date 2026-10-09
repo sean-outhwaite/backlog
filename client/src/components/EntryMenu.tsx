@@ -1,8 +1,21 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { MoreIcon, TrashIcon } from './icons'
 
-// A "⋯" button among a card's cover shortcuts; removing lives behind it so it's not one stray tap away.
-export function EntryMenu({ onRemove }: { onRemove: () => void }) {
+// A "⋯" button on a card; removing lives behind it so it's not one stray tap away. Styled by default
+// for a media card's cover shortcuts.
+export function EntryMenu({
+  onRemove,
+  label = 'Remove',
+  icon = <TrashIcon />,
+  triggerClassName = 'cover-action',
+  triggerLabel = 'More actions',
+}: {
+  onRemove: () => void
+  label?: string
+  icon?: ReactNode
+  triggerClassName?: string
+  triggerLabel?: string
+}) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -32,11 +45,11 @@ export function EntryMenu({ onRemove }: { onRemove: () => void }) {
     <div className="entry-menu" ref={rootRef}>
       <button
         ref={triggerRef}
-        className="btn-icon cover-action"
+        className={`btn-icon ${triggerClassName}`}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label="More actions"
-        title="More actions"
+        aria-label={triggerLabel}
+        title={triggerLabel}
         onClick={() => setOpen((wasOpen) => !wasOpen)}
       >
         <MoreIcon />
@@ -52,8 +65,8 @@ export function EntryMenu({ onRemove }: { onRemove: () => void }) {
             }}
             autoFocus
           >
-            <TrashIcon />
-            Remove
+            {icon}
+            {label}
           </button>
         </div>
       )}
