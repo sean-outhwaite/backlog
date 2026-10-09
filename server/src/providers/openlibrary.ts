@@ -1,3 +1,4 @@
+import { env } from '../lib/env.js'
 import {
   joinNames,
   PROVIDER_TIMEOUT_MS,
@@ -11,6 +12,14 @@ import {
 
 const OPEN_LIBRARY_BASE = 'https://openlibrary.org'
 const COVER_BASE = 'https://covers.openlibrary.org/b/id'
+
+// Open Library allows 1 request/second from anonymous clients and 3 from ones that identify
+// themselves with an app name and contact in the User-Agent.
+const USER_AGENT = env.openLibraryContact ? `Backlog (${env.openLibraryContact})` : 'Backlog'
+
+function openLibraryFetch(url: string | URL, signal: AbortSignal) {
+  return fetch(url, { signal, headers: { 'User-Agent': USER_AGENT } })
+}
 
 interface OpenLibrarySearchDoc {
   key: string
@@ -127,16 +136,17 @@ export const openLibraryProvider: MediaProvider = {
     url.searchParams.set('limit', '20')
     url.searchParams.set('fields', SEARCH_FIELDS)
 
-    const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })
+    const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibrarySearchResponse
 
     return data.docs.map(toSearchResult)
   },
   async popular() {
-    const response = await fetch(`${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20`, {
-      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
-    })
+    const response = await openLibraryFetch(
+      `${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20`,
+      AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+    )
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibraryTrendingResponse
     return data.works.map(toSearchResult)
@@ -149,8 +159,8 @@ export const openLibraryProvider: MediaProvider = {
 
     const signal = AbortSignal.timeout(PROVIDER_TIMEOUT_MS)
     const [seriesResponse, searchResponse] = await Promise.all([
-      fetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, { signal }),
-      fetch(url, { signal }),
+      openLibraryFetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, signal),
+      openLibraryFetch(url, signal),
     ])
     if (!seriesResponse.ok) return null
     if (!searchResponse.ok) throw new Error(`Open Library request failed: ${searchResponse.status}`)
@@ -177,7 +187,7 @@ export const openLibraryProvider: MediaProvider = {
   },
   async getById(externalId) {
     const [response, indexEntry] = await Promise.all([
-      fetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) }),
+      openLibraryFetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, AbortSignal.timeout(PROVIDER_TIMEOUT_MS)),
       fetchIndexEntry(externalId),
     ])
     if (!response.ok) return null
@@ -214,7 +224,7 @@ async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntr
   url.searchParams.set('fields', 'author_name,first_publish_year,number_of_pages_median,series_key,series_name')
 
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })
+    const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
     if (!response.ok) return null
     const data = (await response.json()) as { docs: OpenLibraryIndexEntry[] }
     return data.docs[0] ?? null

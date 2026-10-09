@@ -9,5 +9,6 @@ export const env = {
   supabaseUrl: required('SUPABASE_URL'),
   tmdbApiKey: required('TMDB_API_KEY'),
   rawgApiKey: required('RAWG_API_KEY'),
+  openLibraryContact: process.env.OPEN_LIBRARY_CONTACT,
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5174',
 }
