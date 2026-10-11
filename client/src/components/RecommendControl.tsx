@@ -1,14 +1,17 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '../lib/api'
-import { getFriends } from '../lib/friends'
+import { friendNames, getFriends } from '../lib/friends'
 import { Avatar } from './Avatar'
 import { CheckIcon, SearchIcon, SendIcon } from './icons'
 import { Spinner } from './Spinner'
+import { Toast } from './Toast'
 import type { MediaRef, Profile } from '../types'
 
 // Past this many friends the picker gets a search box.
 const SEARCH_THRESHOLD = 6
+// How long the "Recommended to …" confirmation stays up.
+const TOAST_MS = 3000
 
 const friendName = (friend: Profile) => friend.username ?? 'Unnamed friend'
 
@@ -17,6 +20,8 @@ export function RecommendControl({ media, title }: { media: MediaRef; title: str
   const [friends, setFriends] = useState<Profile[]>([])
   const [open, setOpen] = useState(false)
   const [sentTo, setSentTo] = useState<string[]>([])
+  // The latest send, confirmed in a toast; the id restarts it when you send again.
+  const [confirmation, setConfirmation] = useState<{ id: number; message: string } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -27,6 +32,12 @@ export function RecommendControl({ media, title }: { media: MediaRef; title: str
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!confirmation) return
+    const timer = window.setTimeout(() => setConfirmation(null), TOAST_MS)
+    return () => window.clearTimeout(timer)
+  }, [confirmation])
 
   if (friends.length === 0) return null
 
@@ -46,10 +57,14 @@ export function RecommendControl({ media, title }: { media: MediaRef; title: str
           media={media}
           title={title}
           friends={friends}
-          onSent={(names) => setSentTo((prev) => [...new Set([...prev, ...names])])}
+          onSent={(recipients) => {
+            setSentTo((prev) => [...new Set([...prev, ...recipients.map(friendName)])])
+            setConfirmation({ id: Date.now(), message: `Recommended ${title} to ${friendNames(recipients)}` })
+          }}
           onClose={() => setOpen(false)}
         />
       )}
+      {confirmation && <Toast key={confirmation.id} message={confirmation.message} duration={TOAST_MS} />}
     </>
   )
 }
@@ -64,7 +79,7 @@ function RecommendDialog({
   media: MediaRef
   title: string
   friends: Profile[]
-  onSent: (names: string[]) => void
+  onSent: (recipients: Profile[]) => void
   onClose: () => void
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -106,7 +121,7 @@ function RecommendDialog({
         toUserIds: [...selected],
         message: message.trim() || undefined,
       })
-      onSent(friends.filter((friend) => selected.has(friend.id)).map(friendName))
+      onSent(friends.filter((friend) => selected.has(friend.id)))
       close()
     } catch {
       setStatus('error')

@@ -33,7 +33,7 @@ import { RecommendControl } from '../components/RecommendControl'
 import { SeriesVolumes } from '../components/SeriesVolumes'
 import { StatusTabs } from '../components/StatusTabs'
 import { LoadingState } from '../components/Spinner'
-import { UndoToast } from '../components/UndoToast'
+import { Toast } from '../components/Toast'
 import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { useStatusParam } from '../hooks/useStatusParam'
@@ -97,7 +97,8 @@ export function Dashboard() {
     const moved = arrayMove(visible, from, to)
     const before = moved[to - 1]
     const after = moved[to + 1]
-    const position = before && after ? (before.position + after.position) / 2 : before ? before.position + 1 : after.position - 1
+    const position =
+      before && after ? (before.position + after.position) / 2 : before ? before.position + 1 : after.position - 1
 
     const byPosition = (a: ListEntry, b: ListEntry) => a.position - b.position
     setEntries((prev) => prev.map((e) => (e.id === activeId ? { ...e, position } : e)).sort(byPosition))
@@ -224,11 +225,11 @@ export function Dashboard() {
       </SortableGrid>
 
       {removing && (
-        <UndoToast
+        <Toast
           key={removing.id}
           message={`Removed ${removing.mediaItem.title}`}
           duration={UNDO_MS}
-          onUndo={undoRemoval}
+          action={{ label: 'Undo', onClick: undoRemoval }}
         />
       )}
     </div>

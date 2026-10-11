@@ -153,6 +153,14 @@ export function TrashIcon() {
   )
 }
 
+export function CloseIcon() {
+  return (
+    <Icon>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </Icon>
+  )
+}
+
 export function MoreIcon() {
   return (
     <Icon>

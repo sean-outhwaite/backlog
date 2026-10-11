@@ -89,3 +89,17 @@ recommendationsRouter.post(
     res.status(201).json(recommendations.map((recommendation) => ({ ...recommendation, fromUser, mediaItem })))
   }),
 )
+
+// Dismisses a recommendation sent to you. deleteMany so it's one statement that also checks it's yours.
+recommendationsRouter.delete(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const { count } = await prisma.recommendation.deleteMany({ where: { id: req.params.id, toUserId: userId } })
+    if (count === 0) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    res.status(204).send()
+  }),
+)
