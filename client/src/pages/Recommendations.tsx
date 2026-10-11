@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
+import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
@@ -88,9 +89,7 @@ export function Recommendations() {
             actions={
               <>
                 <p className="recommendation-from">
-                  <span className="avatar avatar--sm" aria-hidden="true">
-                    {rec.fromUser.username?.[0]?.toUpperCase()}
-                  </span>
+                  <Avatar profile={rec.fromUser} size="sm" />
                   From <strong>{rec.fromUser.username}</strong>
                 </p>
                 {rec.message && <p className="recommendation-message">“{rec.message}”</p>}

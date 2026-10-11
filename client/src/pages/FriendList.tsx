@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AddToListButton } from '../components/AddToListButton'
+import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { StatusTabs } from '../components/StatusTabs'
 import { useStatusParam } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
-import type { ListEntry, ListStatus } from '../types'
+import type { ListEntry, ListStatus, Profile } from '../types'
 
 const EMPTY_MESSAGES: Record<ListStatus, string> = {
   want: 'Nothing in their backlog right now.',
@@ -18,7 +19,7 @@ const EMPTY_MESSAGES: Record<ListStatus, string> = {
 export function FriendList() {
   const { id } = useParams<{ id: string }>()
   const [entries, setEntries] = useState<ListEntry[]>([])
-  const [username, setUsername] = useState<string | null>(null)
+  const [friend, setFriend] = useState<Pick<Profile, 'username' | 'avatarUrl'> | null>(null)
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useStatusParam()
   // Media item ids already on your own list, so their cards show as added.
@@ -28,9 +29,11 @@ export function FriendList() {
     if (!id) return
     setLoading(true)
     api
-      .get<{ friend: { username: string | null } | null; entries: ListEntry[] }>(`/api/friends/${id}/list`)
+      .get<{ friend: Pick<Profile, 'id' | 'username' | 'avatarUrl'> | null; entries: ListEntry[] }>(
+        `/api/friends/${id}/list`,
+      )
       .then((list) => {
-        setUsername(list.friend?.username ?? null)
+        setFriend(list.friend)
         setEntries(list.entries)
       })
       .finally(() => setLoading(false))
@@ -56,7 +59,14 @@ export function FriendList() {
       <Link to="/friends" className="back-link">
         ← Friends
       </Link>
-      <PageHeader title={username ? `${username}'s backlog` : 'Their backlog'} />
+      <PageHeader
+        title={
+          <span className="friend-heading">
+            {friend && <Avatar profile={friend} size="lg" />}
+            {friend?.username ? `${friend.username}'s backlog` : 'Their backlog'}
+          </span>
+        }
+      />
 
       <div className="list-toolbar">
         <StatusTabs status={status} onChange={setStatus} countFor={countFor} />

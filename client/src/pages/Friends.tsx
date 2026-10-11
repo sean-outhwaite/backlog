@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Avatar } from '../components/Avatar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EntryMenu } from '../components/EntryMenu'
 import { RefreshIcon, UserMinusIcon } from '../components/icons'
@@ -69,9 +70,7 @@ export function Friends() {
           {friends.map((friend) => (
             <li key={friend.id} className="friend-item">
               <Link to={`/friends/${friend.id}`} className="friend-card">
-                <span className="avatar" aria-hidden="true">
-                  {friend.username?.[0]?.toUpperCase()}
-                </span>
+                <Avatar profile={friend} />
                 <span className="friend-name">{friend.username}</span>
                 <span className="friend-arrow" aria-hidden="true">
                   →

@@ -13,7 +13,7 @@ export function Privacy() {
       </Link>
 
       <h1>Privacy policy</h1>
-      <p className="legal-updated">Last updated 9 October 2026</p>
+      <p className="legal-updated">Last updated 12 October 2026</p>
 
       <p>
         Backlog is a small personal project for tracking what you want to watch, read, and play, and sharing it with
@@ -23,7 +23,7 @@ export function Privacy() {
       <h2>What we store</h2>
       <ul>
         <li>Your email address, used to sign you in.</li>
-        <li>The username you choose.</li>
+        <li>The username you choose, and a profile photo if you upload one.</li>
         <li>Your lists: the titles you add, their status, order, and series progress.</li>
         <li>
           Your friends (people who used your invite link, or whose link you used) and the recommendations you send and
@@ -40,14 +40,15 @@ export function Privacy() {
 
       <h2>Who can see your data</h2>
       <p>
-        Your friends on Backlog can see your username, your lists, and recommendations you send them. Nobody else can.
+        Your friends on Backlog can see your username, profile photo, your lists, and recommendations you send them. Nobody else can.
         We don&apos;t sell or share your data, and there are no ads or analytics.
       </p>
 
       <h2>Services we use</h2>
       <ul>
         <li>
-          <strong>Supabase</strong> handles sign-in and hosts the database.
+          <strong>Supabase</strong> handles sign-in and hosts the database and profile photos. Photos aren&apos;t
+          password-protected, so anyone with a photo&apos;s link could open it. Removing your photo deletes it.
         </li>
         <li>
           <strong>Vercel</strong> hosts the app.

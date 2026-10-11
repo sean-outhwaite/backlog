@@ -25,6 +25,12 @@ app.use('/api/friends', requireAuth, friendsRouter)
 app.use('/api/recommendations', requireAuth, recommendationsRouter)
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  // Body parsers flag client errors (too large, malformed) as `expose`; pass those through as-is.
+  const clientError = err as { expose?: boolean; status?: number; message?: string }
+  if (clientError.expose && clientError.status && clientError.status < 500) {
+    res.status(clientError.status).json({ error: clientError.message })
+    return
+  }
   console.error(err)
   res.status(500).json({ error: 'Internal server error' })
 })

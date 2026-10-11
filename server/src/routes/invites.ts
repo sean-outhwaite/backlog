@@ -51,7 +51,7 @@ invitesRouter.get(
       prisma.profile.findUniqueOrThrow({ where: { id: invite.ownerId } }),
       isOwn ? false : areFriends(userId, invite.ownerId),
     ])
-    res.json({ owner: { id: owner.id, username: owner.username }, isOwn, alreadyFriends })
+    res.json({ owner: { id: owner.id, username: owner.username, avatarUrl: owner.avatarUrl }, isOwn, alreadyFriends })
   }),
 )
 

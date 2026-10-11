@@ -49,4 +49,7 @@ export const api = {
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  // Sends a file as the raw request body, typed by the blob itself.
+  putBlob: <T>(path: string, blob: Blob) =>
+    request<T>(path, { method: 'PUT', body: blob, headers: { 'Content-Type': blob.type } }),
 }

@@ -35,7 +35,7 @@ friendsRouter.get(
 
     // The profile is only for the page's heading; fetched alongside the list so it costs no extra round trip.
     const [friend, entries] = await Promise.all([
-      prisma.profile.findUnique({ where: { id: friendId }, select: { id: true, username: true } }),
+      prisma.profile.findUnique({ where: { id: friendId }, select: { id: true, username: true, avatarUrl: true } }),
       prisma.listEntry.findMany({
         where: { userId: friendId },
         include: { mediaItem: true },

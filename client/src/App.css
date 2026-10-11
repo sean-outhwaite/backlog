@@ -506,6 +506,31 @@
   font-size: 11px;
 }
 
+.avatar--lg {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+.avatar--xl {
+  width: 96px;
+  height: 96px;
+  font-size: 40px;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.friend-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .app-main {
   flex: 1;
   min-width: 0;
@@ -2697,6 +2722,83 @@ html:has(.modal-dialog[open]) {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+.avatar-editor-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 4px 0;
+}
+
+/* Over the photo while an upload is in flight. */
+.avatar-editor-preview .spinner {
+  position: absolute;
+}
+
+.avatar-editor-hint {
+  margin: 0;
+  text-align: center;
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* Square, so the dimmed corners show what the circle leaves out. Size matches VIEWPORT in AvatarCropper. */
+.avatar-cropper-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-cropper {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--border);
+  cursor: grab;
+  /* Dragging pans the photo rather than scrolling the page on touch screens. */
+  touch-action: none;
+  user-select: none;
+}
+
+.avatar-cropper:active {
+  cursor: grabbing;
+}
+
+.avatar-cropper:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.avatar-cropper img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+.avatar-cropper-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 200px rgba(8, 6, 13, 0.6);
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+}
+
+.avatar-cropper-zoom {
+  width: 240px;
+  accent-color: var(--accent);
+}
+
+/* Pushed to the left, away from the main actions. */
+.avatar-editor-remove {
+  margin-right: auto;
+  color: var(--danger);
 }
 
 .btn-danger-solid {

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { api } from '../lib/api'
 import { getFriends } from '../lib/friends'
+import { Avatar } from './Avatar'
 import { CheckIcon, SearchIcon, SendIcon } from './icons'
 import { Spinner } from './Spinner'
 import type { MediaRef, Profile } from '../types'
@@ -159,9 +160,7 @@ function RecommendDialog({
           {shown.map((friend) => (
             <li key={friend.id}>
               <label className="recommend-friend">
-                <span className="avatar" aria-hidden="true">
-                  {friendName(friend)[0].toUpperCase()}
-                </span>
+                <Avatar profile={friend} />
                 <span className="recommend-friend-name">{friendName(friend)}</span>
                 <input type="checkbox" checked={selected.has(friend.id)} onChange={() => toggle(friend.id)} />
               </label>

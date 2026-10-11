@@ -76,11 +76,13 @@ export interface SeriesVolume extends MediaItem {
 export interface Profile {
   id: string
   username: string | null
+  // Null shows the username's initial instead.
+  avatarUrl: string | null
   createdAt: string
 }
 
 export interface InvitePreview {
-  owner: Pick<Profile, 'id' | 'username'>
+  owner: Pick<Profile, 'id' | 'username' | 'avatarUrl'>
   isOwn: boolean
   alreadyFriends: boolean
 }

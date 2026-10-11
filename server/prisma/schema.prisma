@@ -36,6 +36,8 @@ enum ListStatus {
 model Profile {
   id        String   @id
   username  String?  @unique
+  // Public URL of the photo in Supabase Storage's avatars bucket. Null shows the username's initial.
+  avatarUrl String?
   createdAt DateTime @default(now())
 
   listEntries             ListEntry[]
