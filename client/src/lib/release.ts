@@ -1,4 +1,5 @@
-import type { MediaItem } from '../types'
+import type { ListTab } from '../hooks/useStatusParam'
+import type { ListEntry, MediaItem } from '../types'
 
 // Whatever a title carries about its release: stored fields on a MediaItem, or `unreleased`
 // straight from a provider (search results, details).
@@ -39,4 +40,17 @@ export function releaseLabel(media: ReleaseInfo): { text: string; upcoming: bool
     if (age >= 0 && age < OUT_NOW_DAYS * 24 * 3600 * 1000) return { text: 'Out now', upcoming: false }
   }
   return null
+}
+
+// Which tab a list entry belongs on: a title that isn't out yet waits under Preorders whatever its
+// status, so the backlog only holds things you can get to now. A series is never upcoming itself.
+export function entryTab(entry: Pick<ListEntry, 'status' | 'mediaItem'>): ListTab {
+  return entry.mediaItem.kind !== 'series' && isUpcoming(entry.mediaItem) ? 'upcoming' : entry.status
+}
+
+// Soonest first; titles without a date yet go last.
+export function byReleaseDate(a: Pick<ListEntry, 'mediaItem'>, b: Pick<ListEntry, 'mediaItem'>) {
+  const time = (entry: Pick<ListEntry, 'mediaItem'>) =>
+    entry.mediaItem.releaseDate ? new Date(entry.mediaItem.releaseDate).getTime() : Number.MAX_SAFE_INTEGER
+  return time(a) - time(b)
 }

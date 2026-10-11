@@ -7,15 +7,16 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { StatusTabs } from '../components/StatusTabs'
-import { useStatusParam } from '../hooks/useStatusParam'
+import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
-import { isUpcoming } from '../lib/release'
+import { entryTab, isUpcoming, byReleaseDate } from '../lib/release'
 import type { CollectionSummary, ListEntry, ListStatus, Profile } from '../types'
 
-const EMPTY_MESSAGES: Record<ListStatus, string> = {
+const EMPTY_MESSAGES: Record<ListTab, string> = {
   want: 'Nothing in their backlog right now.',
   in_progress: 'Nothing on the go right now.',
   done: "They haven't finished anything yet.",
+  upcoming: 'Nothing coming up on their list.',
 }
 
 export function FriendList() {
@@ -53,8 +54,9 @@ export function FriendList() {
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
-  const countFor = (s: ListStatus) => entries.filter((entry) => entry.status === s).length
-  const visible = entries.filter((entry) => entry.status === status)
+  const countFor = (tab: ListTab) => entries.filter((entry) => entryTab(entry) === tab).length
+  const visible = entries.filter((entry) => entryTab(entry) === status)
+  if (status === 'upcoming') visible.sort(byReleaseDate)
 
   return (
     <div>

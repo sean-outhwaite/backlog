@@ -983,6 +983,24 @@
   color: var(--text-h);
 }
 
+.status-tabs-divider {
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin: 0 -6px -2px;
+  background: var(--border);
+}
+
+/* Preorders is a side room, not a step: smaller and lighter than the status tabs. */
+.status-tabs button.status-tab--upcoming {
+  font-size: 0.9em;
+  font-weight: 400;
+}
+
+.status-tabs button.status-tab--upcoming.active {
+  font-weight: 500;
+}
+
 .status-tabs button:active:not(:disabled) {
   transform: none;
 }
@@ -1003,7 +1021,12 @@
   pointer-events: none;
   transition:
     transform 0.3s var(--ease-spring),
-    width 0.3s var(--ease-spring);
+    width 0.3s var(--ease-spring),
+    background-color 0.3s;
+}
+
+.status-indicator--upcoming {
+  background: var(--teal);
 }
 
 .status-count {
@@ -1017,6 +1040,10 @@
 .status-tabs button.active .status-count {
   color: var(--accent);
   opacity: 1;
+}
+
+.status-tabs button.status-tab--upcoming.active .status-count {
+  color: var(--teal);
 }
 
 .type-filter {
@@ -1061,7 +1088,22 @@
   }
 
   .status-tabs {
+    gap: 16px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .status-tabs button {
+    white-space: nowrap;
+  }
+
+  /* Four labelled tabs don't fit a phone: Preorders keeps its icon and count, and its name for
+     screen readers. */
+  .status-label--upcoming {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
   .type-filter {

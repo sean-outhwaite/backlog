@@ -36,9 +36,10 @@ import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
 import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
-import { useStatusParam } from '../hooks/useStatusParam'
+import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+import { byReleaseDate, entryTab } from '../lib/release'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
 // The moves offered on each tab's cards; the first is the primary action.
@@ -144,10 +145,13 @@ export function Dashboard() {
   }
 
   const listed = entries.filter((entry) => entry.id !== removing?.id)
-  const countFor = (s: ListStatus) => listed.filter((entry) => entry.status === s).length
+  const countFor = (tab: ListTab) => listed.filter((entry) => entryTab(entry) === tab).length
   const visible = listed.filter(
-    (entry) => entry.status === status && (typeFilter === 'all' || entry.mediaItem.type === typeFilter),
+    (entry) => entryTab(entry) === status && (typeFilter === 'all' || entry.mediaItem.type === typeFilter),
   )
+  // Upcoming titles can't be started or finished, and wait in release order rather than your own.
+  const upcoming = status === 'upcoming'
+  if (upcoming) visible.sort(byReleaseDate)
 
   return (
     <div>
@@ -187,42 +191,56 @@ export function Dashboard() {
           )}
           {status === 'in_progress' && <p>Nothing on the go. Start something from up next and it'll show up here.</p>}
           {status === 'done' && <p>Nothing finished yet. Mark something done and it'll show up here.</p>}
+          {upcoming && <p>Nothing coming up. Titles you add before they're out wait here until release.</p>}
         </EmptyState>
       )}
 
-      <SortableGrid ids={visible.map((entry) => entry.id)} onMove={(from, to) => void moveEntry(from, to)}>
-        {visible.map((entry) => (
-          <SortableEntry key={entry.id} id={entry.id}>
+      {upcoming ? (
+        <div className="media-grid">
+          {visible.map((entry) => (
             <MediaCard
+              key={entry.id}
               mediaItem={entry.mediaItem}
-              progress={entry.progress}
-              stackCovers={entry.covers}
-              onSeriesAdded={load}
-              details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
-              // Start sits over the cover; the other tabs' main moves stay in the card body.
-              coverMain={
-                entry.status === 'want' && (
-                  <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                )
-              }
-              coverActions={
-                <>
-                  <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                  <EntryMenu onRemove={() => void removeEntry(entry)} />
-                </>
-              }
-              actions={
-                <>
-                  {entry.status !== 'want' && (
-                    <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                  )}
-                  <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
-                </>
-              }
+              coverActions={<EntryMenu onRemove={() => void removeEntry(entry)} />}
+              actions={<RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />}
             />
-          </SortableEntry>
-        ))}
-      </SortableGrid>
+          ))}
+        </div>
+      ) : (
+        <SortableGrid ids={visible.map((entry) => entry.id)} onMove={(from, to) => void moveEntry(from, to)}>
+          {visible.map((entry) => (
+            <SortableEntry key={entry.id} id={entry.id}>
+              <MediaCard
+                mediaItem={entry.mediaItem}
+                progress={entry.progress}
+                stackCovers={entry.covers}
+                onSeriesAdded={load}
+                details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+                // Start sits over the cover; the other tabs' main moves stay in the card body.
+                coverMain={
+                  entry.status === 'want' && (
+                    <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                  )
+                }
+                coverActions={
+                  <>
+                    <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                    <EntryMenu onRemove={() => void removeEntry(entry)} />
+                  </>
+                }
+                actions={
+                  <>
+                    {entry.status !== 'want' && (
+                      <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                    )}
+                    <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                  </>
+                }
+              />
+            </SortableEntry>
+          ))}
+        </SortableGrid>
+      )}
 
       {removing && (
         <Toast

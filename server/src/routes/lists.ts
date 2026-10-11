@@ -77,7 +77,10 @@ listsRouter.post(
         where: { seriesId: mediaItem.id, volume: isOutWhere() },
         select: { volumeId: true },
       })
-      await markVolumesDone(entry.id, volumes.map((volume) => volume.volumeId))
+      await markVolumesDone(
+        entry.id,
+        volumes.map((volume) => volume.volumeId),
+      )
     }
     const [withMedia] = await withProgress([{ ...entry, mediaItem }])
     res.status(201).json(withMedia)
@@ -101,9 +104,20 @@ listsRouter.patch(
       return
     }
 
-    const existing = await prisma.listEntry.findUnique({ where: { id: req.params.id } })
+    // Starting or finishing needs the title to be out, so its release is looked up alongside.
+    const { status } = parsed.data
+    const [existing, mediaItem] = await Promise.all([
+      prisma.listEntry.findUnique({ where: { id: req.params.id } }),
+      status && status !== 'want'
+        ? prisma.mediaItem.findFirst({ where: { listEntries: { some: { id: req.params.id } } } })
+        : null,
+    ])
     if (!existing || existing.userId !== userId) {
       res.status(404).json({ error: 'Not found' })
+      return
+    }
+    if (mediaItem && mediaItem.kind !== 'series' && !isOut(mediaItem)) {
+      res.status(409).json({ error: "That isn't out yet" })
       return
     }
 
@@ -252,7 +266,10 @@ listsRouter.post(
       where: { seriesId: link.seriesId, position: { lt: link.position }, volume: isOutWhere() },
       select: { volumeId: true },
     })
-    await markVolumesDone(entryId, earlier.map((volume) => volume.volumeId))
+    await markVolumesDone(
+      entryId,
+      earlier.map((volume) => volume.volumeId),
+    )
 
     res.json(await syncSeriesStatus(entry, link.seriesId))
   }),
