@@ -47,7 +47,7 @@ readAt?, createdAt)`, indexed on `(userId, readAt)`.
 - As built: "Add to a list" lives in the details dialog (every card opens it). Items are newest
   first with no reordering yet; a friend's Lists tab only shows non-empty lists.
 
-## 5. Pre-release tracking (movies, games, books)
+## 5. Pre-release tracking (movies, games, books) (done)
 
 - `MediaItem.releaseDate DateTime?`, `releaseCheckedAt`, `releaseNotifiedAt` (keep `releaseYear`).
 - Providers return a full date when known: TMDB `release_date`; RAWG `released` (ignored when

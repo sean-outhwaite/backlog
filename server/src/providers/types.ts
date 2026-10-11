@@ -7,6 +7,10 @@ export interface NormalizedMediaResult {
   coverImageUrl: string | null
   description: string | null
   releaseYear: number | null
+  // The exact release date (YYYY-MM-DD), where the provider gives a full one.
+  releaseDate: string | null
+  // Not out yet: a future date, or the provider says it's still to come (TBA, in production).
+  unreleased: boolean
 }
 
 // Search results also carry a rough popularity signal, used to rank results from different
@@ -86,6 +90,8 @@ export function toSeriesSearchResult(series: SeriesDetails): MediaSearchResult {
     coverImageUrl: series.coverImageUrl ?? first.coverImageUrl,
     description: series.description,
     releaseYear: first.releaseYear,
+    releaseDate: first.releaseDate,
+    unreleased: false,
     popularity: Math.max(...series.volumes.map((volume) => volume.popularity)),
     volumeCount: series.volumes.length,
     covers: series.volumes
@@ -111,6 +117,44 @@ export function joinNames(names: string[] | undefined, max = 4): string | null {
 export function yearFromDate(date: string | null | undefined): number | null {
   const match = date?.match(/\d{4}/)
   return match ? Number(match[0]) : null
+}
+
+// Today as YYYY-MM-DD (UTC), for comparing against release dates.
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+// A release date as YYYY-MM-DD with whether it names a day, or null if it can't be read. Partial
+// dates ("2025", "March 2025") are taken as the start of their year or month. Handles the shapes
+// providers use: "2026-10-26", "Jul 16, 2026", "July 16 2026", "16 July 2026", "March 2025", "2025".
+export function parseReleaseDate(date: string | null | undefined): { date: string; exact: boolean } | null {
+  const text = date?.trim().toLowerCase()
+  if (!text) return null
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const month = (name: string) => MONTHS.indexOf(name.slice(0, 3)) + 1
+
+  let match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (match && Number(match[2]) >= 1 && Number(match[2]) <= 12 && Number(match[3]) >= 1 && Number(match[3]) <= 31) {
+    return { date: `${match[1]}-${match[2]}-${match[3]}`, exact: true }
+  }
+  match = text.match(/^([a-z]+)\.? (\d{1,2}),? (\d{4})$/)
+  if (match && month(match[1]) > 0)
+    return { date: `${match[3]}-${pad(month(match[1]))}-${pad(Number(match[2]))}`, exact: true }
+  match = text.match(/^(\d{1,2}) ([a-z]+)\.?,? (\d{4})$/)
+  if (match && month(match[2]) > 0)
+    return { date: `${match[3]}-${pad(month(match[2]))}-${pad(Number(match[1]))}`, exact: true }
+  match = text.match(/^([a-z]+)\.?,? (\d{4})$/)
+  if (match && month(match[1]) > 0) return { date: `${match[2]}-${pad(month(match[1]))}-01`, exact: false }
+  const year = yearFromDate(text)
+  return year ? { date: `${year}-01-01`, exact: false } : null
+}
+
+// A full date, or null for a partial or missing one.
+export function exactDate(date: string | null | undefined): string | null {
+  const parsed = parseReleaseDate(date)
+  return parsed?.exact ? parsed.date : null
 }
 
 // Upper bound on any single provider HTTP call, so one hung API can't stall a search.

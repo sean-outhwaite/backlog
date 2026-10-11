@@ -6,6 +6,7 @@ import { asyncHandler } from '../lib/asyncHandler.js'
 import { isUniqueConstraintError, prisma } from '../lib/prisma.js'
 import { mediaRefSchema, refreshSeries, resolveMediaItem } from '../lib/mediaItems.js'
 import { derivedSeriesStatus, withProgress } from '../lib/series.js'
+import { isOut, isOutWhere } from '../lib/releases.js'
 
 export const listsRouter = Router()
 
@@ -144,6 +145,7 @@ async function findEntryVolume(userId: string, entryId: string, volumeId: string
     prisma.listEntry.findUnique({ where: { id: entryId }, include: { mediaItem: true } }),
     prisma.seriesVolume.findFirst({
       where: { volumeId, series: { listEntries: { some: { id: entryId, userId } } } },
+      include: { volume: { select: { releasePending: true, releaseDate: true, releaseCheckedAt: true } } },
     }),
   ])
   return entry && entry.userId === userId && link ? { entry, link } : null
@@ -153,8 +155,8 @@ async function findEntryVolume(userId: string, entryId: string, volumeId: string
 // derivedSeriesStatus) and returns it with its progress, as the volume routes respond.
 async function syncSeriesStatus(entry: ListEntry & { mediaItem: MediaItem }, seriesId: string) {
   const [total, byStatus] = await Promise.all([
-    prisma.seriesVolume.count({ where: { seriesId } }),
-    prisma.volumeProgress.groupBy({ by: ['status'], where: { entryId: entry.id }, _count: true }),
+    prisma.seriesVolume.count({ where: { seriesId, volume: isOutWhere() } }),
+    prisma.volumeProgress.groupBy({ by: ['status'], where: { entryId: entry.id, volume: isOutWhere() }, _count: true }),
   ])
   const done = byStatus.find((row) => row.status === 'done')?._count ?? 0
   const started = byStatus.reduce((sum, row) => sum + row._count, 0)
@@ -193,6 +195,10 @@ listsRouter.put(
       return
     }
     const { entry, link } = found
+    if (status !== 'want' && !isOut(link.volume)) {
+      res.status(409).json({ error: "That volume isn't out yet" })
+      return
+    }
 
     const key = { entryId_volumeId: { entryId, volumeId: link.volumeId } }
     const data = { status, completedAt: status === 'done' ? new Date() : null }
@@ -232,7 +238,7 @@ listsRouter.post(
     const { entry, link } = found
 
     const earlier = await prisma.seriesVolume.findMany({
-      where: { seriesId: link.seriesId, position: { lt: link.position } },
+      where: { seriesId: link.seriesId, position: { lt: link.position }, volume: isOutWhere() },
       select: { volumeId: true },
     })
     const volumeIds = earlier.map((volume) => volume.volumeId)

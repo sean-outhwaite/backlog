@@ -1,7 +1,9 @@
 import { env } from '../lib/env.js'
 import {
   joinNames,
+  parseReleaseDate,
   PROVIDER_TIMEOUT_MS,
+  todayIso,
   toFacts,
   yearFromDate,
   type MediaProvider,
@@ -27,13 +29,16 @@ interface OpenLibrarySearchDoc {
   cover_i?: number
   first_publish_year?: number
   readinglog_count?: number
+  // Every edition's publish date, in whatever shape it was entered.
+  publish_date?: string[]
   // Parallel arrays, one element per series the work belongs to.
   series_key?: string[]
   series_name?: string[]
   series_position?: string[]
 }
 
-const SEARCH_FIELDS = 'key,title,cover_i,first_publish_year,readinglog_count,series_key,series_name,series_position'
+const SEARCH_FIELDS =
+  'key,title,cover_i,first_publish_year,publish_date,readinglog_count,series_key,series_name,series_position'
 
 // Series volumes are few (Berserk has 43), so one page covers all but the longest runs.
 const MAX_SERIES_VOLUMES = 200
@@ -65,6 +70,7 @@ interface OpenLibraryIndexEntry {
   series_key?: string[]
   series_name?: string[]
   first_publish_year?: number
+  publish_date?: string[]
   number_of_pages_median?: number
 }
 
@@ -105,6 +111,21 @@ function toGenres(subjects: string[] | undefined): string[] {
   return genres
 }
 
+// A work is out once its first edition is. Upcoming only when that first edition has an exact date
+// still to come: a bare future year ("2027") is too vague to count down to.
+function releaseFields(publishDates: string[] | undefined, firstPublishYear: number | null) {
+  const earliest = (publishDates ?? [])
+    .map(parseReleaseDate)
+    .filter((parsed) => parsed !== null)
+    .sort((a, b) => a.date.localeCompare(b.date))[0]
+  const releaseDate = earliest?.exact ? earliest.date : null
+  return {
+    releaseYear: firstPublishYear ?? (earliest ? Number(earliest.date.slice(0, 4)) : null),
+    releaseDate,
+    unreleased: !!releaseDate && releaseDate > todayIso(),
+  }
+}
+
 function toSearchResult(doc: OpenLibrarySearchDoc): MediaSearchResult {
   return {
     externalId: workKeyToExternalId(doc.key),
@@ -112,7 +133,7 @@ function toSearchResult(doc: OpenLibrarySearchDoc): MediaSearchResult {
     title: doc.title,
     coverImageUrl: toCoverUrl(doc.cover_i),
     description: null,
-    releaseYear: doc.first_publish_year ?? null,
+    ...releaseFields(doc.publish_date, doc.first_publish_year ?? null),
     popularity: doc.readinglog_count ?? 0,
     series:
       doc.series_key?.[0] && doc.series_name?.[0]
@@ -199,7 +220,10 @@ export const openLibraryProvider: MediaProvider = {
       title: work.title,
       coverImageUrl: toCoverUrl(work.covers?.[0]),
       description: toDescription(work.description),
-      releaseYear: indexEntry?.first_publish_year ?? yearFromDate(work.first_publish_date),
+      ...releaseFields(
+        indexEntry?.publish_date ?? (work.first_publish_date ? [work.first_publish_date] : undefined),
+        indexEntry?.first_publish_year ?? yearFromDate(work.first_publish_date),
+      ),
       tagline: null,
       genres: toGenres(work.subjects),
       facts: toFacts([
@@ -221,7 +245,10 @@ export const openLibraryProvider: MediaProvider = {
 async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntry | null> {
   const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
   url.searchParams.set('q', `key:/works/${externalId}`)
-  url.searchParams.set('fields', 'author_name,first_publish_year,number_of_pages_median,series_key,series_name')
+  url.searchParams.set(
+    'fields',
+    'author_name,first_publish_year,publish_date,number_of_pages_median,series_key,series_name',
+  )
 
   try {
     const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))

@@ -57,13 +57,25 @@ const detailsQuerySchema = z.object({
 
 const SERIES_PART_LABELS: Record<MediaType, string> = { book: 'Volumes', movie: 'Films', tv: 'Seasons', game: 'Games' }
 
+// "26 Oct 2026", for a YYYY-MM-DD release date shown in a details fact.
+function formatDay(date: string) {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
 // A series' details, shaped like a title's so the details view can show either.
 async function seriesDetails(type: MediaType, externalId: string): Promise<MediaDetails | null> {
   const getSeries = providersByType[type].getSeries
   const series = getSeries ? await getSeries(externalId) : null
   if (!series) return null
   const [first] = series.volumes
-  const years = series.volumes.map((volume) => volume.releaseYear).filter((year): year is number => year !== null)
+  const out = series.volumes.filter((volume) => !volume.unreleased)
+  const next = series.volumes.find((volume) => volume.unreleased)
+  const years = out.map((volume) => volume.releaseYear).filter((year): year is number => year !== null)
   const span = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : null
   return {
     externalId,
@@ -72,11 +84,14 @@ async function seriesDetails(type: MediaType, externalId: string): Promise<Media
     coverImageUrl: series.coverImageUrl ?? first.coverImageUrl,
     description: series.description,
     releaseYear: first.releaseYear,
+    releaseDate: first.releaseDate,
+    unreleased: false,
     tagline: null,
     genres: [],
     facts: toFacts([
-      [SERIES_PART_LABELS[type], String(series.volumes.length)],
+      [SERIES_PART_LABELS[type], String(out.length)],
       [type === 'book' ? 'Published' : 'Released', span],
+      ['Next', next && `${next.title}${next.releaseDate ? `, out ${formatDay(next.releaseDate)}` : ''}`],
     ]),
     url: series.url,
   }

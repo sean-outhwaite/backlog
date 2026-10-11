@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { api } from '../lib/api'
 import { fetchMediaDetails } from '../lib/mediaDetails'
 import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
+import { releaseLabel, type ReleaseInfo } from '../lib/release'
 import type { MediaDetails, MediaItem, SeriesRef } from '../types'
 import { CoverArt } from './CoverArt'
 import { AddToListButton } from './AddToListButton'
@@ -11,7 +12,8 @@ import { BookmarkIcon, MediaTypeIcon, SeriesIcon } from './icons'
 import { Spinner } from './Spinner'
 
 export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'> &
-  Partial<Pick<MediaItem, 'kind'>>
+  Partial<Pick<MediaItem, 'kind'>> &
+  ReleaseInfo
 
 // Shows what the card already knows straight away, then fills in the rest from the provider.
 export function MediaDetailsDialog({
@@ -61,6 +63,8 @@ export function MediaDetailsDialog({
   }
 
   const close = () => dialogRef.current?.close()
+  // The live details know best; until they arrive, what the card had.
+  const release = releaseLabel(details ?? media)
   const coverStyle = media.coverImageUrl ? ({ '--cover': `url("${media.coverImageUrl}")` } as CSSProperties) : undefined
 
   return createPortal(
@@ -86,6 +90,11 @@ export function MediaDetailsDialog({
             <MediaTypeIcon type={media.type} />
             {mediaLabel(media)}
             {(details?.releaseYear ?? media.releaseYear) && <> · {details?.releaseYear ?? media.releaseYear}</>}
+            {release && (
+              <span className={`release-badge${release.upcoming ? ' release-badge--upcoming' : ''}`}>
+                {release.text}
+              </span>
+            )}
           </p>
           <h2 id="details-title">{media.title}</h2>
           {details?.tagline && <p className="details-tagline">{details.tagline}</p>}

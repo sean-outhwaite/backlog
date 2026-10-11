@@ -52,19 +52,26 @@ model Profile {
 }
 
 model MediaItem {
-  id            String      @id @default(uuid())
-  source        MediaSource
-  externalId    String
-  type          MediaType
-  kind          MediaKind   @default(title)
-  title         String
-  coverImageUrl String?
-  description   String?
-  releaseYear   Int?
-  createdAt     DateTime    @default(now())
+  id               String      @id @default(uuid())
+  source           MediaSource
+  externalId       String
+  type             MediaType
+  kind             MediaKind   @default(title)
+  title            String
+  coverImageUrl    String?
+  description      String?
+  releaseYear      Int?
+  // The exact release date, where the provider gives one.
+  releaseDate      DateTime?   @db.Date
+  // Not out yet, as of releaseCheckedAt. The daily release check (lib/releases) re-fetches these
+  // until they are, then tells whoever's tracking them. Null releaseCheckedAt means it's never
+  // been seen as upcoming, so its coming out isn't news (see checkReleases).
+  releasePending   Boolean     @default(false)
+  releaseCheckedAt DateTime?
+  createdAt        DateTime    @default(now())
   // Series only: when its volumes were last re-fetched from the provider (see refreshSeries).
   // Null means never, so series added before this column existed are refreshed on next use.
-  refreshedAt   DateTime?
+  refreshedAt      DateTime?
 
   listEntries     ListEntry[]
   recommendations Recommendation[]
@@ -76,6 +83,7 @@ model MediaItem {
 
   // kind is in the key because a provider's series and title ids are separate namespaces.
   @@unique([source, type, kind, externalId])
+  @@index([releasePending])
 }
 
 model SeriesVolume {

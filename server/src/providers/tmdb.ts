@@ -1,7 +1,9 @@
 import { env } from '../lib/env.js'
 import {
+  exactDate,
   joinNames,
   PROVIDER_TIMEOUT_MS,
+  todayIso,
   toFacts,
   yearFromDate,
   type MediaProvider,
@@ -43,6 +45,8 @@ interface TmdbCredits {
 
 interface TmdbMovieDetail extends TmdbMovieResult {
   belongs_to_collection: { id: number; name: string } | null
+  // "Released", or a stage before it ("Rumored", "Planned", "In Production", "Post Production"), or "Canceled".
+  status: string | null
   tagline: string | null
   runtime: number | null
   genres: TmdbNamed[]
@@ -117,6 +121,20 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? '' : 's'}`
 }
 
+// Release fields from a date, and (from a title's full details) its production status: undated
+// titles count as unreleased only when the status says they're still being made.
+function releaseFields(date: string | undefined, status?: string | null, upcomingStatuses: string[] = []) {
+  const releaseDate = exactDate(date)
+  return {
+    releaseYear: yearFromDate(date),
+    releaseDate,
+    unreleased: releaseDate ? releaseDate > todayIso() : !!status && upcomingStatuses.includes(status),
+  }
+}
+
+const UPCOMING_MOVIE_STATUSES = ['Rumored', 'Planned', 'In Production', 'Post Production']
+const UPCOMING_TV_STATUSES = ['Planned', 'In Production', 'Pilot']
+
 function toMovieResult(r: TmdbMovieResult): MediaSearchResult {
   return {
     externalId: String(r.id),
@@ -124,7 +142,7 @@ function toMovieResult(r: TmdbMovieResult): MediaSearchResult {
     title: r.title,
     coverImageUrl: toCoverUrl(r.poster_path),
     description: r.overview,
-    releaseYear: yearFromDate(r.release_date),
+    ...releaseFields(r.release_date),
     popularity: r.vote_count ?? 0,
   }
 }
@@ -136,20 +154,19 @@ function toTvResult(r: TmdbTvResult): MediaSearchResult {
     title: r.name,
     coverImageUrl: toCoverUrl(r.poster_path),
     description: r.overview,
-    releaseYear: yearFromDate(r.first_air_date),
+    ...releaseFields(r.first_air_date),
     popularity: r.vote_count ?? 0,
   }
 }
 
-// A collection's films in release order, numbered from 1. Only films that are out: undated or
-// future entries (like "Untitled James Bond Film") can't be watched yet. A collection with
-// fewer than two isn't a series worth tracking.
+// A collection's films in release order, numbered from 1. Films with a future date are kept (and
+// tracked until they're out); undated ones (like "Untitled James Bond Film") have no place in the
+// order yet, so they're left out. A collection with fewer than two isn't a series worth tracking.
 async function getCollection(externalId: string): Promise<SeriesDetails | null> {
   const collection = await tmdbFetch<TmdbCollectionDetail>(`/collection/${externalId}`, {})
   if (!collection?.id) return null
-  const today = new Date().toISOString().slice(0, 10)
   const volumes = collection.parts
-    .filter((part): part is TmdbMovieResult & { release_date: string } => !!part.release_date && part.release_date <= today)
+    .filter((part): part is TmdbMovieResult & { release_date: string } => !!exactDate(part.release_date))
     .sort((a, b) => a.release_date.localeCompare(b.release_date))
     .map((part, index): SeriesVolumeResult => ({ ...toMovieResult(part), position: index + 1 }))
   if (volumes.length < 2) return null
@@ -192,7 +209,7 @@ export const tmdbMovieProvider: MediaProvider = {
       title: r.title,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
-      releaseYear: yearFromDate(r.release_date),
+      ...releaseFields(r.release_date, r.status, UPCOMING_MOVIE_STATUSES),
       tagline: r.tagline || null,
       genres: names(r.genres),
       facts: toFacts([
@@ -232,7 +249,7 @@ export const tmdbTvProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: toCoverUrl(r.poster_path),
       description: r.overview,
-      releaseYear: yearFromDate(r.first_air_date),
+      ...releaseFields(r.first_air_date, r.status, UPCOMING_TV_STATUSES),
       tagline: r.tagline || null,
       genres: names(r.genres),
       facts: toFacts([

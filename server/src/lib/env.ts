@@ -10,6 +10,8 @@ export const env = {
   // Server-only key for writing avatars to Storage. Optional so the app still runs without it;
   // avatar uploads fail with 503 until it's set.
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  // Shared with Vercel Cron, which sends it as a bearer token. Without it the cron routes refuse.
+  cronSecret: process.env.CRON_SECRET,
   tmdbApiKey: required('TMDB_API_KEY'),
   rawgApiKey: required('RAWG_API_KEY'),
   openLibraryContact: process.env.OPEN_LIBRARY_CONTACT,

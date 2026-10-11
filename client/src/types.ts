@@ -13,14 +13,20 @@ export interface MediaItem {
   coverImageUrl: string | null
   description: string | null
   releaseYear: number | null
+  // Release tracking, as stored: see isUpcoming in lib/release for what they mean together.
+  releaseDate: string | null
+  releasePending: boolean
+  releaseCheckedAt: string | null
 }
 
 // Search results come straight from the providers and aren't stored, so they have no id.
 // `series` is set when a title belongs to a series that can be added whole.
 export type MediaSearchResult = Pick<
   MediaItem,
-  'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description' | 'releaseYear'
+  'externalId' | 'type' | 'title' | 'coverImageUrl' | 'description' | 'releaseYear' | 'releaseDate'
 > & {
+  // Straight from the provider: not out yet.
+  unreleased?: boolean
   series?: SeriesRef
   // Set on results that are a whole series rather than a single title.
   kind?: 'series'

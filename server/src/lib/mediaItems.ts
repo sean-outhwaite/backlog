@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { isUniqueConstraintError, prisma } from './prisma.js'
 import { providersByType, sourceByType } from '../providers/index.js'
 import type { SeriesDetails, SeriesVolumeResult } from '../providers/types.js'
+import { releaseColumns } from './releases.js'
 
 // Provider ids (TMDB/RAWG numbers, Open Library "OL123W") are interpolated into provider URL
 // paths, so only allow characters that can't change the path.
@@ -49,6 +50,7 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
         coverImageUrl: details.coverImageUrl,
         description: details.description,
         releaseYear: details.releaseYear,
+        ...releaseColumns(details),
       },
     })
   } catch (error) {
@@ -92,8 +94,8 @@ async function resolveSeries(type: MediaType, externalId: string): Promise<Media
 const SERIES_REFRESH_MS = 24 * 60 * 60 * 1000
 
 // Fetches a series from its provider again once it's stale, and links any new volumes. A new
-// volume means nobody has finished the series any more, so every entry for it marked done, whoever
-// it belongs to, moves back to in progress (what derivedSeriesStatus gives once done < total).
+// volume that's out means nobody has finished the series any more, so every entry for it marked done,
+// whoever it belongs to, moves back to in progress (what derivedSeriesStatus gives once done < total).
 // Volumes the provider no longer lists stay linked, along with anyone's progress on them. If the
 // provider fails, the stored series is used as it is and the refresh is tried again next time.
 export async function refreshSeries(series: MediaItem): Promise<MediaItem> {
@@ -122,15 +124,21 @@ export async function refreshSeries(series: MediaItem): Promise<MediaItem> {
 
     if (added.length > 0) {
       await linkVolumes(series, added)
-      await prisma.listEntry.updateMany({
-        where: { mediaItemId: series.id, status: 'done' },
-        data: { status: 'in_progress', completedAt: null },
-      })
+      // An announced volume doesn't reopen anyone's series until it's out (see checkReleases).
+      if (added.some((volume) => !volume.unreleased)) {
+        await prisma.listEntry.updateMany({
+          where: { mediaItemId: series.id, status: 'done' },
+          data: { status: 'in_progress', completedAt: null },
+        })
+      }
     }
     // Renumbering is rare (a provider fixing its data), so these are one update each.
     await Promise.all(
       moved.map(({ volumeId, position }) =>
-        prisma.seriesVolume.update({ where: { seriesId_volumeId: { seriesId: series.id, volumeId } }, data: { position } }),
+        prisma.seriesVolume.update({
+          where: { seriesId_volumeId: { seriesId: series.id, volumeId } },
+          data: { position },
+        }),
       ),
     )
   }
@@ -167,6 +175,7 @@ async function linkVolumes(series: MediaItem, volumes: SeriesVolumeResult[]): Pr
       coverImageUrl: volume.coverImageUrl,
       description: volume.description,
       releaseYear: volume.releaseYear,
+      ...releaseColumns(volume),
     })),
     skipDuplicates: true,
   })

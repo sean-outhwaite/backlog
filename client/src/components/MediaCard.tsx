@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import type { MediaItem } from '../types'
 import { mediaLabel, SERIES_WORDS } from '../lib/mediaTypes'
+import { releaseLabel } from '../lib/release'
 import { CoverArt } from './CoverArt'
 import { MediaDetailsDialog, type DetailsMedia } from './MediaDetailsDialog'
 import { MediaTypeIcon, SeriesIcon } from './icons'
@@ -36,6 +37,7 @@ export function MediaCard({
 }) {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const openDetails = () => setDetailsOpen(true)
+  const release = mediaItem.kind === 'series' ? null : releaseLabel(mediaItem)
 
   return (
     <article className={`media-card media-card--${mediaItem.type}`}>
@@ -74,6 +76,9 @@ export function MediaCard({
                 .filter(Boolean)
                 .join(' · ')}
             </span>
+          )}
+          {release && (
+            <span className={`release-badge${release.upcoming ? ' release-badge--upcoming' : ''}`}>{release.text}</span>
           )}
         </div>
         {actions && <div className="media-card-actions">{actions}</div>}

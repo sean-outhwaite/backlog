@@ -1,5 +1,6 @@
 import type { ListEntry, ListStatus, MediaItem } from '@prisma/client'
 import { prisma } from './prisma.js'
+import { isOut } from './releases.js'
 
 export interface SeriesProgress {
   done: number
@@ -12,6 +13,7 @@ const STACKED_COVERS = 3
 type EntryWithMedia = ListEntry & { mediaItem: MediaItem }
 
 // Adds `progress` (volumes done / total) and `covers` (for the card's stack) to series entries.
+// Only volumes that are out count: an announced one isn't something you can have finished yet.
 // Two queries, run in parallel, and none at all when there are no series in the list.
 export async function withProgress<T extends EntryWithMedia>(
   entries: T[],
@@ -23,7 +25,11 @@ export async function withProgress<T extends EntryWithMedia>(
     prisma.seriesVolume.findMany({
       where: { seriesId: { in: seriesEntries.map((entry) => entry.mediaItemId) } },
       orderBy: { position: 'asc' },
-      select: { seriesId: true, volumeId: true, volume: { select: { coverImageUrl: true } } },
+      select: {
+        seriesId: true,
+        volumeId: true,
+        volume: { select: { coverImageUrl: true, releasePending: true, releaseDate: true, releaseCheckedAt: true } },
+      },
     }),
     prisma.volumeProgress.findMany({
       where: { entryId: { in: seriesEntries.map((entry) => entry.id) }, status: 'done' },
@@ -33,6 +39,7 @@ export async function withProgress<T extends EntryWithMedia>(
 
   const volumesBySeries = new Map<string, typeof volumes>()
   for (const volume of volumes) {
+    if (!isOut(volume.volume)) continue
     volumesBySeries.set(volume.seriesId, [...(volumesBySeries.get(volume.seriesId) ?? []), volume])
   }
   const doneByEntry = new Map<string, Set<string>>()
@@ -43,7 +50,8 @@ export async function withProgress<T extends EntryWithMedia>(
   return entries.map((entry) => {
     if (entry.mediaItem.kind !== 'series') return entry
     const seriesVolumes = volumesBySeries.get(entry.mediaItemId) ?? []
-    const done = doneByEntry.get(entry.id) ?? new Set<string>()
+    const doneAny = doneByEntry.get(entry.id) ?? new Set<string>()
+    const done = new Set(seriesVolumes.map((volume) => volume.volumeId).filter((id) => doneAny.has(id)))
     return {
       ...entry,
       progress: { done: done.size, total: seriesVolumes.length },

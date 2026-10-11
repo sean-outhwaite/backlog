@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { env } from './lib/env.js'
 import { requireAuth } from './middleware/auth.js'
 import { collectionsRouter } from './routes/collections.js'
+import { cronRouter } from './routes/cron.js'
 import { friendsRouter } from './routes/friends.js'
 import { invitesRouter } from './routes/invites.js'
 import { listsRouter } from './routes/lists.js'
@@ -18,6 +19,7 @@ app.use(cors({ origin: env.clientOrigin }))
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }))
+app.use('/api/cron', cronRouter)
 
 app.use('/api/media', requireAuth, mediaRouter)
 app.use('/api/lists', requireAuth, listsRouter)

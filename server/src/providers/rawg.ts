@@ -1,7 +1,9 @@
 import { env } from '../lib/env.js'
 import {
+  exactDate,
   joinNames,
   PROVIDER_TIMEOUT_MS,
+  todayIso,
   toFacts,
   yearFromDate,
   type MediaProvider,
@@ -15,6 +17,8 @@ interface RawgGameSummary {
   name: string
   background_image: string | null
   released: string | null
+  // To be announced: `released` is then only a placeholder (often 31 December), not a real date.
+  tba?: boolean
   added?: number
 }
 
@@ -50,6 +54,15 @@ async function rawgFetch<T>(path: string, params: Record<string, string>): Promi
   return (await response.json()) as T
 }
 
+function releaseFields(r: RawgGameSummary) {
+  const releaseDate = r.tba ? null : exactDate(r.released)
+  return {
+    releaseYear: yearFromDate(r.released),
+    releaseDate,
+    unreleased: !!r.tba || (!!releaseDate && releaseDate > todayIso()),
+  }
+}
+
 function toSearchResult(r: RawgGameSummary): MediaSearchResult {
   return {
     externalId: String(r.id),
@@ -57,7 +70,7 @@ function toSearchResult(r: RawgGameSummary): MediaSearchResult {
     title: r.name,
     coverImageUrl: r.background_image,
     description: null,
-    releaseYear: yearFromDate(r.released),
+    ...releaseFields(r),
     popularity: r.added ?? 0,
   }
 }
@@ -85,7 +98,7 @@ export const rawgProvider: MediaProvider = {
       title: r.name,
       coverImageUrl: r.background_image,
       description: r.description_raw,
-      releaseYear: yearFromDate(r.released),
+      ...releaseFields(r),
       tagline: null,
       genres: r.genres.map((genre) => genre.name),
       facts: toFacts([
