@@ -69,31 +69,23 @@ recommendationsRouter.post(
 
     // Separate creates in parallel and the response assembled by hand: createMany and `include`
     // each turn the INSERT into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
-    const recommendations = await Promise.all(
-      toUserIds.map((toUserId) =>
-        prisma.recommendation.create({
-          data: { fromUserId: userId, toUserId, mediaItemId: mediaItem.id, message },
-        }),
+    // Each recipient's notification goes in alongside, since it doesn't reference the recommendation.
+    const [recommendations] = await Promise.all([
+      Promise.all(
+        toUserIds.map((toUserId) =>
+          prisma.recommendation.create({
+            data: { fromUserId: userId, toUserId, mediaItemId: mediaItem.id, message },
+          }),
+        ),
       ),
-    )
+      Promise.all(
+        toUserIds.map((toUserId) =>
+          prisma.notification.create({
+            data: { userId: toUserId, type: 'recommendation', actorId: userId, mediaItemId: mediaItem.id },
+          }),
+        ),
+      ),
+    ])
     res.status(201).json(recommendations.map((recommendation) => ({ ...recommendation, fromUser, mediaItem })))
-  }),
-)
-
-recommendationsRouter.patch(
-  '/:id/viewed',
-  asyncHandler(async (req, res) => {
-    const { userId } = req as unknown as AuthedRequest
-    const existing = await prisma.recommendation.findUnique({ where: { id: req.params.id } })
-    if (!existing || existing.toUserId !== userId) {
-      res.status(404).json({ error: 'Not found' })
-      return
-    }
-
-    const recommendation = await prisma.recommendation.update({
-      where: { id: req.params.id },
-      data: { viewedAt: new Date() },
-    })
-    res.json(recommendation)
   }),
 )

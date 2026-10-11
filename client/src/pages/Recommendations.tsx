@@ -5,6 +5,7 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
+import { useNotifications } from '../hooks/useNotifications'
 import { listedKeys, resultKey, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import type { ListEntry, MediaSearchResult, Recommendation } from '../types'
@@ -17,6 +18,7 @@ export function Recommendations() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const popular = usePopular('all', !loading && !hasPending)
+  const { markRead } = useNotifications()
 
   useEffect(() => {
     async function load() {
@@ -30,10 +32,10 @@ export function Recommendations() {
       setAddedIds((prev) => new Set([...prev, ...onList, ...listedKeys(entries)]))
       setHasPending(found.some((rec) => !onList.has(rec.mediaItemId)))
       setLoading(false)
-      await Promise.all(found.filter((r) => !r.viewedAt).map((r) => api.patch(`/api/recommendations/${r.id}/viewed`)))
+      await markRead('recommendation')
     }
     void load()
-  }, [])
+  }, [markRead])
 
   async function addToList(mediaItemId: string) {
     await api.post('/api/lists', { mediaItemId })

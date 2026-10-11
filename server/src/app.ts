@@ -7,6 +7,7 @@ import { friendsRouter } from './routes/friends.js'
 import { invitesRouter } from './routes/invites.js'
 import { listsRouter } from './routes/lists.js'
 import { mediaRouter } from './routes/media.js'
+import { notificationsRouter } from './routes/notifications.js'
 import { profileRouter } from './routes/profile.js'
 import { recommendationsRouter } from './routes/recommendations.js'
 
@@ -23,6 +24,7 @@ app.use('/api/profile', requireAuth, profileRouter)
 app.use('/api/invites', requireAuth, invitesRouter)
 app.use('/api/friends', requireAuth, friendsRouter)
 app.use('/api/recommendations', requireAuth, recommendationsRouter)
+app.use('/api/notifications', requireAuth, notificationsRouter)
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   // Body parsers flag client errors (too large, malformed) as `expose`; pass those through as-is.

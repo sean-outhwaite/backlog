@@ -46,6 +46,8 @@ model Profile {
   friendshipsAsB          Friendship[]     @relation("FriendshipUserB")
   recommendationsSent     Recommendation[] @relation("RecommendationFrom")
   recommendationsReceived Recommendation[] @relation("RecommendationTo")
+  notifications           Notification[]   @relation("NotificationRecipient")
+  notificationsCaused     Notification[]   @relation("NotificationActor")
 }
 
 model MediaItem {
@@ -68,6 +70,7 @@ model MediaItem {
   volumes         SeriesVolume[]   @relation("SeriesVolumes")
   inSeries        SeriesVolume[]   @relation("VolumeSeries")
   volumeProgress  VolumeProgress[]
+  notifications   Notification[]
 
   // kind is in the key because a provider's series and title ids are separate namespaces.
   @@unique([source, type, kind, externalId])
@@ -145,9 +148,35 @@ model Recommendation {
   mediaItemId String
   message     String?
   createdAt   DateTime  @default(now())
+  // No longer written: whether you've seen a recommendation is its Notification's readAt now.
   viewedAt    DateTime?
 
   fromUser  Profile   @relation("RecommendationFrom", fields: [fromUserId], references: [id])
   toUser    Profile   @relation("RecommendationTo", fields: [toUserId], references: [id])
   mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+}
+
+enum NotificationType {
+  recommendation
+  released
+}
+
+// Something to tell a user about, shown in the bell menu. Points at who did it and what it's about
+// rather than at the Recommendation itself, so it can be inserted alongside the recommendation
+// rather than after it, and so other kinds (a tracked title coming out) share the same shape.
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  actorId     String?
+  mediaItemId String?
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+
+  user      Profile    @relation("NotificationRecipient", fields: [userId], references: [id])
+  actor     Profile?   @relation("NotificationActor", fields: [actorId], references: [id])
+  mediaItem MediaItem? @relation(fields: [mediaItemId], references: [id])
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }

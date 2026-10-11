@@ -40,8 +40,8 @@ export function Privacy() {
 
       <h2>Who can see your data</h2>
       <p>
-        Your friends on Backlog can see your username, profile photo, your lists, and recommendations you send them. Nobody else can.
-        We don&apos;t sell or share your data, and there are no ads or analytics.
+        Your friends on Backlog can see your username, profile photo, your lists, and recommendations you send them.
+        Nobody else can. We don&apos;t sell or share your data, and there are no ads or analytics.
       </p>
 
       <h2>Services we use</h2>

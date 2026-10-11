@@ -105,3 +105,21 @@ export interface Recommendation {
   fromUser: Profile
   mediaItem: MediaItem
 }
+
+export type NotificationType = 'recommendation' | 'released'
+
+// Who did it (a recommendation's sender) and what it's about; either can be gone by the time it's read.
+export interface AppNotification {
+  id: string
+  type: NotificationType
+  createdAt: string
+  readAt: string | null
+  actor: Pick<Profile, 'id' | 'username' | 'avatarUrl'> | null
+  mediaItem: MediaItem | null
+}
+
+export interface UnreadCounts {
+  total: number
+  recommendation: number
+  released: number
+}

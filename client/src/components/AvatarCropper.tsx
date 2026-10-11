@@ -48,7 +48,8 @@ export function AvatarCropper({ image, onChange }: { image: PickedImage; onChang
     onChange({ x: -clamped.x / scale, y: -clamped.y / scale, side: VIEWPORT / scale })
   }
 
-  const moveBy = (dx: number, dy: number) => update({ ...viewRef.current, x: viewRef.current.x + dx, y: viewRef.current.y + dy })
+  const moveBy = (dx: number, dy: number) =>
+    update({ ...viewRef.current, x: viewRef.current.x + dx, y: viewRef.current.y + dy })
 
   // Zooms around the middle of the viewport, so whatever's centred stays centred.
   function zoomTo(zoom: number) {

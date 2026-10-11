@@ -3,7 +3,8 @@
 Phases in order; each builds on the ones before. Schema changes get a migration generated with
 `prisma migrate diff` and applied with `migrate deploy` (no shadow DB, see CLAUDE.md).
 
-## 1. Custom avatars + friend avatar on their backlog
+## 1. Custom avatars + friend avatar on their backlog (done)
+
 - `Profile.avatarUrl String?`. Public Supabase Storage bucket `avatars`, one object per user
   (`<userId>`), written by the server with `SUPABASE_SERVICE_ROLE_KEY` (server-only env var).
 - `PUT /api/profile/avatar` (raw WebP or JPEG body) and `DELETE /api/profile/avatar`. Stored URL gets
@@ -15,9 +16,10 @@ Phases in order; each builds on the ones before. Schema changes get a migration 
   picture fallback).
 - "Change photo" in the user menu. Friend page heading shows their avatar. Privacy page updated.
 
-## 2. Notifications (shared), starting with recommendations
+## 2. Notifications (shared), starting with recommendations (done)
+
 - `Notification (id, userId, type: recommendation | released, recommendationId?, mediaItemId?,
-  readAt?, createdAt)`, indexed on `(userId, readAt)`.
+readAt?, createdAt)`, indexed on `(userId, readAt)`.
 - Created per recipient alongside each recommendation (plain `create`s, in parallel).
 - `GET /api/notifications` (latest 30 + unread count), `POST /api/notifications/read`.
 - Bell with unread dot next to the user menu (in the page header on small screens) and a count
@@ -25,6 +27,7 @@ Phases in order; each builds on the ones before. Schema changes get a migration 
   Recommendations marks them read (replaces the `viewedAt` loop).
 
 ## 3. "Popular with friends"
+
 - `GET /api/media/popular/friends`: friends' `ListEntry` rows grouped by `mediaItemId`, scored by
   distinct friends (small bump for in_progress/done), ties by recency, excluding your own list.
   Top 12, with which friends have each (for avatars).
@@ -32,6 +35,7 @@ Phases in order; each builds on the ones before. Schema changes get a migration 
   when empty.
 
 ## 4. Named lists + "My picks"
+
 - `Collection (id, ownerId, name, description?, kind: custom | picks, position, createdAt)` and
   `CollectionItem (collectionId, mediaItemId, note?, position, addedAt)`, unique on
   `(collectionId, mediaItemId)`. "My picks" is created lazily. UI calls them "Lists".
@@ -42,6 +46,7 @@ Phases in order; each builds on the ones before. Schema changes get a migration 
 - No notifications for picks.
 
 ## 5. Pre-release tracking (movies, games, books)
+
 - `MediaItem.releaseDate DateTime?`, `releaseCheckedAt`, `releaseNotifiedAt` (keep `releaseYear`).
 - Providers return a full date when known: TMDB `release_date`; RAWG `released` (ignored when
   `tba`); Open Library only exact `publish_date`s ("2026-10-26", "Jul 16, 2026"), upcoming only if
