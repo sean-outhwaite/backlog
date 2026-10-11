@@ -11,7 +11,8 @@ import { NoteEditor } from '../components/NoteEditor'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { api, ApiError } from '../lib/api'
-import type { CollectionDetail, ListEntry } from '../types'
+import { isUpcoming } from '../lib/release'
+import type { CollectionDetail, ListEntry, ListStatus } from '../types'
 
 // One list, yours (editable) or a friend's (with add-to-backlog buttons).
 export function CollectionPage() {
@@ -66,8 +67,8 @@ export function CollectionPage() {
   const { isOwn, owner, items } = collection
   const isPicks = collection.kind === 'picks'
 
-  async function addToBacklog(mediaItemId: string) {
-    await api.post('/api/lists', { mediaItemId })
+  async function addToBacklog(mediaItemId: string, status: ListStatus) {
+    await api.post('/api/lists', { mediaItemId, status })
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
@@ -177,7 +178,8 @@ export function CollectionPage() {
                 {!isOwn && (
                   <AddToListButton
                     added={addedIds.has(item.mediaItemId)}
-                    onAdd={() => addToBacklog(item.mediaItemId)}
+                    onAdd={(status) => addToBacklog(item.mediaItemId, status)}
+                    upcoming={isUpcoming(item.mediaItem)}
                   />
                 )}
               </>

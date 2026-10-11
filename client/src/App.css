@@ -1629,6 +1629,63 @@ section + section {
   animation: pop 0.45s var(--ease-spring) both;
 }
 
+/* The add button with a ▾ joined on its right for adding as started or finished. */
+.add-split {
+  position: relative;
+  display: flex;
+}
+
+.add-split .add-button {
+  flex: 1;
+}
+
+.add-split.has-menu .add-button {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.add-split-trigger {
+  width: 34px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.add-split-trigger .icon {
+  transition: transform 0.2s;
+}
+
+.add-split-trigger[aria-expanded='true'] .icon {
+  transform: rotate(180deg);
+}
+
+/* Opens upward: the button sits at the foot of a card, which clips anything below it. */
+.add-split-panel {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: var(--shadow-lift);
+  transform-origin: bottom right;
+  animation: menu-in 0.18s var(--ease-spring) both;
+}
+
+.add-split-item {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 7px 12px 7px 10px;
+  border-radius: 7px;
+  color: var(--text-h);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 /* Dim the cover while that card's add is in flight. */
 .media-card:has(.add-button[aria-busy='true']) .media-card-cover img {
   opacity: 0.6;

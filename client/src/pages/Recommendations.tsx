@@ -10,7 +10,8 @@ import { useNotifications } from '../hooks/useNotifications'
 import { listedKeys, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import { friendNames } from '../lib/friends'
-import type { FriendsPick, ListEntry, MediaItem, MediaSearchResult, Recommendation } from '../types'
+import { isUpcoming } from '../lib/release'
+import type { FriendsPick, ListEntry, ListStatus, MediaItem, MediaSearchResult, Recommendation } from '../types'
 
 export function Recommendations() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -47,18 +48,18 @@ export function Recommendations() {
     void load()
   }, [markRead])
 
-  async function addToList(mediaItemId: string) {
-    await api.post('/api/lists', { mediaItemId })
+  async function addToList(mediaItemId: string, status: ListStatus) {
+    await api.post('/api/lists', { mediaItemId, status })
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
-  async function addFriendsPick(mediaItem: MediaItem) {
-    await api.post('/api/lists', { mediaItemId: mediaItem.id })
+  async function addFriendsPick(mediaItem: MediaItem, status: ListStatus) {
+    await api.post('/api/lists', { mediaItemId: mediaItem.id, status })
     setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
   }
 
-  async function addPopularToList(result: MediaSearchResult) {
-    await api.post('/api/lists', { type: result.type, externalId: result.externalId })
+  async function addPopularToList(result: MediaSearchResult, status: ListStatus) {
+    await api.post('/api/lists', { type: result.type, externalId: result.externalId, status })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
 
@@ -72,7 +73,11 @@ export function Recommendations() {
           mediaItem={result}
           actions={
             <>
-              <AddToListButton added={addedIds.has(resultKey(result))} onAdd={() => addPopularToList(result)} />
+              <AddToListButton
+                added={addedIds.has(resultKey(result))}
+                onAdd={(status) => addPopularToList(result, status)}
+                upcoming={isUpcoming(result)}
+              />
               <RecommendControl media={{ type: result.type, externalId: result.externalId }} title={result.title} />
             </>
           }
@@ -127,7 +132,11 @@ export function Recommendations() {
                   From <strong>{rec.fromUser.username}</strong>
                 </p>
                 {rec.message && <p className="recommendation-message">“{rec.message}”</p>}
-                <AddToListButton added={addedIds.has(rec.mediaItemId)} onAdd={() => addToList(rec.mediaItemId)} />
+                <AddToListButton
+                  added={addedIds.has(rec.mediaItemId)}
+                  onAdd={(status) => addToList(rec.mediaItemId, status)}
+                  upcoming={isUpcoming(rec.mediaItem)}
+                />
               </>
             }
           />
@@ -162,7 +171,11 @@ export function Recommendations() {
                           {pickedBy.length > 1 && <span className="note-by"> — {note.friend.username}</span>}
                         </p>
                       )}
-                      <AddToListButton added={addedIds.has(mediaItem.id)} onAdd={() => addToList(mediaItem.id)} />
+                      <AddToListButton
+                        added={addedIds.has(mediaItem.id)}
+                        onAdd={(status) => addToList(mediaItem.id, status)}
+                        upcoming={isUpcoming(mediaItem)}
+                      />
                     </>
                   }
                 />

@@ -8,7 +8,8 @@ import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
 import { listedKeys, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import type { ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
+import { isUpcoming } from '../lib/release'
+import type { ListEntry, ListStatus, MediaItem, MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 
 export function Search() {
@@ -68,23 +69,28 @@ export function Search() {
     void runSearch(query, type)
   }
 
-  async function addToList(result: MediaSearchResult) {
+  async function addToList(result: MediaSearchResult, status: ListStatus) {
     await api.post('/api/lists', {
       type: result.type,
       externalId: result.externalId,
       kind: result.kind,
+      status,
     })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
 
-  async function addFriendsPick(mediaItem: MediaItem) {
-    await api.post('/api/lists', { mediaItemId: mediaItem.id })
+  async function addFriendsPick(mediaItem: MediaItem, status: ListStatus) {
+    await api.post('/api/lists', { mediaItemId: mediaItem.id, status })
     setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
   }
 
   // Keyed by series rather than result, so every volume's card shows the series as added.
-  async function addSeries(result: MediaSearchResult, series: NonNullable<MediaSearchResult['series']>) {
-    await api.post('/api/lists', { type: result.type, externalId: series.externalId, kind: 'series' })
+  async function addSeries(
+    result: MediaSearchResult,
+    series: NonNullable<MediaSearchResult['series']>,
+    status: ListStatus,
+  ) {
+    await api.post('/api/lists', { type: result.type, externalId: series.externalId, kind: 'series', status })
     setAddedIds((prev) => new Set(prev).add(seriesKey(result.type, series.externalId)))
   }
 
@@ -154,13 +160,14 @@ export function Search() {
               <>
                 <AddToListButton
                   added={addedIds.has(resultKey(result))}
-                  onAdd={() => addToList(result)}
+                  onAdd={(status) => addToList(result, status)}
+                  upcoming={isUpcoming(result)}
                   label={result.kind === 'series' ? 'Add series' : undefined}
                 />
                 {result.series && (
                   <AddToListButton
                     added={addedIds.has(seriesKey(result.type, result.series.externalId))}
-                    onAdd={() => addSeries(result, result.series!)}
+                    onAdd={(status) => addSeries(result, result.series!, status)}
                     label="Add series"
                     icon={<SeriesIcon />}
                     primary={false}

@@ -9,6 +9,7 @@ import { LoadingState } from '../components/Spinner'
 import { StatusTabs } from '../components/StatusTabs'
 import { useStatusParam } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
+import { isUpcoming } from '../lib/release'
 import type { CollectionSummary, ListEntry, ListStatus, Profile } from '../types'
 
 const EMPTY_MESSAGES: Record<ListStatus, string> = {
@@ -47,8 +48,8 @@ export function FriendList() {
       .catch(() => {})
   }, [])
 
-  async function addToList(mediaItemId: string) {
-    await api.post('/api/lists', { mediaItemId })
+  async function addToList(mediaItemId: string, status: ListStatus) {
+    await api.post('/api/lists', { mediaItemId, status })
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
@@ -80,7 +81,8 @@ export function FriendList() {
             actions={
               <AddToListButton
                 added={addedIds.has(entry.mediaItemId)}
-                onAdd={() => addToList(entry.mediaItemId)}
+                onAdd={(status) => addToList(entry.mediaItemId, status)}
+                upcoming={isUpcoming(entry.mediaItem)}
                 label={entry.mediaItem.kind === 'series' ? 'Add series' : undefined}
               />
             }

@@ -41,31 +41,43 @@ listsRouter.post(
       return
     }
 
+    const { status } = parsed.data
     const mediaItem = await resolveMediaItem(parsed.data)
     if (!mediaItem) {
       res.status(404).json({ error: 'Media item not found' })
       return
     }
+    // A series is never upcoming itself; its unreleased volumes are left out of marking it done.
+    if (status !== 'want' && mediaItem.kind !== 'series' && !isOut(mediaItem)) {
+      res.status(409).json({ error: "That isn't out yet" })
+      return
+    }
 
     // mediaItem is attached here rather than via `include`, which would turn a single
     // INSERT into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
+    const data = { status, completedAt: status === 'done' ? new Date() : null }
     let entry
     try {
       entry = await prisma.listEntry.create({
-        data: {
-          userId,
-          mediaItemId: mediaItem.id,
-          status: parsed.data.status,
-          completedAt: parsed.data.status === 'done' ? new Date() : null,
-          position: newEntryPosition(),
-        },
+        data: { userId, mediaItemId: mediaItem.id, ...data, position: newEntryPosition() },
       })
     } catch (error) {
-      // Already on the list: return the existing entry, unchanged.
       if (!isUniqueConstraintError(error)) throw error
-      entry = await prisma.listEntry.findUniqueOrThrow({
-        where: { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } },
+      const key = { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } }
+      // Already on the list: a plain add leaves it as it is, but adding it as started or
+      // finished moves it there.
+      entry =
+        status === 'want'
+          ? await prisma.listEntry.findUniqueOrThrow({ where: key })
+          : await prisma.listEntry.update({ where: key, data })
+    }
+    // Finishing a series finishes every volume that's out, so its progress agrees.
+    if (status === 'done' && mediaItem.kind === 'series') {
+      const volumes = await prisma.seriesVolume.findMany({
+        where: { seriesId: mediaItem.id, volume: isOutWhere() },
+        select: { volumeId: true },
       })
+      await markVolumesDone(entry.id, volumes.map((volume) => volume.volumeId))
     }
     const [withMedia] = await withProgress([{ ...entry, mediaItem }])
     res.status(201).json(withMedia)
@@ -218,7 +230,6 @@ listsRouter.put(
 )
 
 // Marks every volume before this one done, for catching up on a series read ahead of the app.
-// Volumes already done keep their original completedAt.
 listsRouter.post(
   '/:id/volumes/:volumeId/done-before',
   asyncHandler(async (req, res) => {
@@ -241,23 +252,28 @@ listsRouter.post(
       where: { seriesId: link.seriesId, position: { lt: link.position }, volume: isOutWhere() },
       select: { volumeId: true },
     })
-    const volumeIds = earlier.map((volume) => volume.volumeId)
-    const completedAt = new Date()
-    // Started volumes are updated, untouched ones (no row yet) created: disjoint rows, so in parallel.
-    await Promise.all([
-      prisma.volumeProgress.updateMany({
-        where: { entryId, volumeId: { in: volumeIds }, status: { not: 'done' } },
-        data: { status: 'done', completedAt },
-      }),
-      prisma.volumeProgress.createMany({
-        data: volumeIds.map((id) => ({ entryId, volumeId: id, status: 'done' as const, completedAt })),
-        skipDuplicates: true,
-      }),
-    ])
+    await markVolumesDone(entryId, earlier.map((volume) => volume.volumeId))
 
     res.json(await syncSeriesStatus(entry, link.seriesId))
   }),
 )
+
+// Marks these volumes of a series entry done. Volumes already done keep their original completedAt.
+async function markVolumesDone(entryId: string, volumeIds: string[]) {
+  if (volumeIds.length === 0) return
+  const completedAt = new Date()
+  // Started volumes are updated, untouched ones (no row yet) created: disjoint rows, so in parallel.
+  await Promise.all([
+    prisma.volumeProgress.updateMany({
+      where: { entryId, volumeId: { in: volumeIds }, status: { not: 'done' } },
+      data: { status: 'done', completedAt },
+    }),
+    prisma.volumeProgress.createMany({
+      data: volumeIds.map((id) => ({ entryId, volumeId: id, status: 'done' as const, completedAt })),
+      skipDuplicates: true,
+    }),
+  ])
+}
 
 listsRouter.delete(
   '/:id',

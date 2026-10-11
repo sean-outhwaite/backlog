@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 import { fetchMediaDetails } from '../lib/mediaDetails'
 import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
 import { releaseLabel, type ReleaseInfo } from '../lib/release'
-import type { MediaDetails, MediaItem, SeriesRef } from '../types'
+import type { ListStatus, MediaDetails, MediaItem, SeriesRef } from '../types'
 import { CoverArt } from './CoverArt'
 import { AddToListButton } from './AddToListButton'
 import { AddToCollectionDialog } from './AddToCollectionDialog'
@@ -56,8 +56,8 @@ export function MediaDetailsDialog({
     }
   }, [media.type, media.externalId, media.kind])
 
-  async function addSeries(series: SeriesRef) {
-    await api.post('/api/lists', { type: media.type, externalId: series.externalId, kind: 'series' })
+  async function addSeries(series: SeriesRef, status: ListStatus) {
+    await api.post('/api/lists', { type: media.type, externalId: series.externalId, kind: 'series', status })
     setSeriesAdded(true)
     onSeriesAdded?.()
   }
@@ -134,7 +134,7 @@ export function MediaDetailsDialog({
                   </span>
                   <AddToListButton
                     added={seriesAdded}
-                    onAdd={() => addSeries(details.series!)}
+                    onAdd={(status) => addSeries(details.series!, status)}
                     label="Add series"
                     icon={<SeriesIcon />}
                     primary={false}
