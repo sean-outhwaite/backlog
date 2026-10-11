@@ -6,7 +6,8 @@ import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
 import type { MediaDetails, MediaItem, SeriesRef } from '../types'
 import { CoverArt } from './CoverArt'
 import { AddToListButton } from './AddToListButton'
-import { MediaTypeIcon, SeriesIcon } from './icons'
+import { AddToCollectionDialog } from './AddToCollectionDialog'
+import { BookmarkIcon, MediaTypeIcon, SeriesIcon } from './icons'
 import { Spinner } from './Spinner'
 
 export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'> &
@@ -34,6 +35,7 @@ export function MediaDetailsDialog({
   const [details, setDetails] = useState<MediaDetails | null>(null)
   const [failed, setFailed] = useState(false)
   const [seriesAdded, setSeriesAdded] = useState(false)
+  const [pickingList, setPickingList] = useState(false)
 
   useEffect(() => {
     // Guarded because StrictMode runs this twice, and showModal throws on an open dialog.
@@ -135,7 +137,13 @@ export function MediaDetailsDialog({
 
           {children}
 
-          {actions && <div className="details-actions">{actions}</div>}
+          <div className="details-actions">
+            {actions}
+            <button type="button" className="details-add-to-list" onClick={() => setPickingList(true)}>
+              <BookmarkIcon />
+              Add to a list
+            </button>
+          </div>
 
           {details && (
             <a className="details-source" href={details.url} target="_blank" rel="noreferrer">
@@ -144,6 +152,13 @@ export function MediaDetailsDialog({
           )}
         </div>
       </div>
+      {pickingList && (
+        <AddToCollectionDialog
+          media={{ type: media.type, externalId: media.externalId, kind: media.kind }}
+          title={media.title}
+          onClose={() => setPickingList(false)}
+        />
+      )}
     </dialog>,
     document.body,
   )

@@ -4,7 +4,7 @@ import { NotificationsProvider, useNotifications } from '../hooks/useNotificatio
 import type { UnreadCounts } from '../types'
 import { InProgressPanel } from './InProgressPanel'
 import { NotificationsMenu } from './NotificationsMenu'
-import { ListIcon, LogoMark, SearchIcon, SparklesIcon, UsersIcon } from './icons'
+import { BookmarkIcon, ListIcon, LogoMark, SearchIcon, SparklesIcon, UsersIcon } from './icons'
 import { UserMenu } from './UserMenu'
 
 // shortLabel is what the mobile bottom bar shows, where there's only room for a word. badge names
@@ -17,8 +17,9 @@ const NAV_ITEMS: {
   end?: boolean
   badge?: keyof UnreadCounts
 }[] = [
-  { to: '/', label: 'My backlog', shortLabel: 'List', icon: ListIcon, end: true },
+  { to: '/', label: 'My backlog', shortLabel: 'Backlog', icon: ListIcon, end: true },
   { to: '/search', label: 'Search', shortLabel: 'Search', icon: SearchIcon },
+  { to: '/lists', label: 'Lists', shortLabel: 'Lists', icon: BookmarkIcon },
   { to: '/friends', label: 'Friends', shortLabel: 'Friends', icon: UsersIcon },
   {
     to: '/recommendations',

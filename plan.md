@@ -34,7 +34,7 @@ readAt?, createdAt)`, indexed on `(userId, readAt)`.
 - Separate row above "Popular right now" on Search, and in the Recommendations fallback. Hidden
   when empty.
 
-## 4. Named lists + "My picks"
+## 4. Named lists + "My picks" (done)
 
 - `Collection (id, ownerId, name, description?, kind: custom | picks, position, createdAt)` and
   `CollectionItem (collectionId, mediaItemId, note?, position, addedAt)`, unique on
@@ -44,6 +44,8 @@ readAt?, createdAt)`, indexed on `(userId, readAt)`.
 - Lists page; "Add to list…" on cards (with optional note), "Pick for friends" shortcut; friend page
   gets Backlog | Lists tabs; Recommendations page gets a "Friends' picks" section.
 - No notifications for picks.
+- As built: "Add to a list" lives in the details dialog (every card opens it). Items are newest
+  first with no reordering yet; a friend's Lists tab only shows non-empty lists.
 
 ## 5. Pre-release tracking (movies, games, books)
 

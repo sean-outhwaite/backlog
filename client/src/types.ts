@@ -129,3 +129,43 @@ export interface FriendsPopularItem {
   mediaItem: MediaItem
   friends: Pick<Profile, 'id' | 'username' | 'avatarUrl'>[]
 }
+
+export type CollectionKind = 'custom' | 'picks'
+
+// A named list friends can browse ("Lists" in the UI); picks is each user's one list of
+// recommendations for every friend.
+export interface Collection {
+  id: string
+  ownerId: string
+  kind: CollectionKind
+  name: string
+  description: string | null
+  createdAt: string
+}
+
+// As listed: the newest few covers instead of the items. `contains` only when asked about a title.
+export interface CollectionSummary extends Collection {
+  itemCount: number
+  covers: string[]
+  contains?: boolean
+}
+
+export interface CollectionItem {
+  collectionId: string
+  mediaItemId: string
+  note: string | null
+  addedAt: string
+  mediaItem: MediaItem
+}
+
+export interface CollectionDetail extends Collection {
+  owner: Pick<Profile, 'id' | 'username' | 'avatarUrl'>
+  isOwn: boolean
+  items: CollectionItem[]
+}
+
+// A title from friends' picks, with everyone who picked it, newest first.
+export interface FriendsPick {
+  mediaItem: MediaItem
+  pickedBy: { friend: Pick<Profile, 'id' | 'username' | 'avatarUrl'>; note: string | null; addedAt: string }[]
+}

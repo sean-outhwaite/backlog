@@ -1,4 +1,5 @@
 import { Prisma, type MediaItem, type MediaType } from '@prisma/client'
+import { friendIdsSql } from './friendship.js'
 import { prisma } from './prisma.js'
 
 const LIMIT = 12
@@ -18,11 +19,7 @@ type Row = MediaItem & { friendIds: string[] }
 export async function friendsPopular(userId: string, type?: MediaType): Promise<FriendsPopularItem[]> {
   const typeFilter = type ? Prisma.sql`AND m."type" = ${type}::"MediaType"` : Prisma.empty
   const rows = await prisma.$queryRaw<Row[]>`
-    WITH friends AS (
-      SELECT CASE WHEN "userAId" = ${userId} THEN "userBId" ELSE "userAId" END AS id
-      FROM "Friendship"
-      WHERE "userAId" = ${userId} OR "userBId" = ${userId}
-    ),
+    WITH friends AS (${friendIdsSql(userId)}),
     ranked AS (
       SELECT
         e."mediaItemId",

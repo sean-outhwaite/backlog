@@ -25,6 +25,7 @@ export function Privacy() {
         <li>Your email address, used to sign you in.</li>
         <li>The username you choose, and a profile photo if you upload one.</li>
         <li>Your lists: the titles you add, their status, order, and series progress.</li>
+        <li>The named lists and picks you make, and any notes you add to them.</li>
         <li>
           Your friends (people who used your invite link, or whose link you used) and the recommendations you send and
           receive.
@@ -40,8 +41,9 @@ export function Privacy() {
 
       <h2>Who can see your data</h2>
       <p>
-        Your friends on Backlog can see your username, profile photo, your lists, and recommendations you send them.
-        Nobody else can. We don&apos;t sell or share your data, and there are no ads or analytics.
+        Your friends on Backlog can see your username, profile photo, your lists and picks (with their notes), and
+        recommendations you send them. Nobody else can. We don&apos;t sell or share your data, and there are no ads or
+        analytics.
       </p>
 
       <h2>Services we use</h2>

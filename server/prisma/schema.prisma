@@ -48,6 +48,7 @@ model Profile {
   recommendationsReceived Recommendation[] @relation("RecommendationTo")
   notifications           Notification[]   @relation("NotificationRecipient")
   notificationsCaused     Notification[]   @relation("NotificationActor")
+  collections             Collection[]
 }
 
 model MediaItem {
@@ -71,6 +72,7 @@ model MediaItem {
   inSeries        SeriesVolume[]   @relation("VolumeSeries")
   volumeProgress  VolumeProgress[]
   notifications   Notification[]
+  collectionItems CollectionItem[]
 
   // kind is in the key because a provider's series and title ids are separate namespaces.
   @@unique([source, type, kind, externalId])
@@ -179,4 +181,40 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+// "picks" is each user's one list of things they recommend to every friend (created lazily, and
+// kept to one per user by a partial unique index in the migration); "custom" lists are named by them.
+enum CollectionKind {
+  custom
+  picks
+}
+
+// A named list of titles that friends can browse, separate from the backlog (ListEntry). Called
+// "Lists" in the UI.
+model Collection {
+  id          String         @id @default(uuid())
+  ownerId     String
+  kind        CollectionKind @default(custom)
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+
+  owner Profile          @relation(fields: [ownerId], references: [id])
+  items CollectionItem[]
+
+  @@index([ownerId])
+}
+
+model CollectionItem {
+  collectionId String
+  mediaItemId  String
+  // Why it's on the list, shown to friends alongside it.
+  note         String?
+  addedAt      DateTime @default(now())
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  mediaItem  MediaItem  @relation(fields: [mediaItemId], references: [id])
+
+  @@id([collectionId, mediaItemId])
 }

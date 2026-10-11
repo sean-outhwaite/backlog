@@ -26,3 +26,11 @@ export function invalidateFriends() {
 
 // An invite link opened while signed out, kept across sign-in so AuthCallback can return to it.
 export const PENDING_INVITE_KEY = 'pendingInviteToken'
+
+// "Mazuko", "Mazuko and nick", "Mazuko, nick and 2 others".
+export function friendNames(friends: Pick<Profile, 'username'>[]) {
+  const names = friends.map((friend) => friend.username ?? 'a friend')
+  if (names.length <= 2) return names.join(' and ')
+  const others = names.length - 2
+  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? 'other' : 'others'}`
+}

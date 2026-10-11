@@ -1,4 +1,5 @@
 import { resultKey } from '../hooks/usePopular'
+import { friendNames } from '../lib/friends'
 import type { FriendsPopularItem, MediaItem } from '../types'
 import { AddToListButton } from './AddToListButton'
 import { Avatar } from './Avatar'
@@ -6,14 +7,6 @@ import { MediaCard } from './MediaCard'
 import { RecommendControl } from './RecommendControl'
 
 const AVATARS_SHOWN = 3
-
-// "Mazuko", "Mazuko and nick", "Mazuko, nick and 2 others".
-function friendNames(friends: FriendsPopularItem['friends']) {
-  const names = friends.map((friend) => friend.username ?? 'a friend')
-  if (names.length <= 2) return names.join(' and ')
-  const others = names.length - 2
-  return `${names[0]}, ${names[1]} and ${others} ${others === 1 ? 'other' : 'others'}`
-}
 
 // Cards for titles your friends have, each saying who. addedKeys holds resultKeys of what's on your list.
 export function FriendsPopularGrid({

@@ -4,6 +4,7 @@ import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { areFriends } from '../lib/friendship.js'
 import { withProgress } from '../lib/series.js'
+import { collectionSummaries } from '../lib/collections.js'
 
 export const friendsRouter = Router()
 
@@ -43,6 +44,25 @@ friendsRouter.get(
       }),
     ])
     res.json({ friend, entries: await withProgress(entries) })
+  }),
+)
+
+// A friend's lists, leaving out any with nothing in them.
+friendsRouter.get(
+  '/:id/collections',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const friendId = req.params.id
+    if (!(await areFriends(userId, friendId))) {
+      res.status(403).json({ error: 'Not friends with this user' })
+      return
+    }
+    // The profile is for the page's heading, like the backlog view's.
+    const [friend, collections] = await Promise.all([
+      prisma.profile.findUnique({ where: { id: friendId }, select: { id: true, username: true, avatarUrl: true } }),
+      collectionSummaries(friendId, { nonEmptyOnly: true }),
+    ])
+    res.json({ friend, collections })
   }),
 )
 

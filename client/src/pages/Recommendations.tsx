@@ -9,10 +9,13 @@ import { LoadingState } from '../components/Spinner'
 import { useNotifications } from '../hooks/useNotifications'
 import { listedKeys, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import type { ListEntry, MediaItem, MediaSearchResult, Recommendation } from '../types'
+import { friendNames } from '../lib/friends'
+import type { FriendsPick, ListEntry, MediaItem, MediaSearchResult, Recommendation } from '../types'
 
 export function Recommendations() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
+  // What friends have put on their picks lists: recommendations to everyone, rather than to you.
+  const [picks, setPicks] = useState<FriendsPick[]>([])
   // A recommendation is pending until its title is on your list. Decided once on load, so
   // adding one here doesn't make popular titles pop in underneath mid-visit.
   const [hasPending, setHasPending] = useState(true)
@@ -27,10 +30,12 @@ export function Recommendations() {
 
   useEffect(() => {
     async function load() {
-      const [found, entries] = await Promise.all([
+      const [found, entries, friendsPicks] = await Promise.all([
         api.get<Recommendation[]>('/api/recommendations'),
         api.get<ListEntry[]>('/api/lists'),
+        api.get<FriendsPick[]>('/api/collections/feed').catch(() => []),
       ])
+      setPicks(friendsPicks)
       const onList = new Set(entries.map((entry) => entry.mediaItemId))
       setRecommendations(found)
       // Recommendations are keyed by mediaItemId and popular titles by resultKey; both start from your list.
@@ -97,7 +102,7 @@ export function Recommendations() {
       <PageHeader title="Recommendations" subtitle="Things your friends think you'd love." />
 
       {loading && <LoadingState />}
-      {!loading && recommendations.length === 0 && (
+      {!loading && recommendations.length === 0 && picks.length === 0 && (
         <EmptyState className={popularGrid ? 'empty-state--popular' : undefined}>
           {popularGrid ? (
             <>
@@ -129,7 +134,45 @@ export function Recommendations() {
         ))}
       </div>
 
-      {recommendations.length > 0 && popularGrid && (
+      {picks.length > 0 && (
+        <section className="popular-section picks-section">
+          <h2>Friends' picks</h2>
+          <div className="media-grid">
+            {picks.map(({ mediaItem, pickedBy }) => {
+              const note = pickedBy.find((pick) => pick.note)
+              return (
+                <MediaCard
+                  key={mediaItem.id}
+                  mediaItem={mediaItem}
+                  actions={
+                    <>
+                      <p className="friends-have">
+                        <span className="avatar-stack" aria-hidden="true">
+                          {pickedBy.slice(0, 3).map(({ friend }) => (
+                            <Avatar key={friend.id} profile={friend} size="sm" />
+                          ))}
+                        </span>
+                        <span>
+                          <strong>{friendNames(pickedBy.map((pick) => pick.friend))}</strong> picked this
+                        </span>
+                      </p>
+                      {note && (
+                        <p className="recommendation-message">
+                          “{note.note}”
+                          {pickedBy.length > 1 && <span className="note-by"> — {note.friend.username}</span>}
+                        </p>
+                      )}
+                      <AddToListButton added={addedIds.has(mediaItem.id)} onAdd={() => addToList(mediaItem.id)} />
+                    </>
+                  }
+                />
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {(recommendations.length > 0 || picks.length > 0) && popularGrid && (
         <EmptyState className="empty-state--popular">
           <p>You're all caught up on recommendations. Here's what's popular right now.</p>
           {popularGrid}

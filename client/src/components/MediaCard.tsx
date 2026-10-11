@@ -101,7 +101,7 @@ export function MediaCard({
 
 // Volumes fanned back to front over a blurred wash of the front one, so a series reads as a pile of
 // books at a glance. Rendered back to front so DOM order stacks them; data-slot is the depth.
-function CoverStack({ covers }: { covers: string[] }) {
+export function CoverStack({ covers }: { covers: string[] }) {
   const style = { '--cover': `url(${JSON.stringify(covers[0])})` } as CSSProperties
   return (
     <span className="cover-stack" style={style} data-count={covers.length}>

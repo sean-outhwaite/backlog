@@ -3,10 +3,12 @@ import './App.css'
 import { Layout } from './components/Layout'
 import { RequireAuth } from './components/RequireAuth'
 import { AuthCallback } from './pages/AuthCallback'
+import { CollectionPage } from './pages/CollectionPage'
 import { Dashboard } from './pages/Dashboard'
 import { Friends } from './pages/Friends'
-import { FriendList } from './pages/FriendList'
+import { FriendCollections, FriendList } from './pages/FriendList'
 import { InviteRedeem } from './pages/InviteRedeem'
+import { Lists } from './pages/Lists'
 import { Onboarding } from './pages/Onboarding'
 import { Privacy } from './pages/Privacy'
 import { Recommendations } from './pages/Recommendations'
@@ -28,6 +30,9 @@ export default function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:id" element={<FriendList />} />
+          <Route path="/friends/:id/lists" element={<FriendCollections />} />
+          <Route path="/lists" element={<Lists />} />
+          <Route path="/lists/:id" element={<CollectionPage />} />
           <Route path="/recommendations" element={<Recommendations />} />
         </Route>
       </Route>

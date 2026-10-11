@@ -3,6 +3,7 @@ import express from 'express'
 import type { NextFunction, Request, Response } from 'express'
 import { env } from './lib/env.js'
 import { requireAuth } from './middleware/auth.js'
+import { collectionsRouter } from './routes/collections.js'
 import { friendsRouter } from './routes/friends.js'
 import { invitesRouter } from './routes/invites.js'
 import { listsRouter } from './routes/lists.js'
@@ -25,6 +26,7 @@ app.use('/api/invites', requireAuth, invitesRouter)
 app.use('/api/friends', requireAuth, friendsRouter)
 app.use('/api/recommendations', requireAuth, recommendationsRouter)
 app.use('/api/notifications', requireAuth, notificationsRouter)
+app.use('/api/collections', requireAuth, collectionsRouter)
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   // Body parsers flag client errors (too large, malformed) as `expose`; pass those through as-is.

@@ -104,6 +104,30 @@ export function BellIcon() {
   )
 }
 
+export function BookmarkIcon() {
+  return (
+    <Icon>
+      <path d="M6 4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17l-6-4-6 4z" />
+    </Icon>
+  )
+}
+
+export function StarIcon() {
+  return (
+    <Icon>
+      <path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" />
+    </Icon>
+  )
+}
+
+export function PencilIcon() {
+  return (
+    <Icon>
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+    </Icon>
+  )
+}
+
 export function PlayIcon() {
   return (
     <Icon>
