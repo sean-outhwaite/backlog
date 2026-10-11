@@ -3097,17 +3097,83 @@ html:has(.modal-dialog[open]) {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  box-shadow: 0 0 0 200px rgba(8, 6, 13, 0.6);
-  outline: 2px solid rgba(255, 255, 255, 0.8);
+  /* The ring is inset: anything outside the circle would be clipped at the viewport's edges. */
+  box-shadow:
+    0 0 0 200px rgba(8, 6, 13, 0.6),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.8);
   pointer-events: none;
 }
 
+/* Drawn by hand: a native range's thumb stops short of the track's ends, leaving a sliver of fill
+   at the minimum. --fill puts the fill's end under the thumb's centre, which travels the track
+   less one thumb width. */
 .avatar-cropper-zoom {
+  --thumb: 16px;
+  --fill: calc(var(--thumb) / 2 + var(--progress) * (100% - var(--thumb)));
   width: 240px;
-  accent-color: var(--accent);
+  height: var(--thumb);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
-/* Pushed to the left, away from the main actions. */
+.avatar-cropper-zoom:focus {
+  box-shadow: none;
+}
+
+.avatar-cropper-zoom::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--border) var(--fill));
+}
+
+.avatar-cropper-zoom::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--border) var(--fill));
+}
+
+.avatar-cropper-zoom::-webkit-slider-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((4px - var(--thumb)) / 2);
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  -webkit-appearance: none;
+  transition: transform 0.15s var(--ease-spring);
+}
+
+.avatar-cropper-zoom::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform 0.15s var(--ease-spring);
+}
+
+.avatar-cropper-zoom:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.avatar-cropper-zoom:active::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+.avatar-cropper-zoom:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.avatar-cropper-zoom:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* A small link under the photo, away from the main actions. */
 .avatar-editor-remove {
   align-self: center;
   padding: 4px 10px;

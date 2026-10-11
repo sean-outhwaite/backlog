@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react'
 import type { AvatarCrop, PickedImage } from '../lib/avatarImage'
 
 // Matches .avatar-cropper's size in App.css.
@@ -128,6 +128,8 @@ export function AvatarCropper({ image, onChange }: { image: PickedImage; onChang
         step={0.01}
         value={view.zoom}
         aria-label="Zoom"
+        // Read by the track's fill in App.css.
+        style={{ '--progress': (view.zoom - 1) / (MAX_ZOOM - 1) } as CSSProperties}
         onChange={(event) => zoomTo(Number(event.target.value))}
       />
     </div>
