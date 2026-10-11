@@ -6,10 +6,11 @@ import { centreCrop, cropAvatar, pickImage, releaseImage, type AvatarCrop, type 
 import type { Profile } from '../types'
 import { Avatar } from './Avatar'
 import { AvatarCropper } from './AvatarCropper'
+import { CameraIcon } from './icons'
 import { Spinner } from './Spinner'
 
 // Upload or remove your profile photo. A picked photo is positioned under the circle first and
-// only uploaded on Save; removing saves straight away. Done just closes.
+// only uploaded on Save; removing saves straight away. Done (or Not now) just closes.
 export function AvatarDialog({ onClose }: { onClose: () => void }) {
   const { profile, refreshProfile } = useAuth()
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -103,11 +104,33 @@ export function AvatarDialog({ onClose }: { onClose: () => void }) {
           </>
         ) : (
           <>
-            <div className="avatar-editor-preview">
+            <button
+              type="button"
+              className="avatar-editor-preview"
+              onClick={() => inputRef.current?.click()}
+              disabled={working}
+              aria-label={profile?.avatarUrl ? 'Choose another photo' : 'Choose a photo'}
+            >
               <Avatar profile={profile} size="xl" />
-              {working && <Spinner />}
-            </div>
+              {working ? (
+                <Spinner />
+              ) : (
+                <span className="avatar-editor-camera">
+                  <CameraIcon />
+                </span>
+              )}
+            </button>
             <p className="avatar-editor-hint">Friends see this next to your name.</p>
+            {profile?.avatarUrl && (
+              <button
+                type="button"
+                className="btn-quiet avatar-editor-remove"
+                onClick={() => void save(() => api.delete<Profile>('/api/profile/avatar'))}
+                disabled={working}
+              >
+                Remove photo
+              </button>
+            )}
           </>
         )}
         {status === 'error' && <p className="error-text">That didn't work. Try again, or pick a different photo?</p>}
@@ -133,27 +156,32 @@ export function AvatarDialog({ onClose }: { onClose: () => void }) {
             </>
           ) : (
             <>
-              {profile?.avatarUrl && (
-                <button
-                  type="button"
-                  className="btn-quiet avatar-editor-remove"
-                  onClick={() => void save(() => api.delete<Profile>('/api/profile/avatar'))}
-                  disabled={working}
-                >
-                  Remove photo
-                </button>
+              {/* With a photo set, finishing is the main action; without one, choosing is. */}
+              {profile?.avatarUrl ? (
+                <>
+                  <button type="button" onClick={() => inputRef.current?.click()} disabled={working}>
+                    Change photo
+                  </button>
+                  <button type="button" className="btn-primary" onClick={close} autoFocus>
+                    Done
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={close}>
+                    Not now
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={working}
+                    autoFocus
+                  >
+                    Choose photo
+                  </button>
+                </>
               )}
-              <button type="button" className="btn-quiet" onClick={close}>
-                Done
-              </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => inputRef.current?.click()}
-                disabled={working}
-              >
-                {profile?.avatarUrl ? 'Choose another' : 'Choose photo'}
-              </button>
             </>
           )}
         </footer>
