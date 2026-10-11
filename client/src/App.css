@@ -3211,6 +3211,12 @@ html:has(.modal-dialog[open]) {
   overflow-y: auto;
 }
 
+/* Fills the dialog, so the fields run full width and the footer lines up on the right. */
+.collection-form {
+  flex: 1;
+  gap: 16px;
+}
+
 .collection-form label,
 .collection-picker-note {
   display: flex;
@@ -3233,7 +3239,8 @@ html:has(.modal-dialog[open]) {
 .collection-picker-note textarea,
 .note-editor textarea {
   resize: vertical;
-  font: inherit;
+  min-height: 72px;
+  line-height: 1.4;
 }
 
 .collection-picker-title {

@@ -91,6 +91,7 @@ a {
 
 input,
 select,
+textarea,
 button {
   font: inherit;
   border: 1px solid var(--border);
@@ -107,7 +108,8 @@ button {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-bg);
