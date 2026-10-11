@@ -26,7 +26,7 @@ readAt?, createdAt)`, indexed on `(userId, readAt)`.
   badge on the Recommendations nav item; refreshed on route change and tab focus. Opening
   Recommendations marks them read (replaces the `viewedAt` loop).
 
-## 3. "Popular with friends"
+## 3. "Popular with friends" (done)
 
 - `GET /api/media/popular/friends`: friends' `ListEntry` rows grouped by `mediaItemId`, scored by
   distinct friends (small bump for in_progress/done), ties by recency, excluding your own list.

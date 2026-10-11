@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
+import { FriendsPopularGrid } from '../components/FriendsPopularGrid'
 import { SearchIcon, SeriesIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
-import { listedKeys, resultKey, seriesKey, usePopular } from '../hooks/usePopular'
+import { listedKeys, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import type { ListEntry, MediaSearchResult, MediaType } from '../types'
+import type { ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 
 export function Search() {
@@ -26,8 +27,12 @@ export function Search() {
       .catch(() => {})
   }, [])
 
-  // Before the first search, show what's popular for the selected type instead of an empty page.
-  const popular = usePopular(typeFilter)
+  // Before the first search, show what's popular for the selected type instead of an empty page:
+  // first what your friends have, then what's popular generally (minus anything already shown above).
+  const friendsPopular = useFriendsPopular(typeFilter)
+  const generalPopular = usePopular(typeFilter)
+  const friendsKeys = new Set(friendsPopular?.map((item) => resultKey(item.mediaItem)))
+  const popular = generalPopular && generalPopular.filter((result) => !friendsKeys.has(resultKey(result)))
 
   // Changing the filter mid-search can leave two requests in flight; only the latest one may land.
   const latestSearch = useRef(0)
@@ -70,6 +75,11 @@ export function Search() {
       kind: result.kind,
     })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
+  }
+
+  async function addFriendsPick(mediaItem: MediaItem) {
+    await api.post('/api/lists', { mediaItemId: mediaItem.id })
+    setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
   }
 
   // Keyed by series rather than result, so every volume's card shows the series as added.
@@ -118,6 +128,12 @@ export function Search() {
         <EmptyState icon={<SearchIcon />}>
           <p>Look something up to start building your backlog.</p>
         </EmptyState>
+      )}
+      {!loading && searchedQuery === null && !!friendsPopular?.length && (
+        <section className="popular-section">
+          <h2>Popular with your friends</h2>
+          <FriendsPopularGrid items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+        </section>
       )}
       {!loading && searchedQuery === null && !!popular?.length && <h2>Popular right now</h2>}
       {!loading && searchedQuery !== null && results.length === 0 && (

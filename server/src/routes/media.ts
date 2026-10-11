@@ -7,6 +7,8 @@ import type { MediaType } from '@prisma/client'
 import { toFacts, type MediaDetails, type MediaSearchResult } from '../providers/types.js'
 import { externalIdSchema } from '../lib/mediaItems.js'
 import { rankSearchResults } from '../lib/searchRanking.js'
+import { friendsPopular } from '../lib/friendsPopular.js'
+import type { AuthedRequest } from '../middleware/auth.js'
 
 const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
 const SERIES_PER_TYPE_WHEN_UNFILTERED = 2
@@ -107,7 +109,10 @@ mediaRouter.get(
       }
       const searchSeries = provider.searchSeries
       if (!searchSeries) return [titles]
-      return [titles, { label: `${mediaType} series`, run: () => searchSeries(q), limit: SERIES_PER_TYPE_WHEN_UNFILTERED }]
+      return [
+        titles,
+        { label: `${mediaType} series`, run: () => searchSeries(q), limit: SERIES_PER_TYPE_WHEN_UNFILTERED },
+      ]
     })
     const settled = await Promise.allSettled(
       searches.map(async ({ run, limit }) => {
@@ -158,6 +163,21 @@ mediaRouter.get(
     }
 
     res.json(interleave(lists))
+  }),
+)
+
+// What your friends have on their lists that you don't, for a row above the general popular list.
+// Unlike the rest of this router it reads the DB, since it's about your friends' lists.
+mediaRouter.get(
+  '/popular/friends',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    const parsed = popularQuerySchema.safeParse(req.query)
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() })
+      return
+    }
+    res.json(await friendsPopular(userId, parsed.data.type))
   }),
 )
 

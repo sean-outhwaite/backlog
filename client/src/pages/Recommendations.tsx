@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
+import { FriendsPopularGrid } from '../components/FriendsPopularGrid'
 import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
 import { useNotifications } from '../hooks/useNotifications'
-import { listedKeys, resultKey, usePopular } from '../hooks/usePopular'
+import { listedKeys, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import type { ListEntry, MediaSearchResult, Recommendation } from '../types'
+import type { ListEntry, MediaItem, MediaSearchResult, Recommendation } from '../types'
 
 export function Recommendations() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -17,7 +18,11 @@ export function Recommendations() {
   const [hasPending, setHasPending] = useState(true)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
-  const popular = usePopular('all', !loading && !hasPending)
+  const generalPopular = usePopular('all', !loading && !hasPending)
+  const friendsPopular = useFriendsPopular('all', !loading && !hasPending)
+  // Friends' titles first; the general list leaves out any already shown there.
+  const friendsKeys = new Set(friendsPopular?.map((item) => resultKey(item.mediaItem)))
+  const popular = generalPopular && generalPopular.filter((result) => !friendsKeys.has(resultKey(result)))
   const { markRead } = useNotifications()
 
   useEffect(() => {
@@ -42,13 +47,19 @@ export function Recommendations() {
     setAddedIds((prev) => new Set(prev).add(mediaItemId))
   }
 
+  async function addFriendsPick(mediaItem: MediaItem) {
+    await api.post('/api/lists', { mediaItemId: mediaItem.id })
+    setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
+  }
+
   async function addPopularToList(result: MediaSearchResult) {
     await api.post('/api/lists', { type: result.type, externalId: result.externalId })
     setAddedIds((prev) => new Set(prev).add(resultKey(result)))
   }
 
-  // Shown in place of the empty state, or under the recommendations once none are pending.
-  const popularGrid = !!popular?.length && (
+  // Shown in place of the empty state, or under the recommendations once none are pending. With
+  // friends' titles too, each part gets a heading.
+  const generalGrid = !!popular?.length && (
     <div className="media-grid">
       {popular.map((result) => (
         <MediaCard
@@ -63,6 +74,22 @@ export function Recommendations() {
         />
       ))}
     </div>
+  )
+  const popularGrid = friendsPopular?.length ? (
+    <>
+      <section className="popular-section">
+        <h2>Popular with your friends</h2>
+        <FriendsPopularGrid items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+      </section>
+      {generalGrid && (
+        <section className="popular-section">
+          <h2>Popular right now</h2>
+          {generalGrid}
+        </section>
+      )}
+    </>
+  ) : (
+    generalGrid
   )
 
   return (

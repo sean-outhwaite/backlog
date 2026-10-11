@@ -123,3 +123,9 @@ export interface UnreadCounts {
   recommendation: number
   released: number
 }
+
+// A title on friends' lists but not yours, with the friends who have it (see GET /api/media/popular/friends).
+export interface FriendsPopularItem {
+  mediaItem: MediaItem
+  friends: Pick<Profile, 'id' | 'username' | 'avatarUrl'>[]
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
-import type { ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
+import type { FriendsPopularItem, ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 
 // What's popular right now, for filling pages that would otherwise be empty. null while
 // loading (or while disabled); an empty array if nothing could be fetched.
@@ -25,6 +25,31 @@ export function usePopular(type: MediaType | 'all', enabled = true): MediaSearch
   }, [type, enabled])
 
   return enabled ? popular : null
+}
+
+// Titles on your friends' lists that aren't on yours, most shared first. Same null/empty contract
+// as usePopular.
+export function useFriendsPopular(type: MediaType | 'all', enabled = true): FriendsPopularItem[] | null {
+  const [items, setItems] = useState<FriendsPopularItem[] | null>(null)
+
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+    const params = type === 'all' ? '' : `?type=${type}`
+    api
+      .get<FriendsPopularItem[]>(`/api/media/popular/friends${params}`)
+      .then((found) => {
+        if (!cancelled) setItems(found)
+      })
+      .catch(() => {
+        if (!cancelled) setItems([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [type, enabled])
+
+  return enabled ? items : null
 }
 
 export function seriesKey(type: MediaType, seriesExternalId: string) {

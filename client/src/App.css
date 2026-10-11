@@ -1753,6 +1753,38 @@ section + section {
   color: var(--text-h);
 }
 
+.friends-have {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.friends-have strong {
+  color: var(--text-h);
+}
+
+/* Overlapping, each ringed in the card's colour so they read as separate faces. */
+.avatar-stack {
+  display: flex;
+  flex: none;
+}
+
+.avatar-stack .avatar {
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.avatar-stack .avatar + .avatar {
+  margin-left: -6px;
+}
+
+.popular-section + .popular-section,
+.popular-section + h2 {
+  margin-top: 32px;
+}
+
 .recommendation-message {
   position: relative;
   padding: 8px 10px;
