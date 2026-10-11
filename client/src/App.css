@@ -9,6 +9,9 @@
 .app-sidebar {
   position: sticky;
   top: 0;
+  /* Above the main column, so menus that open out of the sidebar (notifications) cover the page
+     rather than slipping under its positioned content. */
+  z-index: 10;
   display: flex;
   flex-direction: column;
   flex: none;
