@@ -43,10 +43,7 @@ export function Notifications() {
 
   return (
     <div>
-      <PageHeader
-        title="Notifications"
-        subtitle="Recommendations from friends, and titles you're waiting on coming out."
-      />
+      <PageHeader title="Notifications" subtitle="Recommendations from friends, and preorder release updates." />
 
       {failed && (
         <EmptyState>
