@@ -5,6 +5,7 @@ import { fetchMediaDetails } from '../lib/mediaDetails'
 import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
 import { releaseLabel, type ReleaseInfo } from '../lib/release'
 import type { ListStatus, MediaDetails, MediaItem, SeriesRef } from '../types'
+import { ClampedDescription } from './ClampedDescription'
 import { CoverArt } from './CoverArt'
 import { AddToListButton } from './AddToListButton'
 import { AddToCollectionDialog } from './AddToCollectionDialog'
@@ -125,7 +126,9 @@ export function MediaDetailsDialog({
                   ))}
                 </dl>
               )}
-              {details.description && <p className="details-description">{details.description}</p>}
+              {details.description && (
+                <ClampedDescription text={details.description} className="details-description" lines={6} />
+              )}
               {details.series && offerSeries && media.kind !== 'series' && (
                 <div className="details-series">
                   <SeriesIcon />

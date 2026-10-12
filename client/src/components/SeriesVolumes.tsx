@@ -4,6 +4,7 @@ import { fetchMediaDetails } from '../lib/mediaDetails'
 import { SERIES_WORDS } from '../lib/mediaTypes'
 import { formatReleaseDate, isUpcoming } from '../lib/release'
 import type { ListEntry, ListStatus, MediaDetails, MediaType, SeriesVolume } from '../types'
+import { ClampedDescription } from './ClampedDescription'
 import { CoverArt } from './CoverArt'
 import { CheckIcon, PlayIcon } from './icons'
 import { Spinner } from './Spinner'
@@ -229,7 +230,7 @@ function VolumePanel({
         </p>
         <h4>{volume.title}</h4>
         {description ? (
-          <ClampedDescription text={description} />
+          <ClampedDescription text={description} className="volume-panel-description" lines={4} />
         ) : !details && !failed ? (
           <p className="details-loading" role="status">
             <Spinner /> Loading description…
@@ -260,37 +261,6 @@ function VolumePanel({
           </button>
         )}
       </div>
-    </div>
-  )
-}
-
-// A description cut to a few lines, with a toggle to read the rest. The toggle only shows when
-// the text is actually cut off, measured rather than guessed from its length, since that depends
-// on the panel's width. The panel is keyed by volume, so picking another one starts collapsed.
-function ClampedDescription({ text }: { text: string }) {
-  const ref = useRef<HTMLParagraphElement>(null)
-  const [expanded, setExpanded] = useState(false)
-  const [overflowing, setOverflowing] = useState(false)
-
-  useEffect(() => {
-    const element = ref.current
-    if (!element || expanded) return
-    const measure = () => setOverflowing(element.scrollHeight > element.clientHeight + 1)
-    const observer = new ResizeObserver(measure)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [text, expanded])
-
-  return (
-    <div className="volume-panel-description-wrap">
-      <p ref={ref} className={`volume-panel-description${expanded ? '' : ' is-clamped'}`}>
-        {text}
-      </p>
-      {(overflowing || expanded) && (
-        <button className="volume-panel-more" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
-          {expanded ? 'Show less' : 'Show more'}
-        </button>
-      )}
     </div>
   )
 }

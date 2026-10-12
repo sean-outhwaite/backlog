@@ -2648,15 +2648,16 @@ html:has(.modal-dialog[open]) {
   color: var(--text);
 }
 
-.volume-panel-description.is-clamped {
+.volume-panel-description.is-clamped,
+.details-description.is-clamped {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
+  -webkit-line-clamp: var(--clamp-lines);
+  line-clamp: var(--clamp-lines);
   overflow: hidden;
 }
 
-.volume-panel-description-wrap {
+.clamped-description {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2664,7 +2665,7 @@ html:has(.modal-dialog[open]) {
 }
 
 /* A text link rather than a button, so it reads as part of the description. */
-.volume-panel-more {
+.clamped-description-more {
   padding: 0;
   border: 0;
   background: none;
@@ -2673,13 +2674,13 @@ html:has(.modal-dialog[open]) {
   font-weight: 600;
 }
 
-.volume-panel-more:hover:not(:disabled) {
+.clamped-description-more:hover:not(:disabled) {
   background: none;
   color: var(--accent);
   text-decoration: underline;
 }
 
-.volume-panel-more:active:not(:disabled) {
+.clamped-description-more:active:not(:disabled) {
   transform: none;
 }
 
