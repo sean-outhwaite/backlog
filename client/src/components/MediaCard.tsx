@@ -15,6 +15,7 @@ export function MediaCard({
   stackCovers,
   partCount,
   details,
+  detailsActions,
   offerSeries,
   onSeriesAdded,
 }: {
@@ -32,6 +33,8 @@ export function MediaCard({
   partCount?: number
   // Extra content for the details dialog, such as a series' volumes.
   details?: ReactNode
+  // The details dialog's actions, when the card's own (sized for the cover) don't suit a toolbar.
+  detailsActions?: ReactNode
   offerSeries?: boolean
   onSeriesAdded?: () => void
 }) {
@@ -89,11 +92,13 @@ export function MediaCard({
           offerSeries={offerSeries}
           onSeriesAdded={onSeriesAdded}
           actions={
-            <>
-              {coverActions}
-              {coverMain}
-              {actions}
-            </>
+            detailsActions ?? (
+              <>
+                {coverActions}
+                {coverMain}
+                {actions}
+              </>
+            )
           }
           onClose={() => setDetailsOpen(false)}
         >

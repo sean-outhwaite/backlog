@@ -203,6 +203,12 @@ export function Dashboard() {
               mediaItem={entry.mediaItem}
               coverActions={<EntryMenu onRemove={() => void removeEntry(entry)} />}
               actions={<RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />}
+              detailsActions={
+                <>
+                  <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                  <EntryMenu onRemove={() => void removeEntry(entry)} triggerClassName="details-more" />
+                </>
+              }
             />
           ))}
         </div>
@@ -234,6 +240,13 @@ export function Dashboard() {
                       <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
                     )}
                     <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                  </>
+                }
+                detailsActions={
+                  <>
+                    <DetailsMoves entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                    <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                    <EntryMenu onRemove={() => void removeEntry(entry)} triggerClassName="details-more" />
                   </>
                 }
               />
@@ -351,6 +364,25 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
       {main.to !== 'done' && <MainIcon />}
       {!main.iconOnly && main.label}
     </button>
+  )
+}
+
+// In the details dialog there's room to spell every move out, the first one primary as on the card.
+// They get a row of their own, above the actions that don't change the entry's status.
+function DetailsMoves({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
+  return (
+    <div className="details-moves">
+      {STATUS_ACTIONS[entry.status].map((action, index) => {
+        const ActionIcon = ACTION_ICONS[action.to]
+        const primary = index === 0 && entry.status !== 'done'
+        return (
+          <button key={action.to} className={primary ? 'btn-primary' : undefined} onClick={() => onMove(action.to)}>
+            <ActionIcon />
+            {action.label}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
