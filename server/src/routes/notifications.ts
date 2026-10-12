@@ -6,20 +6,35 @@ import { prisma } from '../lib/prisma.js'
 
 export const notificationsRouter = Router()
 
-const NOTIFICATION_LIMIT = 30
+const listSchema = z.object({
+  unread: z.enum(['true', 'false']).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  // The id of the last notification on the previous page.
+  cursor: z.string().uuid().optional(),
+})
 
-// The newest notifications, for the bell menu. Only fetched when it's opened.
+// Newest first, a page at a time: the bell menu asks for its few unread ones, the
+// notifications page for everything.
 notificationsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const { userId } = req as unknown as AuthedRequest
-    const notifications = await prisma.notification.findMany({
-      where: { userId },
+    const parsed = listSchema.safeParse(req.query)
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() })
+      return
+    }
+    const { unread, limit, cursor } = parsed.data
+    // One extra row says whether there's another page.
+    const found = await prisma.notification.findMany({
+      where: { userId, ...(unread === 'true' && { readAt: null }) },
       include: { actor: { select: { id: true, username: true, avatarUrl: true } }, mediaItem: true },
-      orderBy: { createdAt: 'desc' },
-      take: NOTIFICATION_LIMIT,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
     })
-    res.json(notifications)
+    const notifications = found.slice(0, limit)
+    res.json({ notifications, nextCursor: found.length > limit ? notifications[limit - 1].id : null })
   }),
 )
 
@@ -42,9 +57,12 @@ notificationsRouter.get(
   }),
 )
 
-const markReadSchema = z.object({ type: z.enum(['recommendation', 'released']).optional() })
+const markReadSchema = z.object({
+  type: z.enum(['recommendation', 'released']).optional(),
+  ids: z.array(z.string().uuid()).max(50).optional(),
+})
 
-// Marks every unread notification read, or just those of one type.
+// Marks every unread notification read, or just those of one type, or just the given ones.
 notificationsRouter.post(
   '/read',
   asyncHandler(async (req, res) => {
@@ -55,7 +73,12 @@ notificationsRouter.post(
       return
     }
     await prisma.notification.updateMany({
-      where: { userId, readAt: null, ...(parsed.data.type && { type: parsed.data.type }) },
+      where: {
+        userId,
+        readAt: null,
+        ...(parsed.data.type && { type: parsed.data.type }),
+        ...(parsed.data.ids && { id: { in: parsed.data.ids } }),
+      },
       data: { readAt: new Date() },
     })
     res.status(204).end()

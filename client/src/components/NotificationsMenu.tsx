@@ -3,19 +3,21 @@ import { Link } from 'react-router-dom'
 import { useNotifications } from '../hooks/useNotifications'
 import { usePopover } from '../hooks/usePopover'
 import { api } from '../lib/api'
-import { timeAgo } from '../lib/timeAgo'
-import type { AppNotification } from '../types'
-import { Avatar } from './Avatar'
-import { CoverArt } from './CoverArt'
+import type { NotificationPage } from '../types'
 import { BellIcon } from './icons'
+import { NotificationItem } from './NotificationItem'
 import { Spinner } from './Spinner'
 
-// Bell in the sidebar (the top bar on phones). Opening it loads the latest notifications and
-// marks them all read; the ones that were unread stay highlighted until it's closed.
+// How many new notifications the menu has room for; the rest are on the notifications page.
+const MENU_LIMIT = 5
+
+// Bell in the sidebar (the top bar on phones). Opening it shows the newest few unread notifications
+// and marks just those read, so any it hadn't room for keep the badge up until they're seen on the
+// notifications page. Read ones only appear there.
 export function NotificationsMenu() {
-  const { unread, markRead } = useNotifications()
+  const { unread, markSeen } = useNotifications()
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<AppNotification[] | null>(null)
+  const [page, setPage] = useState<NotificationPage | null>(null)
   const [failed, setFailed] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -29,16 +31,20 @@ export function NotificationsMenu() {
     }
     setOpen(true)
     setFailed(false)
+    // Otherwise the last open's list flashes up, with since-read items still showing as new.
+    setPage(null)
     api
-      .get<AppNotification[]>('/api/notifications')
+      .get<NotificationPage>(`/api/notifications?unread=true&limit=${MENU_LIMIT}`)
       .then((found) => {
-        setNotifications(found)
-        if (found.some((notification) => !notification.readAt)) void markRead()
+        setPage(found)
+        void markSeen(found.notifications)
       })
       .catch(() => setFailed(true))
   }
 
   const label = unread.total > 0 ? `Notifications, ${unread.total} unread` : 'Notifications'
+  // Once the shown ones are marked read, whatever's still unread is what didn't fit.
+  const more = page?.nextCursor ? unread.total : 0
 
   return (
     <div className="notifications-menu" ref={rootRef}>
@@ -59,51 +65,29 @@ export function NotificationsMenu() {
         <div className="notifications-panel" id="notifications-panel">
           <h2 className="notifications-heading">Notifications</h2>
           {failed && <p className="notifications-empty">Couldn't load notifications.</p>}
-          {!failed && notifications === null && (
+          {!failed && page === null && (
             <p className="notifications-empty">
               <Spinner />
             </p>
           )}
-          {notifications?.length === 0 && <p className="notifications-empty">Nothing yet.</p>}
-          {!!notifications?.length && (
+          {page?.notifications.length === 0 && <p className="notifications-empty">No new notifications.</p>}
+          {!!page?.notifications.length && (
             <ul className="notifications-list">
-              {notifications.map((notification) => (
+              {page.notifications.map((notification) => (
                 <li key={notification.id}>
                   <NotificationItem notification={notification} onFollow={() => setOpen(false)} />
                 </li>
               ))}
             </ul>
           )}
+          {page && (
+            <Link to="/notifications" className="notifications-all" onClick={() => setOpen(false)}>
+              {more > 0 ? `See all · ${more} more new` : 'See all notifications'}
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
         </div>
       )}
     </div>
-  )
-}
-
-function NotificationItem({ notification, onFollow }: { notification: AppNotification; onFollow: () => void }) {
-  const { type, actor, mediaItem } = notification
-  const title = mediaItem?.title ?? 'something'
-  const className = notification.readAt ? 'notification' : 'notification notification--unread'
-
-  if (type === 'recommendation') {
-    return (
-      <Link to="/recommendations" className={className} onClick={onFollow}>
-        <Avatar profile={actor} />
-        <span className="notification-text">
-          <strong>{actor?.username ?? 'A friend'}</strong> recommended <strong>{title}</strong>
-          <time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time>
-        </span>
-      </Link>
-    )
-  }
-
-  return (
-    <Link to="/" className={className} onClick={onFollow}>
-      <span className="notification-cover">{mediaItem && <CoverArt media={mediaItem} />}</span>
-      <span className="notification-text">
-        <strong>{title}</strong> is out now
-        <time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time>
-      </span>
-    </Link>
   )
 }

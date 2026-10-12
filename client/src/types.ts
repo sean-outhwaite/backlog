@@ -124,6 +124,12 @@ export interface AppNotification {
   mediaItem: MediaItem | null
 }
 
+// A page of GET /api/notifications. nextCursor is passed back as ?cursor= for the next one.
+export interface NotificationPage {
+  notifications: AppNotification[]
+  nextCursor: string | null
+}
+
 export interface UnreadCounts {
   total: number
   recommendation: number

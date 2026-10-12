@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { NotificationType, UnreadCounts } from '../types'
+import type { AppNotification, NotificationType, UnreadCounts } from '../types'
 
 // While the tab is visible, how often to look for new notifications between navigations.
 const POLL_MS = 2 * 60 * 1000
@@ -11,6 +11,7 @@ const NONE: UnreadCounts = { total: 0, recommendation: 0, released: 0 }
 interface NotificationsContextValue {
   unread: UnreadCounts
   markRead: (type?: NotificationType) => Promise<void>
+  markSeen: (notifications: AppNotification[]) => Promise<void>
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null)
@@ -51,7 +52,26 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     [refresh],
   )
 
-  return <NotificationsContext.Provider value={{ unread, markRead }}>{children}</NotificationsContext.Provider>
+  // Marks just these read, e.g. the few the bell menu has room for, leaving the rest unread.
+  const markSeen = useCallback(
+    async (notifications: AppNotification[]) => {
+      const seen = notifications.filter((notification) => !notification.readAt)
+      if (seen.length === 0) return
+      const count = (type: NotificationType) => seen.filter((notification) => notification.type === type).length
+      setUnread((current) => ({
+        total: Math.max(0, current.total - seen.length),
+        recommendation: Math.max(0, current.recommendation - count('recommendation')),
+        released: Math.max(0, current.released - count('released')),
+      }))
+      await api.post('/api/notifications/read', { ids: seen.map((notification) => notification.id) })
+      refresh()
+    },
+    [refresh],
+  )
+
+  return (
+    <NotificationsContext.Provider value={{ unread, markRead, markSeen }}>{children}</NotificationsContext.Provider>
+  )
 }
 
 export function useNotifications(): NotificationsContextValue {

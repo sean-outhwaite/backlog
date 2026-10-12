@@ -9,6 +9,7 @@ import { Friends } from './pages/Friends'
 import { FriendCollections, FriendList } from './pages/FriendList'
 import { InviteRedeem } from './pages/InviteRedeem'
 import { Lists } from './pages/Lists'
+import { Notifications } from './pages/Notifications'
 import { Onboarding } from './pages/Onboarding'
 import { Privacy } from './pages/Privacy'
 import { Recommendations } from './pages/Recommendations'
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/lists" element={<Lists />} />
           <Route path="/lists/:id" element={<CollectionPage />} />
           <Route path="/recommendations" element={<Recommendations />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Route>
 

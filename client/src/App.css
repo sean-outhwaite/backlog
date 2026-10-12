@@ -106,6 +106,39 @@
   font-size: 14px;
 }
 
+.notifications-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.notifications-all:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.notifications-feed {
+  display: grid;
+  gap: 2px;
+  max-width: 640px;
+}
+
+.notifications-more {
+  display: flex;
+  justify-content: center;
+  max-width: 640px;
+  margin-top: 16px;
+}
+
 .notifications-list {
   margin: 0;
   padding: 0;
