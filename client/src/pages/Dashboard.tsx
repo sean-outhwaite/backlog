@@ -34,7 +34,7 @@ import { SeriesVolumes } from '../components/SeriesVolumes'
 import { StatusTabs } from '../components/StatusTabs'
 import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
-import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, UndoIcon } from '../components/icons'
+import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } from '../components/icons'
 import { useAuth } from '../hooks/useAuth'
 import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
@@ -206,7 +206,7 @@ export function Dashboard() {
               detailsActions={
                 <>
                   <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
-                  <EntryMenu onRemove={() => void removeEntry(entry)} triggerClassName="details-more" />
+                  <DetailsRemoveButton onRemove={() => void removeEntry(entry)} />
                 </>
               }
             />
@@ -246,7 +246,7 @@ export function Dashboard() {
                   <>
                     <DetailsMoves entry={entry} onMove={(to) => void updateStatus(entry, to)} />
                     <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
-                    <EntryMenu onRemove={() => void removeEntry(entry)} triggerClassName="details-more" />
+                    <DetailsRemoveButton onRemove={() => void removeEntry(entry)} />
                   </>
                 }
               />
@@ -383,6 +383,17 @@ function DetailsMoves({ entry, onMove }: { entry: ListEntry; onMove: (to: ListSt
         )
       })}
     </div>
+  )
+}
+
+// The card tucks removing behind a menu so it's not one stray tap away; the dialog has room to
+// show it outright, and the undo toast covers a slip.
+function DetailsRemoveButton({ onRemove }: { onRemove: () => void }) {
+  return (
+    <button className="details-remove btn-quiet btn-danger" onClick={onRemove}>
+      <TrashIcon />
+      Remove
+    </button>
   )
 }
 

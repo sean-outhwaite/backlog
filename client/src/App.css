@@ -2747,26 +2747,11 @@ html:has(.modal-dialog[open]) {
   flex: 1;
 }
 
-/* Remove sits apart at the end of the row, its menu opening upward since the row is the dialog's foot. */
-.details-actions .entry-menu {
+/* Remove sits apart at the end of the row, red but without a fill so it doesn't compete. */
+.details-remove {
   order: 1;
   margin-left: auto;
-}
-
-.details-actions .entry-menu-panel {
-  top: auto;
-  bottom: calc(100% + 6px);
-  transform-origin: bottom right;
-}
-
-.details-more {
-  border-color: transparent;
-  background: transparent;
-  color: var(--text);
-}
-
-.details-more[aria-expanded='true'] {
-  background: var(--surface-hover);
+  color: var(--danger);
 }
 
 .details-source {
