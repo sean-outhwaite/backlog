@@ -46,7 +46,7 @@ export function UserMenu() {
             autoFocus
           >
             <CameraIcon />
-            {profile?.avatarUrl ? 'Change photo' : 'Add a photo'}
+            {profile?.avatarUrl ? 'Change avatar' : 'Add an avatar'}
           </button>
           <button className="user-menu-item btn-quiet" onClick={() => void signOut()}>
             <LogOutIcon />

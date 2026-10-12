@@ -96,7 +96,7 @@ export function Search() {
 
   return (
     <div>
-      <PageHeader title="Search" subtitle="Movies, shows, books and games, all in one place." />
+      <PageHeader title="Search" subtitle="Find your next favourite." />
 
       <form className="page-toolbar search-bar" onSubmit={handleSearch}>
         <label className="search-input">

@@ -157,7 +157,7 @@ export function Dashboard() {
     <div>
       <PageHeader
         title={profile?.username ? `${profile.username}'s backlog` : 'My backlog'}
-        subtitle="Everything you've been meaning to watch, read and play."
+        subtitle="Everything you're definitely going to get around to finishing."
       />
 
       <div className="list-toolbar">

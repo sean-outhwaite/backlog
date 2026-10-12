@@ -48,7 +48,6 @@ export function Lists() {
               <CollectionCard key={collection.id} collection={collection} />
             ))}
           </div>
-          <p className="page-hint">To add something, open any title and choose “Add to a list”.</p>
         </>
       )}
 

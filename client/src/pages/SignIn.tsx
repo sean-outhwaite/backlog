@@ -39,7 +39,10 @@ export function SignIn() {
   return (
     <AuthShell>
       <h1 className="wordmark">Backlog</h1>
-      <p>Track what you want to watch, read, and play — and pass it on to friends.</p>
+      <p>
+        Keep track of everything you've been meaning to watch, read, and play. Share recommendations for your mates to
+        ignore.
+      </p>
 
       {status === 'sent' ? (
         <p className="auth-sent">Check your email for a sign-in link.</p>
