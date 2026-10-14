@@ -177,21 +177,6 @@ button:disabled {
   color: var(--accent-fill-icon);
 }
 
-/* On a primary button the play triangle is plain white, turning teal when the button is hovered.
-   Stroke matches fill so the triangle keeps its rounded corners without reading as an outline. */
-.btn-primary .play-shape {
-  fill: #fff;
-  stroke: #fff;
-  transition:
-    fill 0.15s,
-    stroke 0.15s;
-}
-
-.btn-primary:hover:not(:disabled) .play-shape {
-  fill: var(--accent-fill-icon);
-  stroke: var(--accent-fill-icon);
-}
-
 /* Square, icon-only; needs an aria-label. */
 .btn-icon {
   flex: none;

@@ -1619,10 +1619,6 @@ section + section {
   white-space: nowrap;
 }
 
-.entry-move--icon-only .icon {
-  font-size: 1.25em;
-}
-
 /* Finished (a soft primary, .btn-soft). */
 .entry-move--finish {
   /* The button's own gap, which the shut tick slot and the wiped label cancel out. */
@@ -1672,6 +1668,31 @@ section + section {
   overflow: hidden;
   clip-path: inset(0 0 0 0);
   transition: clip-path 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* The rest of Start's wording ("reading") is shut until hover, then its column opens and the word
+   is written in left to right. The space before it is part of the word (a padding would hold the
+   shut column open), and the button's aria-label carries the whole name. */
+.entry-move-more {
+  display: inline-grid;
+  grid-template-columns: 0fr;
+  transition: grid-template-columns 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.entry-move-more > span {
+  min-width: 0;
+  overflow: hidden;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.entry-move:is(:hover, :focus-visible):not(:disabled) .entry-move-more {
+  grid-template-columns: 1fr;
+}
+
+.entry-move:is(:hover, :focus-visible):not(:disabled) .entry-move-more > span {
+  clip-path: inset(0);
+  transition-delay: 0.08s;
 }
 
 /* On click the label is wiped away right to left, back into the tick, while its column closes, so
@@ -1725,37 +1746,6 @@ section + section {
 
 .pop-burst span:nth-child(even) {
   background: var(--teal);
-}
-
-/* Over the cover: a see-through frosted purple that firms up on hover. Bottom-right, so it clears a
-   series' progress count in the bottom-left. */
-.media-card-cover-main {
-  position: absolute;
-  right: 10px;
-  bottom: 14px;
-  z-index: 1;
-}
-
-.media-card-cover-main .entry-move {
-  min-width: 104px;
-  height: 34px;
-  padding: 0 20px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(76, 29, 149, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.35);
-}
-
-.media-card-cover-main .entry-move:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(76, 29, 149, 0.55);
-}
-
-/* A pale teal, not the light theme's deep one, which disappears into the purple. */
-.media-card-cover-main .entry-move:hover:not(:disabled) .play-shape {
-  fill: #99f6e4;
-  stroke: #99f6e4;
 }
 
 /* Two-up phone cards leave ~135px; keep the main move's label on one line. */

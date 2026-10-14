@@ -7,6 +7,14 @@ export const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
   game: 'Game',
 }
 
+// What starting a title means, filling out its Start button ("Start reading").
+export const START_VERBS: Record<MediaType, string> = {
+  movie: 'watching',
+  tv: 'watching',
+  book: 'reading',
+  game: 'playing',
+}
+
 // "Book", or "Book series" for a series.
 export function mediaLabel(media: { type: MediaType; kind?: MediaKind }): string {
   return media.kind === 'series' ? `${MEDIA_TYPE_LABELS[media.type]} series` : MEDIA_TYPE_LABELS[media.type]

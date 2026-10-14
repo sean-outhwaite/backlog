@@ -39,15 +39,15 @@ import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } fro
 import { useAuth } from '../hooks/useAuth'
 import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
-import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
+import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS, START_VERBS } from '../lib/mediaTypes'
 import { byReleaseDate, entryTab } from '../lib/release'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
-// The moves offered on each tab's cards; the first is the primary action.
-// iconOnly drops the visible label (it stays as the accessible name) where the icon says it all.
-const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string; iconOnly?: boolean }[]> = {
+// The moves offered on each tab's cards; the first is the primary action. Start is worded and drawn
+// for the title's type (moveFace).
+const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string }[]> = {
   want: [
-    { to: 'in_progress', label: 'Start', iconOnly: true },
+    { to: 'in_progress', label: 'Start' },
     { to: 'done', label: 'Finished' },
   ],
   in_progress: [
@@ -65,6 +65,17 @@ const ACTION_ICONS: Record<ListStatus, ComponentType> = {
   in_progress: PlayIcon,
   done: CheckIcon,
   want: UndoIcon,
+}
+
+// How a move's button reads: Start says what you'd be starting ("Start" + "reading") beside the
+// type's icon, since a bare play icon reads as playing a preview.
+function moveFace(entry: ListEntry, action: { to: ListStatus; label: string }) {
+  if (entry.status === 'want' && action.to === 'in_progress') {
+    const { type } = entry.mediaItem
+    return { label: action.label, more: START_VERBS[type], icon: <MediaTypeIcon type={type} /> }
+  }
+  const ActionIcon = ACTION_ICONS[action.to]
+  return { label: action.label, more: undefined, icon: <ActionIcon /> }
 }
 
 export function Dashboard() {
@@ -283,12 +294,6 @@ export function Dashboard() {
                 stackCovers={entry.covers}
                 onSeriesAdded={load}
                 details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
-                // Start sits over the cover; the other tabs' main moves stay in the card body.
-                coverMain={
-                  entry.status === 'want' && (
-                    <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                  )
-                }
                 coverActions={
                   <>
                     <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
@@ -324,12 +329,10 @@ export function Dashboard() {
                     />
                   ) : (
                     <>
-                      {entry.status !== 'want' && (
-                        <MainMoveButton
-                          entry={entry}
-                          onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
-                        />
-                      )}
+                      <MainMoveButton
+                        entry={entry}
+                        onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
+                      />
                       <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
                     </>
                   )
@@ -509,17 +512,15 @@ function popBurst(rect: DOMRect) {
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
-// The first move is the card's labelled button (primary, unless the entry is already done).
+// The first move is the card's soft primary button (Start or Finished; a finished card leads with Recommend).
 function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void | Promise<void> }) {
   const [finishing, setFinishing] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const main = STATUS_ACTIONS[entry.status][0]
-  const MainIcon = ACTION_ICONS[main.to]
+  const face = moveFace(entry, main)
   const classes = [
-    'entry-move',
-    entry.status !== 'done' && 'btn-primary',
-    main.iconOnly && 'entry-move--icon-only',
-    main.to === 'done' && 'entry-move--finish btn-soft',
+    'entry-move btn-primary btn-soft',
+    main.to === 'done' && 'entry-move--finish',
     finishing && 'is-finishing',
   ]
   const move = async () => {
@@ -556,17 +557,22 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
       ref={buttonRef}
       className={classes.filter(Boolean).join(' ')}
       onClick={() => void move()}
-      aria-label={main.iconOnly ? main.label : undefined}
-      title={main.iconOnly ? main.label : undefined}
+      aria-label={face.more && `${face.label} ${face.more}`}
     >
       {/* A tick that sat beside "Finished" all the time would be noise; it draws itself in on hover. */}
-      <MainIcon />
-      {!main.iconOnly && (
-        // Two spans so the label can both shrink (outer, a grid column) and be wiped (inner).
-        <span className="entry-move-label">
-          <span>{main.label}</span>
+      {face.icon}
+      {/* Two spans so the label can both shrink (outer, a grid column) and be wiped (inner). The
+          rest of Start's wording is written in on hover, the same way, but opening. */}
+      <span className="entry-move-label">
+        <span>
+          {face.label}
+          {face.more && (
+            <span className="entry-move-more">
+              <span>{`\u00a0${face.more}`}</span>
+            </span>
+          )}
         </span>
-      )}
+      </span>
     </button>
   )
 }
@@ -577,12 +583,12 @@ function DetailsMoves({ entry, onMove }: { entry: ListEntry; onMove: (to: ListSt
   return (
     <div className="details-moves">
       {STATUS_ACTIONS[entry.status].map((action, index) => {
-        const ActionIcon = ACTION_ICONS[action.to]
+        const face = moveFace(entry, action)
         const primary = index === 0 && entry.status !== 'done'
         return (
           <button key={action.to} className={primary ? 'btn-primary' : undefined} onClick={() => onMove(action.to)}>
-            <ActionIcon />
-            {action.label}
+            {face.icon}
+            {face.more ? `${face.label} ${face.more}` : face.label}
           </button>
         )
       })}
