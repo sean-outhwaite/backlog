@@ -73,7 +73,8 @@ export function AddToListButton({
     )
   }
 
-  const tint = primary ? 'btn-primary ' : ''
+  // The soft primary, like the backlog's own card buttons.
+  const tint = primary ? 'btn-primary btn-soft ' : ''
   const offerStatuses = !added && !upcoming
 
   return (

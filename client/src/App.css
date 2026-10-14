@@ -1820,6 +1820,11 @@ section + section {
   border-bottom-right-radius: 0;
 }
 
+/* Soft halves each have a purple edge; the ▾'s left one alone is the divider. */
+.add-split.has-menu .add-button.btn-soft {
+  border-right-width: 0;
+}
+
 .add-split-trigger {
   width: 34px;
   border-top-left-radius: 0;
