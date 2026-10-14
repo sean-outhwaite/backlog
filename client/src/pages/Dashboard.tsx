@@ -94,13 +94,6 @@ export function Dashboard() {
 
   useEffect(load, [])
 
-  async function updateStatus(entry: ListEntry, nextStatus: ListStatus) {
-    const updated = await api.patch<ListEntry>(`/api/lists/${entry.id}`, {
-      status: nextStatus,
-    })
-    setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
-  }
-
   // Drops the entry between its new visible neighbours. Entries hidden by the tab or type filter
   // keep their positions, so the order of what's shown is all that changes.
   async function moveEntry(activeId: string, overId: string) {
@@ -139,7 +132,7 @@ export function Dashboard() {
 
   function removeEntry(entry: ListEntry) {
     flushRemoval()
-    dismissFinished()
+    dismissMoved()
     const commit = () => {
       pendingRemoval.current = null
       setRemoving((current) => (current?.id === entry.id ? null : current))
@@ -151,20 +144,20 @@ export function Dashboard() {
     setRemoving(entry)
   }
 
-  // Finishing from a card saves straight away (the card has already popped off the tab), then offers
-  // Undo for as long as a removal would, which puts the entry back as it was. One toast at a time:
-  // finishing sends any pending removal now, and removing dismisses this.
-  const [finished, setFinished] = useState<ListEntry | null>(null)
-  const finishedTimer = useRef<number | undefined>(undefined)
+  // Moving an entry to another tab saves straight away, then offers Undo for as long as a removal
+  // would, which puts the entry back as it was. One toast at a time: moving sends any pending
+  // removal now, and removing dismisses this.
+  const [moved, setMoved] = useState<{ entry: ListEntry; to: ListStatus } | null>(null)
+  const movedTimer = useRef<number | undefined>(undefined)
 
-  function dismissFinished() {
-    window.clearTimeout(finishedTimer.current)
-    setFinished(null)
+  function dismissMoved() {
+    window.clearTimeout(movedTimer.current)
+    setMoved(null)
   }
 
-  useEffect(() => () => window.clearTimeout(finishedTimer.current), [])
+  useEffect(() => () => window.clearTimeout(movedTimer.current), [])
 
-  // When a finished card leaves (or comes back on undo), the cards after it glide to their new
+  // When a card leaves its tab (or comes back on undo), the cards after it glide to their new
   // places rather than jumping: where they were is noted just before the list changes, and once
   // it's rendered each is animated from there. Only for these, so dragging is left to dnd-kit.
   const slideFrom = useRef<Map<string, DOMRect> | null>(null)
@@ -187,20 +180,33 @@ export function Dashboard() {
     }
   })
 
-  async function finishEntry(entry: ListEntry) {
-    const updated = await api.patch<ListEntry>(`/api/lists/${entry.id}`, { status: 'done' })
+  // The card eases out while the move saves (unless it's already gone: Finished pops it first), then
+  // leaves, the cards after it glide in, and the toast offers Undo. If the save fails it eases back.
+  async function moveTo(entry: ListEntry, to: ListStatus, { easeOut = true } = {}) {
+    const card = document.querySelector<HTMLElement>(`[data-entry-id="${entry.id}"] > .media-card`)
+    const exit =
+      easeOut && card && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? card.animate(CARD_EXIT, { duration: 260, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' })
+        : null
+    const [updated] = await Promise.all([
+      api.patch<ListEntry>(`/api/lists/${entry.id}`, { status: to }),
+      exit?.finished,
+    ]).catch((error: unknown) => {
+      exit?.cancel()
+      throw error
+    })
     slideFrom.current = cardRects()
     setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
     flushRemoval()
-    window.clearTimeout(finishedTimer.current)
-    setFinished(entry)
-    finishedTimer.current = window.setTimeout(() => setFinished(null), UNDO_MS)
+    window.clearTimeout(movedTimer.current)
+    setMoved({ entry, to })
+    movedTimer.current = window.setTimeout(() => setMoved(null), UNDO_MS)
   }
 
-  function undoFinish() {
-    if (!finished) return
-    const entry = finished
-    dismissFinished()
+  function undoMove() {
+    if (!moved) return
+    const { entry } = moved
+    dismissMoved()
     slideFrom.current = cardRects()
     setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)))
     api
@@ -296,7 +302,7 @@ export function Dashboard() {
                 details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
                 coverActions={
                   <>
-                    <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                    <MoveShortcuts entry={entry} onMove={(to) => void moveTo(entry, to)} />
                     <EntryMenu
                       onRemove={() => void removeEntry(entry)}
                       actions={
@@ -305,12 +311,12 @@ export function Dashboard() {
                               {
                                 label: 'Resume',
                                 icon: <PlayIcon />,
-                                onClick: () => void updateStatus(entry, 'in_progress'),
+                                onClick: () => void moveTo(entry, 'in_progress'),
                               },
                               {
                                 label: 'Move to backlog',
                                 icon: <UndoIcon />,
-                                onClick: () => void updateStatus(entry, 'want'),
+                                onClick: () => void moveTo(entry, 'want'),
                               },
                             ]
                           : []
@@ -331,7 +337,7 @@ export function Dashboard() {
                     <>
                       <MainMoveButton
                         entry={entry}
-                        onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
+                        onMove={(to) => moveTo(entry, to, { easeOut: to !== 'done' })}
                       />
                       <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
                     </>
@@ -339,7 +345,7 @@ export function Dashboard() {
                 }
                 detailsActions={
                   <>
-                    <DetailsMoves entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                    <DetailsMoves entry={entry} onMove={(to) => void moveTo(entry, to)} />
                     <RecommendControl
                       media={{ mediaItemId: entry.mediaItem.id }}
                       title={entry.mediaItem.title}
@@ -362,12 +368,12 @@ export function Dashboard() {
           action={{ label: 'Undo', onClick: undoRemoval }}
         />
       )}
-      {finished && (
+      {moved && (
         <Toast
-          key={finished.id}
-          message={`Finished ${finished.mediaItem.title}`}
+          key={moved.entry.id}
+          message={moveMessage(moved.entry, moved.to)}
           duration={UNDO_MS}
-          action={{ label: 'Undo', onClick: undoFinish }}
+          action={{ label: 'Undo', onClick: undoMove }}
         />
       )}
     </div>
@@ -477,6 +483,17 @@ const CARD_POP: Keyframe[] = [
   { transform: 'scale(1.07)', opacity: 1, offset: 0.6, easing: 'cubic-bezier(0.4, 0, 1, 1)' },
   { transform: 'scale(0.94)', opacity: 0 },
 ]
+
+// The undo toast's account of a move.
+function moveMessage(entry: ListEntry, to: ListStatus) {
+  const { title } = entry.mediaItem
+  if (to === 'done') return `Finished ${title}`
+  if (to === 'in_progress') return entry.status === 'done' ? `Resumed ${title}` : `Started ${title}`
+  return `Moved ${title} to backlog`
+}
+
+// A card leaving its tab by any move but Finished: a quiet fade as it settles back a little.
+const CARD_EXIT: Keyframe[] = [{ opacity: 0, transform: 'scale(0.95)' }]
 
 // Where each card on the board is, by entry id, for sliding them on from there.
 function cardRects() {
