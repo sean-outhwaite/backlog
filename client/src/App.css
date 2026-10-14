@@ -216,7 +216,7 @@
 .logo-mark {
   width: 28px;
   height: 28px;
-  color: var(--accent);
+  color: var(--flame);
   transition: transform 0.3s var(--ease-spring);
 }
 
@@ -1081,7 +1081,7 @@
 }
 
 .status-indicator--upcoming {
-  background: var(--pine);
+  background: var(--cool);
 }
 
 .status-count {
@@ -1098,7 +1098,7 @@
 }
 
 .status-tabs button.status-tab--upcoming.active .status-count {
-  color: var(--pine);
+  color: var(--cool);
 }
 
 .type-filter {
@@ -1767,7 +1767,7 @@ section + section {
 }
 
 .pop-burst span:nth-child(even) {
-  background: var(--pine);
+  background: var(--cool);
 }
 
 /* Two-up phone cards leave ~135px; keep the main move's label on one line. */
@@ -1842,7 +1842,7 @@ section + section {
   border-bottom-right-radius: 0;
 }
 
-/* Soft halves each have an ember edge; the ▾'s left one alone is the divider. */
+/* Soft halves each have an accent edge; the ▾'s left one alone is the divider. */
 .add-split.has-menu .add-button.btn-soft {
   border-right-width: 0;
 }

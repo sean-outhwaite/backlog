@@ -1,42 +1,49 @@
 :root {
-  /* Campfire. Light mode is a cabin by day: cream, bark browns and an ember accent. Dark mode
-     (below) is the woods at night: midnight navy under stars, lit by firelight. */
-  --text: #6e5a4a;
-  --text-h: #2a1d14;
-  --bg: #fdf8f1;
-  --surface: #f8efe3;
-  --surface-hover: #f1e4d2;
-  --border: #e8d9c4;
-  --accent: #c2410c;
-  --accent-bg: rgba(234, 88, 12, 0.1);
+  /* Campfire. Light mode is the woods by day: a clear blue sky, slate text and a forest-green
+     accent, with the fire itself (the logo) the one warm note. Dark mode (below) is the woods at
+     night: midnight navy under stars, lit by firelight. */
+  --text: #4f6275;
+  --text-h: #16263a;
+  --bg: #f3f8fc;
+  --surface: #e9f1f8;
+  --surface-hover: #dde9f3;
+  --border: #d3e0ec;
+  --accent: #2d6f4e;
+  --accent-bg: rgba(53, 127, 91, 0.12);
   /* Text and icons sitting on a solid accent (badges, checks). */
   --on-accent: #fff;
-  /* Primary buttons: a translucent amber-to-ember fill, so it tints toward whatever it sits on, lit
-     from above by a soft inner highlight. Over cream it comes out pale, so light mode pairs it with
-     deep rust text (6.2:1) and dark mode with warm white (8:1). Icons are pine, a cool counterpoint
-     to the fire. */
-  --accent-fill: linear-gradient(180deg, rgba(251, 158, 60, 0.55), rgba(234, 98, 22, 0.5));
-  --accent-fill-hover: linear-gradient(180deg, rgba(251, 158, 60, 0.68), rgba(234, 98, 22, 0.62));
-  --accent-fill-text: #7c2d12;
-  --accent-fill-icon: #2f6b4f;
-  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(42, 29, 20, 0.25);
-  /* A lighter wash of the same fill, for a card's main action. */
-  --accent-soft: linear-gradient(180deg, rgba(251, 158, 60, 0.26), rgba(234, 98, 22, 0.22));
-  --accent-soft-hover: linear-gradient(180deg, rgba(251, 158, 60, 0.4), rgba(234, 98, 22, 0.36));
-  --accent-soft-border: rgba(234, 98, 22, 0.4);
-  --accent-soft-border-hover: rgba(234, 98, 22, 0.6);
-  /* Flame yellow, paired with the accent in gradients (avatars). */
-  --accent-2: #f59e0b;
+  /* Primary buttons: light mode is a solid forest-green gradient with white text (4.8:1 at its
+     lightest) and pale mint icons; dark mode (below) is a translucent firelight fill, tinting
+     toward the night behind it, with warm white text (8:1) and pine icons. Both are lit from above
+     by a soft inner highlight. */
+  --accent-fill: linear-gradient(180deg, #357f5b, #2a6e4c);
+  --accent-fill-hover: linear-gradient(180deg, #2f7653, #245f42);
+  --accent-fill-text: #fff;
+  --accent-fill-icon: #cfeedd;
+  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(22, 38, 58, 0.25);
+  /* A lighter wash of the same fill, for a card's main action, with its own (darker) text. */
+  --accent-soft: linear-gradient(180deg, rgba(53, 127, 91, 0.14), rgba(42, 110, 76, 0.1));
+  --accent-soft-hover: linear-gradient(180deg, rgba(53, 127, 91, 0.24), rgba(42, 110, 76, 0.18));
+  --accent-soft-border: rgba(45, 111, 78, 0.35);
+  --accent-soft-border-hover: rgba(45, 111, 78, 0.55);
+  --accent-soft-text: #1f5a3e;
+  /* A soft terracotta ember, the fire's warm note against the green (3:1 on the wash). */
+  --accent-soft-icon: #c9673f;
+  /* Paired with the accent in gradients (avatars): moss in light mode, flame yellow at night. */
+  --accent-2: #65a30d;
   --danger: #c0392b;
-  /* The cool counterpart to the fire, for what sits apart from the main flow (the Preorders tab). */
-  --pine: #2f7a5a;
-  /* Logo: the heart of the flame and the logs under it. */
+  /* The cool counterpart to the accent, for what sits apart from the main flow (the Preorders
+     tab): sky blue by day, pine at night. */
+  --cool: #2f68a8;
+  /* Logo: the flame, its heart and the logs under it. The flame is brighter than --accent, which
+     has to stay dark enough for text. */
+  --flame: #f97316;
   --flame-core: #fbbf24;
   --log: #7c4a2d;
-  /* Warm near-black for scrims and frosted buttons over covers. */
-  --scrim: rgb(22, 14, 9);
-  --shadow: 0 1px 2px rgba(42, 29, 20, 0.05), 0 6px 20px -10px rgba(42, 29, 20, 0.2);
-  --shadow-lift: 0 2px 4px rgba(42, 29, 20, 0.05), 0 18px 36px -14px rgba(234, 88, 12, 0.4);
+  /* Near-black for scrims and frosted buttons over covers. */
+  --scrim: rgb(12, 20, 32);
+  --shadow: 0 1px 2px rgba(22, 38, 58, 0.05), 0 6px 20px -10px rgba(22, 38, 58, 0.2);
+  --shadow-lift: 0 2px 4px rgba(22, 38, 58, 0.05), 0 18px 36px -14px rgba(45, 111, 78, 0.35);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --display: 'Fraunces', Georgia, var(--sans);
@@ -63,15 +70,21 @@
     --accent: #fb923c;
     --accent-bg: rgba(251, 146, 60, 0.14);
     --on-accent: #1f1209;
+    --accent-fill: linear-gradient(180deg, rgba(251, 158, 60, 0.55), rgba(234, 98, 22, 0.5));
+    --accent-fill-hover: linear-gradient(180deg, rgba(251, 158, 60, 0.68), rgba(234, 98, 22, 0.62));
     --accent-fill-text: #fff7ed;
-    --accent-fill-icon: #86c9a4;
+    --accent-fill-icon: #6aa886;
     --accent-fill-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
     --accent-soft: linear-gradient(180deg, rgba(251, 146, 60, 0.22), rgba(234, 88, 12, 0.2));
     --accent-soft-hover: linear-gradient(180deg, rgba(251, 146, 60, 0.36), rgba(234, 88, 12, 0.32));
     --accent-soft-border: rgba(251, 146, 60, 0.4);
     --accent-soft-border-hover: rgba(251, 146, 60, 0.6);
+    --accent-soft-text: #fff7ed;
+    --accent-soft-icon: #6aa886;
     --danger: #f87171;
-    --pine: #5fb79a;
+    --cool: #5fb79a;
+    --accent-2: #f59e0b;
+    --flame: #fb923c;
     --flame-core: #fde68a;
     --log: #a0694a;
     --scrim: rgb(5, 8, 14);
@@ -89,21 +102,51 @@ body {
   min-height: 100svh;
   /* Its own stacking context, so the night backdrop (z-index -1) sits above this background. */
   isolation: isolate;
-  /* Morning sun over the top of the page. */
+  /* By day: a blue sky, deepest at the top, with a faint grain and a low morning sun in the
+     top-left corner. */
   background:
-    radial-gradient(900px 420px at 15% -180px, rgba(251, 191, 36, 0.16), transparent 70%),
-    radial-gradient(700px 360px at 95% -120px, var(--accent-bg), transparent 70%), var(--bg);
-  background-repeat: no-repeat;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.3 0 0 0 0 0.42 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    radial-gradient(520px 420px at 8% -60px, rgba(253, 224, 140, 0.45), transparent 70%),
+    radial-gradient(1100px 520px at 15% -180px, rgba(255, 236, 179, 0.3), transparent 70%),
+    linear-gradient(180deg, #c3dcf2 0, #dceaf6 40%, var(--bg) 85%), var(--bg);
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+  background-attachment: fixed;
 }
 
-/* At night: a star field fading out down the page, the glow of a fire past the bottom edge, and
-   a line of pines in front of it. Decorative and fixed, behind everything. */
+/* Decorative and fixed, behind everything. By day: the sun's rays slanting across the page, and
+   misty pine ridges along the bottom, paler the further back they are. At night (below): a star
+   field, the glow of a fire past the bottom edge, and one dark treeline in front of it. */
 body::before,
 body::after {
-  content: none;
+  content: '';
   position: fixed;
   z-index: -1;
   pointer-events: none;
+}
+
+body::before {
+  inset: 0;
+  background: repeating-conic-gradient(
+    from 95deg at 6% -80px,
+    rgba(255, 250, 232, 0.18) 0deg 3deg,
+    transparent 3deg 11deg
+  );
+  -webkit-mask-image: radial-gradient(120% 90% at 6% -80px, #000, transparent 75%);
+  mask-image: radial-gradient(120% 90% at 6% -80px, #000, transparent 75%);
+}
+
+body::after {
+  inset: auto 0 0;
+  height: 190px;
+  opacity: 0.85;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%2399b6ae'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 0 100% / 400px 110px,
+    linear-gradient(180deg, transparent 45%, rgba(243, 248, 252, 0.6)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%23b8ccd0'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 170px 100% / 470px 150px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%23d2e0e8'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 320px 100% / 560px 190px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -231,16 +274,22 @@ button:disabled {
   color: var(--accent-fill-text);
 }
 
-/* A softer primary for a card's main action: a lighter wash with a fine ember edge to keep its
+/* A softer primary for a card's main action: a lighter wash with a fine accent edge to keep its
    shape, firming up on hover (as Start does over the cover). */
 .btn-primary.btn-soft {
   border-color: var(--accent-soft-border);
   background: var(--accent-soft);
+  color: var(--accent-soft-text);
 }
 
 .btn-primary.btn-soft:hover:not(:disabled) {
   border-color: var(--accent-soft-border-hover);
   background: var(--accent-soft-hover);
+  color: var(--accent-soft-text);
+}
+
+.btn-primary.btn-soft .icon {
+  color: var(--accent-soft-icon);
 }
 
 .btn-primary .icon {
