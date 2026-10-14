@@ -1,31 +1,58 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --surface: #faf8fc;
-  --surface-hover: #f1eef6;
-  --border: #e5e4e7;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  /* Primary buttons: a translucent accent fill, so it tints toward whatever it sits on, lit from
-     above by a soft inner highlight. Over white it comes out pale, so light mode pairs it with
-     deep text (5.6:1) and dark mode with white (7.8:1). Icons are teal, a cool counterpoint to the purple. */
-  --accent-fill: linear-gradient(180deg, rgba(168, 118, 235, 0.55), rgba(146, 96, 214, 0.55));
-  --accent-fill-hover: linear-gradient(180deg, rgba(168, 118, 235, 0.65), rgba(146, 96, 214, 0.65));
-  --accent-fill-text: #4c1d95;
-  --accent-fill-icon: #115e59;
-  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(8, 6, 13, 0.25);
-  --danger: #d1435b;
-  /* The cool counterpart to the accent, for what sits apart from the main flow (the Preorders tab). */
-  --teal: #0d9488;
-  --shadow: 0 1px 2px rgba(8, 6, 13, 0.04), 0 6px 20px -10px rgba(8, 6, 13, 0.18);
-  --shadow-lift: 0 2px 4px rgba(8, 6, 13, 0.04), 0 18px 36px -14px rgba(170, 59, 255, 0.4);
+  /* Campfire. Light mode is the woods by day: a clear blue sky, slate text and a forest-green
+     accent, with the fire itself (the logo) the one warm note. Dark mode (below) is the woods at
+     night: midnight navy under stars, lit by firelight. */
+  --text: #4f6275;
+  --text-h: #16263a;
+  --bg: #f3f8fc;
+  --surface: #e9f1f8;
+  --surface-hover: #dde9f3;
+  --border: #d3e0ec;
+  --accent: #2d6f4e;
+  --accent-bg: rgba(53, 127, 91, 0.12);
+  /* Text and icons sitting on a solid accent (badges, checks). */
+  --on-accent: #fff;
+  /* Primary buttons: light mode is a solid forest-green gradient with white text (4.8:1 at its
+     lightest) and pale mint icons; dark mode (below) is a translucent firelight fill, tinting
+     toward the night behind it, with warm white text (8:1) and pine icons. Both are lit from above
+     by a soft inner highlight. */
+  --accent-fill: linear-gradient(180deg, #357f5b, #2a6e4c);
+  --accent-fill-hover: linear-gradient(180deg, #2f7653, #245f42);
+  --accent-fill-text: #fff;
+  --accent-fill-icon: #cfeedd;
+  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(22, 38, 58, 0.25);
+  /* A lighter wash of the same fill, for a card's main action, with its own (darker) text. */
+  --accent-soft: linear-gradient(180deg, rgba(53, 127, 91, 0.14), rgba(42, 110, 76, 0.1));
+  --accent-soft-hover: linear-gradient(180deg, rgba(53, 127, 91, 0.24), rgba(42, 110, 76, 0.18));
+  --accent-soft-border: rgba(45, 111, 78, 0.35);
+  --accent-soft-border-hover: rgba(45, 111, 78, 0.55);
+  --accent-soft-text: #1f5a3e;
+  /* A soft terracotta ember, the fire's warm note against the green (3:1 on the wash). */
+  --accent-soft-icon: #c9673f;
+  /* Paired with the accent in gradients (avatars): moss in light mode, flame yellow at night. */
+  --accent-2: #65a30d;
+  --danger: #c0392b;
+  /* The cool counterpart to the accent, for what sits apart from the main flow (the Preorders
+     tab): sky blue by day, pine at night. */
+  --cool: #2f68a8;
+  /* Logo: the flame, its heart and the logs under it. The flame is brighter than --accent, which
+     has to stay dark enough for text. */
+  --flame: #f97316;
+  --flame-core: #fbbf24;
+  --log: #7c4a2d;
+  /* Near-black for scrims and frosted buttons over covers. */
+  --scrim: rgb(12, 20, 32);
+  --shadow: 0 1px 2px rgba(22, 38, 58, 0.05), 0 6px 20px -10px rgba(22, 38, 58, 0.2);
+  --shadow-lift: 0 2px 4px rgba(22, 38, 58, 0.05), 0 18px 36px -14px rgba(45, 111, 78, 0.35);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --display: 'Bricolage Grotesque', var(--sans);
+  --display: 'Bree Serif', Georgia, var(--sans);
   --ease-spring: cubic-bezier(0.3, 1.5, 0.5, 1);
 
   font: 16px/145% var(--sans);
+  /* Bree Serif comes in one weight; headings ask for bold, and a faked bold smears it. Fonts
+     with real bold weights (the system body font) are unaffected. */
+  font-synthesis-weight: none;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -35,19 +62,35 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --surface: #1d1e26;
-    --surface-hover: #252633;
-    --border: #2e303a;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
+    --text: #a9b1bf;
+    --text-h: #f5ede1;
+    --bg: #0d131f;
+    --surface: #141b29;
+    --surface-hover: #1c2535;
+    --border: #263044;
+    --accent: #fb923c;
+    --accent-bg: rgba(251, 146, 60, 0.14);
+    --on-accent: #1f1209;
+    --accent-fill: linear-gradient(180deg, rgba(251, 158, 60, 0.55), rgba(234, 98, 22, 0.5));
+    --accent-fill-hover: linear-gradient(180deg, rgba(251, 158, 60, 0.68), rgba(234, 98, 22, 0.62));
+    --accent-fill-text: #fff7ed;
+    --accent-fill-icon: #6aa886;
+    --accent-fill-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --accent-soft: linear-gradient(180deg, rgba(251, 146, 60, 0.22), rgba(234, 88, 12, 0.2));
+    --accent-soft-hover: linear-gradient(180deg, rgba(251, 146, 60, 0.36), rgba(234, 88, 12, 0.32));
+    --accent-soft-border: rgba(251, 146, 60, 0.4);
+    --accent-soft-border-hover: rgba(251, 146, 60, 0.6);
+    --accent-soft-text: #fff7ed;
+    --accent-soft-icon: #6aa886;
+    --danger: #f87171;
+    --cool: #5fb79a;
+    --accent-2: #f59e0b;
+    --flame: #fb923c;
+    --flame-core: #fde68a;
+    --log: #a0694a;
+    --scrim: rgb(5, 8, 14);
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px -10px rgba(0, 0, 0, 0.6);
-    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.3), 0 18px 36px -14px rgba(192, 132, 252, 0.35);
-    --accent-fill-text: #fff;
-    --accent-fill-icon: #5eead4;
-    --teal: #2dd4bf;
+    --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.3), 0 18px 36px -14px rgba(251, 146, 60, 0.35);
   }
 }
 
@@ -58,10 +101,75 @@
 body {
   margin: 0;
   min-height: 100svh;
+  /* Its own stacking context, so the night backdrop (z-index -1) sits above this background. */
+  isolation: isolate;
+  /* By day: a blue sky, deepest at the top, with a faint grain. */
   background:
-    radial-gradient(900px 420px at 15% -180px, var(--accent-bg), transparent 70%),
-    radial-gradient(700px 360px at 95% -120px, var(--accent-bg), transparent 70%), var(--bg);
-  background-repeat: no-repeat;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.3 0 0 0 0 0.42 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #c3dcf2 0, #dceaf6 40%, var(--bg) 85%), var(--bg);
+  background-repeat: repeat, no-repeat;
+  background-attachment: fixed;
+}
+
+/* Decorative and fixed, behind everything. By day: a few soft clouds drifting high up, and misty
+   pine ridges along the bottom, paler the further back they are. At night (below): a star
+   field, the glow of a fire past the bottom edge, and one dark treeline in front of it. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  inset: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 96'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.6'/%3E%3C/filter%3E%3Cg fill='%23fff' fill-opacity='0.9' filter='url(%23b)'%3E%3Cellipse cx='70' cy='62' rx='46' ry='20'/%3E%3Cellipse cx='105' cy='44' rx='34' ry='28'/%3E%3Cellipse cx='145' cy='52' rx='30' ry='22'/%3E%3Cellipse cx='120' cy='66' rx='80' ry='16'/%3E%3Cellipse cx='80' cy='48' rx='24' ry='18'/%3E%3C/g%3E%3C/svg%3E") no-repeat 12% 96px / 300px 120px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 80'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.8'/%3E%3C/filter%3E%3Cg fill='%23fff' fill-opacity='0.85' filter='url(%23b)'%3E%3Cellipse cx='110' cy='60' rx='78' ry='13'/%3E%3Cellipse cx='62' cy='52' rx='24' ry='15'/%3E%3Cellipse cx='96' cy='40' rx='28' ry='24'/%3E%3Cellipse cx='134' cy='44' rx='26' ry='20'/%3E%3Cellipse cx='166' cy='54' rx='20' ry='12'/%3E%3C/g%3E%3C/svg%3E") no-repeat 88% 190px / 260px 95px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 64'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.6'/%3E%3C/filter%3E%3Cg fill='%23fff' fill-opacity='0.85' filter='url(%23b)'%3E%3Cellipse cx='76' cy='48' rx='50' ry='10'/%3E%3Cellipse cx='50' cy='42' rx='18' ry='12'/%3E%3Cellipse cx='78' cy='32' rx='22' ry='19'/%3E%3Cellipse cx='104' cy='40' rx='17' ry='13'/%3E%3C/g%3E%3C/svg%3E") no-repeat 62% 64px / 170px 73px;
+}
+
+body::after {
+  inset: auto 0 0;
+  height: 190px;
+  opacity: 0.85;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%2399b6ae'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 0 100% / 400px 110px,
+    linear-gradient(180deg, transparent 45%, rgba(243, 248, 252, 0.6)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%23b8ccd0'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 170px 100% / 470px 150px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 140' preserveAspectRatio='none' fill='%23d2e0e8'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x 320px 100% / 560px 190px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(900px 420px at 15% -180px, rgba(99, 120, 180, 0.12), transparent 70%),
+      linear-gradient(180deg, transparent 40%, #0c1a1a), var(--bg);
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    inset: 0;
+    background:
+      radial-gradient(60% 260px at 50% calc(100% + 60px), rgba(251, 146, 60, 0.22), transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' fill='%23fff3e0'%3E%3Ccircle cx='0' cy='147' r='0.9' fill-opacity='0.68'/%3E%3Ccircle cx='277' cy='79' r='0.9' fill-opacity='0.57'/%3E%3Ccircle cx='17' cy='280' r='0.6' fill-opacity='0.62'/%3E%3Ccircle cx='167' cy='24' r='0.6' fill-opacity='0.73'/%3E%3Ccircle cx='112' cy='50' r='0.6' fill-opacity='0.45'/%3E%3Ccircle cx='136' cy='149' r='0.9' fill-opacity='0.55'/%3E%3Ccircle cx='188' cy='268' r='0.6' fill-opacity='0.67'/%3E%3Ccircle cx='50' cy='103' r='0.6' fill-opacity='0.93'/%3E%3Ccircle cx='99' cy='172' r='0.9' fill-opacity='0.84'/%3E%3Ccircle cx='162' cy='215' r='0.6' fill-opacity='0.46'/%3E%3Ccircle cx='291' cy='284' r='0.9' fill-opacity='0.95'/%3E%3Ccircle cx='246' cy='62' r='0.6' fill-opacity='0.84'/%3E%3Ccircle cx='54' cy='192' r='0.9' fill-opacity='0.62'/%3E%3Ccircle cx='299' cy='14' r='0.6' fill-opacity='0.91'/%3E%3Ccircle cx='245' cy='9' r='0.6' fill-opacity='0.61'/%3E%3Ccircle cx='278' cy='137' r='0.9' fill-opacity='0.54'/%3E%3Ccircle cx='130' cy='140' r='1.3' fill-opacity='0.81'/%3E%3Ccircle cx='97' cy='120' r='0.9' fill-opacity='0.75'/%3E%3Ccircle cx='228' cy='299' r='1.3' fill-opacity='0.60'/%3E%3Ccircle cx='167' cy='80' r='0.9' fill-opacity='0.43'/%3E%3Ccircle cx='198' cy='229' r='0.9' fill-opacity='0.55'/%3E%3Ccircle cx='126' cy='292' r='0.6' fill-opacity='0.65'/%3E%3Ccircle cx='41' cy='32' r='0.6' fill-opacity='0.35'/%3E%3Ccircle cx='149' cy='219' r='0.9' fill-opacity='0.60'/%3E%3Ccircle cx='49' cy='63' r='0.6' fill-opacity='0.78'/%3E%3Ccircle cx='217' cy='130' r='0.9' fill-opacity='0.47'/%3E%3Ccircle cx='86' cy='244' r='0.6' fill-opacity='0.70'/%3E%3Ccircle cx='125' cy='232' r='0.6' fill-opacity='0.94'/%3E%3C/svg%3E");
+    -webkit-mask-image: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.5) 45%, #000 85%);
+    mask-image: linear-gradient(180deg, #000 0, rgba(0, 0, 0, 0.5) 45%, #000 85%);
+  }
+
+  body::after {
+    content: '';
+    inset: auto 0 0;
+    height: 140px;
+    opacity: 0.9;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='140' fill='%23070c14'%3E%3Cpath d='M20 70L30 99H10ZM20 90L37 119H3ZM20 109L42 138H-2ZM18 132h4v8h-4ZM52 40L66 82H38ZM52 68L76 110H28ZM52 95L84 137H20ZM50 132h4v8h-4ZM80 82L88 106H72ZM80 98L94 123H66ZM80 114L99 138H61ZM78 132h4v8h-4ZM118 52L131 89H105ZM118 77L139 114H97ZM118 100L146 137H90ZM116 132h4v8h-4ZM150 28L166 75H134ZM150 59L177 106H123ZM150 90L186 137H114ZM148 132h4v8h-4ZM184 74L194 102H174ZM184 92L200 120H168ZM184 110L205 138H163ZM182 132h4v8h-4ZM214 46L228 85H200ZM214 72L237 112H191ZM214 98L244 137H184ZM212 132h4v8h-4ZM250 66L261 97H239ZM250 87L268 118H232ZM250 107L274 138H226ZM248 132h4v8h-4ZM286 20L303 70H269ZM286 54L315 104H257ZM286 86L324 136H248ZM284 132h4v8h-4ZM320 78L329 104H311ZM320 95L335 121H305ZM320 112L340 138H300ZM318 132h4v8h-4ZM352 50L365 88H339ZM352 75L374 113H330ZM352 100L381 137H323ZM350 132h4v8h-4ZM384 36L399 80H369ZM384 65L409 109H359ZM384 93L417 137H351ZM382 132h4v8h-4ZM418 70L428 99H408ZM418 90L435 119H401ZM418 109L440 138H396ZM416 132h4v8h-4ZM452 44L466 84H438ZM452 71L475 111H429ZM452 97L483 137H421ZM450 132h4v8h-4ZM0 130H480V140H0Z'/%3E%3C/svg%3E")
+      repeat-x bottom left / 480px 140px;
+  }
 }
 
 h1,
@@ -77,7 +185,7 @@ h3 {
 h1 {
   font-size: clamp(28px, 5vw, 38px);
   line-height: 1.1;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
 }
 
 h2 {
@@ -128,7 +236,7 @@ button {
   background: var(--surface);
 }
 
-/* Hover brightens rather than recolours; purple is reserved for primary actions. */
+/* Hover brightens rather than recolours; the accent is reserved for primary actions. */
 button:hover:not(:disabled) {
   background: var(--surface-hover);
   color: var(--text-h);
@@ -161,16 +269,22 @@ button:disabled {
   color: var(--accent-fill-text);
 }
 
-/* A softer primary for a card's main action: a lighter wash with a fine purple edge to keep its
+/* A softer primary for a card's main action: a lighter wash with a fine accent edge to keep its
    shape, firming up on hover (as Start does over the cover). */
 .btn-primary.btn-soft {
-  border-color: rgba(168, 118, 235, 0.45);
-  background: linear-gradient(180deg, rgba(168, 118, 235, 0.28), rgba(146, 96, 214, 0.28));
+  border-color: var(--accent-soft-border);
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
 }
 
 .btn-primary.btn-soft:hover:not(:disabled) {
-  border-color: rgba(168, 118, 235, 0.65);
-  background: linear-gradient(180deg, rgba(168, 118, 235, 0.42), rgba(146, 96, 214, 0.42));
+  border-color: var(--accent-soft-border-hover);
+  background: var(--accent-soft-hover);
+  color: var(--accent-soft-text);
+}
+
+.btn-primary.btn-soft .icon {
+  color: var(--accent-soft-icon);
 }
 
 .btn-primary .icon {
