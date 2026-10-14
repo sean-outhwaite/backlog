@@ -5,6 +5,7 @@ import { CheckIcon, PlayIcon, PlusIcon } from './icons'
 import { Spinner } from './Spinner'
 
 const ADDED_LABELS: Record<ListStatus, string> = { want: 'Added', in_progress: 'Started', done: 'Finished' }
+const ADDING_LABELS: Record<ListStatus, string> = { want: 'Backlogging…', in_progress: 'Starting…', done: 'Finishing…' }
 
 // Adds to the backlog in one click; the ▾ beside it adds straight to in progress or done instead.
 // Pass upcoming for unreleased titles, which can only be wanted.
@@ -12,7 +13,7 @@ export function AddToListButton({
   added,
   onAdd,
   label = 'Backlog',
-  icon = <PlusIcon />,
+  icon,
   primary = true,
   title,
   upcoming = false,
@@ -37,11 +38,11 @@ export function AddToListButton({
 
   async function add(status: ListStatus) {
     setOpen(false)
+    setAddedAs(status)
     setAdding(true)
     setFailed(false)
     try {
       await onAdd(status)
-      setAddedAs(status)
     } catch {
       setFailed(true)
     } finally {
@@ -49,12 +50,13 @@ export function AddToListButton({
     }
   }
 
+  // While it adds, the plus spins (a button with its own icon, like Add series, gets a spinner).
   let content
   if (adding) {
     content = (
       <>
-        <Spinner />
-        Adding…
+        {icon ? <Spinner /> : <PlusIcon />}
+        {ADDING_LABELS[addedAs]}
       </>
     )
   } else if (added) {
@@ -67,7 +69,7 @@ export function AddToListButton({
   } else {
     content = (
       <>
-        {icon}
+        {icon ?? <PlusIcon />}
         {failed ? 'Try again' : label}
       </>
     )
@@ -78,7 +80,8 @@ export function AddToListButton({
   const offerStatuses = !added && !upcoming
 
   return (
-    <div className={`add-split${offerStatuses ? ' has-menu' : ''}`} ref={rootRef}>
+    // While adding, the ▾ folds away into the main half (is-busy), then is gone once added.
+    <div className={`add-split${offerStatuses ? ' has-menu' : ''}${adding ? ' is-busy' : ''}`} ref={rootRef}>
       <button
         className={`${tint}add-button${added ? ' is-added' : ''}`}
         title={title}

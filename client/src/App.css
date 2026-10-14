@@ -1840,6 +1840,49 @@ section + section {
   transform: rotate(180deg);
 }
 
+/* Adding folds the ▾ away: it narrows to nothing and fades while the main half grows, its right
+   edge (now the divider) sliding across and rounding off as it reaches the end. */
+.add-split.has-menu .add-button {
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s var(--ease-spring),
+    border-radius 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.add-split-trigger {
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s,
+    width 0.3s cubic-bezier(0.65, 0, 0.35, 1),
+    border-width 0.3s cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 0.2s;
+}
+
+.add-split.is-busy .add-split-trigger {
+  width: 0;
+  border-width: 0;
+  opacity: 0;
+}
+
+.add-split.has-menu.is-busy .add-button {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.add-split.has-menu.is-busy .add-button.btn-soft {
+  border-right-width: 1px;
+}
+
+/* The plus spins while the add is in flight. */
+.add-button[aria-busy='true'] > .icon {
+  animation: spin 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
 /* Opens upward: the button sits at the foot of a card, which clips anything below it. */
 .add-split-panel {
   position: absolute;
