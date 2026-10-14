@@ -54,7 +54,7 @@ const STATUS_ACTIONS: Record<ListStatus, { to: ListStatus; label: string; iconOn
     { to: 'done', label: 'Finished' },
     { to: 'want', label: 'Move to backlog' },
   ],
-  done: [{ to: 'want', label: 'Move to backlog' }],
+  done: [{ to: 'in_progress', label: 'Resume' }],
 }
 
 // How long a removal can be undone before it's sent to the server.
@@ -292,24 +292,56 @@ export function Dashboard() {
                 coverActions={
                   <>
                     <MoveShortcuts entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                    <EntryMenu onRemove={() => void removeEntry(entry)} />
+                    <EntryMenu
+                      onRemove={() => void removeEntry(entry)}
+                      actions={
+                        entry.status === 'done'
+                          ? [
+                              {
+                                label: 'Resume',
+                                icon: <PlayIcon />,
+                                onClick: () => void updateStatus(entry, 'in_progress'),
+                              },
+                              {
+                                label: 'Move to backlog',
+                                icon: <UndoIcon />,
+                                onClick: () => void updateStatus(entry, 'want'),
+                              },
+                            ]
+                          : []
+                      }
+                    />
                   </>
                 }
+                // Once it's finished, recommending it is the main thing left to do, so it's the
+                // card's one button; its moves wait in the ⋯ menu.
                 actions={
-                  <>
-                    {entry.status !== 'want' && (
-                      <MainMoveButton
-                        entry={entry}
-                        onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
-                      />
-                    )}
-                    <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
-                  </>
+                  entry.status === 'done' ? (
+                    <RecommendControl
+                      media={{ mediaItemId: entry.mediaItem.id }}
+                      title={entry.mediaItem.title}
+                      primary
+                    />
+                  ) : (
+                    <>
+                      {entry.status !== 'want' && (
+                        <MainMoveButton
+                          entry={entry}
+                          onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
+                        />
+                      )}
+                      <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                    </>
+                  )
                 }
                 detailsActions={
                   <>
                     <DetailsMoves entry={entry} onMove={(to) => void updateStatus(entry, to)} />
-                    <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
+                    <RecommendControl
+                      media={{ mediaItemId: entry.mediaItem.id }}
+                      title={entry.mediaItem.title}
+                      primary={entry.status === 'done'}
+                    />
                     <DetailsRemoveButton onRemove={() => void removeEntry(entry)} />
                   </>
                 }
@@ -487,7 +519,7 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
     'entry-move',
     entry.status !== 'done' && 'btn-primary',
     main.iconOnly && 'entry-move--icon-only',
-    main.to === 'done' && 'entry-move--finish',
+    main.to === 'done' && 'entry-move--finish btn-soft',
     finishing && 'is-finishing',
   ]
   const move = async () => {

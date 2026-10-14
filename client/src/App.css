@@ -1382,9 +1382,12 @@ section + section {
   gap: 8px;
   padding: 7px 12px 7px 10px;
   border-radius: 7px;
-  color: var(--danger);
   font-size: 14px;
   white-space: nowrap;
+}
+
+.entry-menu-item.btn-danger {
+  color: var(--danger);
 }
 
 /* Marking done turns its tick green on hover. A bright green, to stand out on the dark frosted button. */
@@ -1620,18 +1623,10 @@ section + section {
   font-size: 1.25em;
 }
 
-/* Finished: a lighter wash than the standard primary fill, with a fine purple edge to keep its
-   shape, firming up on hover (as Start does over the cover). */
+/* Finished (a soft primary, .btn-soft). */
 .entry-move--finish {
   /* The button's own gap, which the shut tick slot and the wiped label cancel out. */
   --finish-gap: 6px;
-  border-color: rgba(168, 118, 235, 0.45);
-  background: linear-gradient(180deg, rgba(168, 118, 235, 0.28), rgba(146, 96, 214, 0.28));
-}
-
-.entry-move--finish:hover:not(:disabled) {
-  border-color: rgba(168, 118, 235, 0.65);
-  background: linear-gradient(180deg, rgba(168, 118, 235, 0.42), rgba(146, 96, 214, 0.42));
 }
 
 /* Finished's tick is hidden until hover, then its slot opens (nudging the label aside) and the
@@ -1763,7 +1758,7 @@ section + section {
   stroke: #99f6e4;
 }
 
-/* Two-up phone cards leave ~135px; keep "Move to backlog" on one line. */
+/* Two-up phone cards leave ~135px; keep the main move's label on one line. */
 @media (max-width: 480px) {
   .entry-move {
     gap: 4px;

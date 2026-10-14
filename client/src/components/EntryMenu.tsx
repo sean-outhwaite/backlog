@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { MoreIcon, TrashIcon } from './icons'
 
-// A "⋯" button on a card; removing lives behind it so it's not one stray tap away. Styled by default
-// for a media card's cover shortcuts.
+// A "⋯" button on a card; removing lives behind it so it's not one stray tap away, below any
+// less-used `actions` the card has no room for. Styled by default for a media card's cover shortcuts.
 export function EntryMenu({
   onRemove,
+  actions = [],
   label = 'Remove',
   icon = <TrashIcon />,
   triggerClassName = 'cover-action',
   triggerLabel = 'More actions',
 }: {
   onRemove: () => void
+  actions?: { label: string; icon: ReactNode; onClick: () => void }[]
   label?: string
   icon?: ReactNode
   triggerClassName?: string
@@ -57,13 +59,27 @@ export function EntryMenu({
 
       {open && (
         <div className="entry-menu-panel" id={panelId}>
+          {actions.map((action, index) => (
+            <button
+              key={action.label}
+              className="entry-menu-item btn-quiet"
+              onClick={() => {
+                setOpen(false)
+                action.onClick()
+              }}
+              autoFocus={index === 0}
+            >
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
           <button
             className="entry-menu-item btn-quiet btn-danger"
             onClick={() => {
               setOpen(false)
               onRemove()
             }}
-            autoFocus
+            autoFocus={actions.length === 0}
           >
             {icon}
             {label}

@@ -161,6 +161,18 @@ button:disabled {
   color: var(--accent-fill-text);
 }
 
+/* A softer primary for a card's main action: a lighter wash with a fine purple edge to keep its
+   shape, firming up on hover (as Start does over the cover). */
+.btn-primary.btn-soft {
+  border-color: rgba(168, 118, 235, 0.45);
+  background: linear-gradient(180deg, rgba(168, 118, 235, 0.28), rgba(146, 96, 214, 0.28));
+}
+
+.btn-primary.btn-soft:hover:not(:disabled) {
+  border-color: rgba(168, 118, 235, 0.65);
+  background: linear-gradient(180deg, rgba(168, 118, 235, 0.42), rgba(146, 96, 214, 0.42));
+}
+
 .btn-primary .icon {
   color: var(--accent-fill-icon);
 }

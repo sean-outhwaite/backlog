@@ -15,8 +15,9 @@ const TOAST_MS = 3000
 
 const friendName = (friend: Profile) => friend.username ?? 'Unnamed friend'
 
-// A "Recommend" button that opens a picker for sending the title to one or more friends.
-export function RecommendControl({ media, title }: { media: MediaRef; title: string }) {
+// A "Recommend" button that opens a picker for sending the title to one or more friends. `primary`
+// (a soft one, like Finished) where recommending is the main thing left to do with a title.
+export function RecommendControl({ media, title, primary }: { media: MediaRef; title: string; primary?: boolean }) {
   const [friends, setFriends] = useState<Profile[]>([])
   const [open, setOpen] = useState(false)
   const [sentTo, setSentTo] = useState<string[]>([])
@@ -45,7 +46,7 @@ export function RecommendControl({ media, title }: { media: MediaRef; title: str
   return (
     <>
       <button
-        className={`recommend-button${sent ? ' is-sent' : ''}`}
+        className={`recommend-button${primary ? ' btn-primary btn-soft' : ''}${sent ? ' is-sent' : ''}`}
         onClick={() => setOpen(true)}
         title={sent ? `Sent to ${sentTo.join(', ')}` : `Recommend ${title} to friends`}
       >
