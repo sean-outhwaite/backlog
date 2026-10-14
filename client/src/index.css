@@ -46,12 +46,13 @@
   --shadow-lift: 0 2px 4px rgba(22, 38, 58, 0.05), 0 18px 36px -14px rgba(45, 111, 78, 0.35);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --display: 'Fraunces', Georgia, var(--sans);
+  --display: 'Bree Serif', Georgia, var(--sans);
   --ease-spring: cubic-bezier(0.3, 1.5, 0.5, 1);
 
   font: 16px/145% var(--sans);
-  /* Fraunces' soft axis rounds its edges off; fonts without the axis ignore it. */
-  font-variation-settings: 'SOFT' 100;
+  /* Bree Serif comes in one weight; headings ask for bold, and a faked bold smears it. Fonts
+     with real bold weights (the system body font) are unaffected. */
+  font-synthesis-weight: none;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);

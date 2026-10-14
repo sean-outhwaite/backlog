@@ -1590,7 +1590,10 @@ section + section {
   padding: 14px;
 }
 
+/* Titles on cards are the media's own names, not ours, so they skip the display font. */
 .media-card-body h3 {
+  font-family: var(--sans);
+  font-weight: 600;
   font-size: 16px;
   line-height: 1.25;
   margin: 0;
