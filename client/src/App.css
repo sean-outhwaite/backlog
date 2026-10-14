@@ -1620,6 +1620,118 @@ section + section {
   font-size: 1.25em;
 }
 
+/* Finished: a lighter wash than the standard primary fill, with a fine purple edge to keep its
+   shape, firming up on hover (as Start does over the cover). */
+.entry-move--finish {
+  /* The button's own gap, which the shut tick slot and the wiped label cancel out. */
+  --finish-gap: 6px;
+  border-color: rgba(168, 118, 235, 0.45);
+  background: linear-gradient(180deg, rgba(168, 118, 235, 0.28), rgba(146, 96, 214, 0.28));
+}
+
+.entry-move--finish:hover:not(:disabled) {
+  border-color: rgba(168, 118, 235, 0.65);
+  background: linear-gradient(180deg, rgba(168, 118, 235, 0.42), rgba(146, 96, 214, 0.42));
+}
+
+/* Finished's tick is hidden until hover, then its slot opens (nudging the label aside) and the
+   stroke draws itself in, springing like the rest of the app's buttons. The negative margin cancels
+   the button's gap while the slot is shut, so the label stays centred. */
+.entry-move--finish .icon {
+  width: 0;
+  margin-inline-end: calc(-1 * var(--finish-gap));
+  transition:
+    width 0.2s var(--ease-spring),
+    margin 0.2s var(--ease-spring),
+    transform 0.25s var(--ease-spring);
+}
+
+.entry-move--finish .icon path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.12s ease-in;
+}
+
+.entry-move--finish:is(:hover, :focus-visible, .is-finishing):not(:disabled) .icon {
+  width: 1.1em;
+  margin-inline-end: 0;
+}
+
+.entry-move--finish:is(:hover, :focus-visible, .is-finishing):not(:disabled) .icon path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.3s cubic-bezier(0.65, 0, 0.35, 1) 0.08s;
+}
+
+/* The label's column can shrink to nothing (grid tracks animate where widths can't), and its text
+   can be wiped away. */
+.entry-move-label {
+  display: inline-grid;
+  grid-template-columns: 1fr;
+  transition:
+    grid-template-columns 0.5s cubic-bezier(0.65, 0, 0.35, 1),
+    margin 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.entry-move-label > span {
+  min-width: 0;
+  overflow: hidden;
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* On click the label is wiped away right to left, back into the tick, while its column closes, so
+   the tick (centred with it) slides to the middle, then grows as the card gets ready to pop. */
+.entry-move--finish.is-finishing .entry-move-label {
+  grid-template-columns: 0fr;
+  margin-inline-start: calc(-1 * var(--finish-gap));
+}
+
+.entry-move--finish.is-finishing .entry-move-label > span {
+  clip-path: inset(0 100% 0 0);
+}
+
+.entry-move--finish.is-finishing .icon {
+  transform: scale(1.6);
+  transition:
+    width 0.2s var(--ease-spring),
+    margin 0.2s var(--ease-spring),
+    transform 0.45s var(--ease-spring) 0.45s;
+}
+
+/* With no animation the tick just shows, so the button still says what it does. */
+@media (prefers-reduced-motion: reduce) {
+  .entry-move--finish .icon {
+    width: 1.1em;
+    margin-inline-end: 0;
+  }
+
+  .entry-move--finish .icon path {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The dots a finished card sprays as it pops; placed and moved from script (popBurst). */
+.pop-burst {
+  position: absolute;
+  z-index: 20;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pop-burst span {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.pop-burst span:nth-child(even) {
+  background: var(--teal);
+}
+
 /* Over the cover: a see-through frosted purple that firms up on hover. Bottom-right, so it clears a
    series' progress count in the bottom-left. */
 .media-card-cover-main {
@@ -1657,6 +1769,10 @@ section + section {
     gap: 4px;
     padding-inline: 6px;
     font-size: 14px;
+  }
+
+  .entry-move--finish {
+    --finish-gap: 4px;
   }
 }
 

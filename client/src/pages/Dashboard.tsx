@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ComponentType,
@@ -127,6 +128,7 @@ export function Dashboard() {
 
   function removeEntry(entry: ListEntry) {
     flushRemoval()
+    dismissFinished()
     const commit = () => {
       pendingRemoval.current = null
       setRemoving((current) => (current?.id === entry.id ? null : current))
@@ -136,6 +138,65 @@ export function Dashboard() {
     }
     pendingRemoval.current = { timer: window.setTimeout(commit, UNDO_MS), commit }
     setRemoving(entry)
+  }
+
+  // Finishing from a card saves straight away (the card has already popped off the tab), then offers
+  // Undo for as long as a removal would, which puts the entry back as it was. One toast at a time:
+  // finishing sends any pending removal now, and removing dismisses this.
+  const [finished, setFinished] = useState<ListEntry | null>(null)
+  const finishedTimer = useRef<number | undefined>(undefined)
+
+  function dismissFinished() {
+    window.clearTimeout(finishedTimer.current)
+    setFinished(null)
+  }
+
+  useEffect(() => () => window.clearTimeout(finishedTimer.current), [])
+
+  // When a finished card leaves (or comes back on undo), the cards after it glide to their new
+  // places rather than jumping: where they were is noted just before the list changes, and once
+  // it's rendered each is animated from there. Only for these, so dragging is left to dnd-kit.
+  const slideFrom = useRef<Map<string, DOMRect> | null>(null)
+  useLayoutEffect(() => {
+    const from = slideFrom.current
+    if (!from) return
+    slideFrom.current = null
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    for (const card of document.querySelectorAll<HTMLElement>('[data-entry-id]')) {
+      const was = from.get(card.dataset.entryId!)
+      if (!was) continue
+      const now = card.getBoundingClientRect()
+      const dx = was.left - now.left
+      const dy = was.top - now.top
+      if (!dx && !dy) continue
+      card.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
+        duration: 500,
+        easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+      })
+    }
+  })
+
+  async function finishEntry(entry: ListEntry) {
+    const updated = await api.patch<ListEntry>(`/api/lists/${entry.id}`, { status: 'done' })
+    slideFrom.current = cardRects()
+    setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+    flushRemoval()
+    window.clearTimeout(finishedTimer.current)
+    setFinished(entry)
+    finishedTimer.current = window.setTimeout(() => setFinished(null), UNDO_MS)
+  }
+
+  function undoFinish() {
+    if (!finished) return
+    const entry = finished
+    dismissFinished()
+    slideFrom.current = cardRects()
+    setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)))
+    api
+      .patch<ListEntry>(`/api/lists/${entry.id}`, { status: entry.status })
+      .then((updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e))))
+      // If it fails, reloading shows where the entry really is.
+      .catch(load)
   }
 
   function undoRemoval() {
@@ -237,7 +298,10 @@ export function Dashboard() {
                 actions={
                   <>
                     {entry.status !== 'want' && (
-                      <MainMoveButton entry={entry} onMove={(to) => void updateStatus(entry, to)} />
+                      <MainMoveButton
+                        entry={entry}
+                        onMove={(to) => (to === 'done' ? finishEntry(entry) : updateStatus(entry, to))}
+                      />
                     )}
                     <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
                   </>
@@ -261,6 +325,14 @@ export function Dashboard() {
           message={`Removed ${removing.mediaItem.title}`}
           duration={UNDO_MS}
           action={{ label: 'Undo', onClick: undoRemoval }}
+        />
+      )}
+      {finished && (
+        <Toast
+          key={finished.id}
+          message={`Finished ${finished.mediaItem.title}`}
+          duration={UNDO_MS}
+          action={{ label: 'Undo', onClick: undoFinish }}
         />
       )}
     </div>
@@ -335,6 +407,7 @@ function SortableEntry({ id, children }: { id: string; children: ReactNode }) {
     <div
       ref={setNodeRef}
       className={`sortable-entry${isDragging ? ' is-dragging' : ''}`}
+      data-entry-id={id}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       {...attributes}
       {...pointerListeners}
@@ -348,21 +421,120 @@ function SortableEntry({ id, children }: { id: string; children: ReactNode }) {
   )
 }
 
+// Finishing plays out before the entry leaves the tab: on the button, the label is wiped away and
+// the tick slides to the middle and grows (CSS, via is-finishing); then the card itself jiggles,
+// swells and pops. The card is animated in script so it's free of React's className and
+// dnd-kit's transform on its wrapper.
+const FINISH_BUTTON_MS = 950
+
+// No starting frame, so the jiggle picks up from wherever the card is (lifted, while hovered).
+// One wobble each way, then it settles.
+const CARD_JIGGLE: Keyframe[] = [
+  { transform: 'scale(1.02) rotate(-1deg)', offset: 0.35 },
+  { transform: 'scale(1.035) rotate(1deg)', offset: 0.7 },
+  { transform: 'scale(1.04) rotate(0deg)' },
+]
+
+// Like a bubble: it goes taut, then is simply gone, shrinking a little as it vanishes rather than
+// flying out at you.
+const CARD_POP: Keyframe[] = [
+  { transform: 'scale(1.04)', opacity: 1 },
+  { transform: 'scale(1.07)', opacity: 1, offset: 0.6, easing: 'cubic-bezier(0.4, 0, 1, 1)' },
+  { transform: 'scale(0.94)', opacity: 0 },
+]
+
+// Where each card on the board is, by entry id, for sliding them on from there.
+function cardRects() {
+  const cards = document.querySelectorAll<HTMLElement>('[data-entry-id]')
+  return new Map(Array.from(cards, (card) => [card.dataset.entryId!, card.getBoundingClientRect()]))
+}
+
+// The spray of a popped bubble: dots set round the card's outline fly a little way out and fade.
+// Laid over the page rather than in the card, which is on its way out.
+const BURST_DOTS = 12
+
+function popBurst(rect: DOMRect) {
+  const burst = document.createElement('div')
+  burst.className = 'pop-burst'
+  burst.style.left = `${rect.left + window.scrollX + rect.width / 2}px`
+  burst.style.top = `${rect.top + window.scrollY + rect.height / 2}px`
+  const animations = Array.from({ length: BURST_DOTS }, (_, i) => {
+    const angle = (i / BURST_DOTS) * 2 * Math.PI
+    const [x, y] = [Math.cos(angle), Math.sin(angle)]
+    const [rx, ry] = [rect.width * 0.45, rect.height * 0.45]
+    const dot = burst.appendChild(document.createElement('span'))
+    return dot.animate(
+      [
+        { transform: `translate(${x * rx}px, ${y * ry}px) scale(1)`, opacity: 1 },
+        { transform: `translate(${x * (rx + 28)}px, ${y * (ry + 28)}px) scale(0.3)`, opacity: 0 },
+      ],
+      { duration: 450, easing: 'cubic-bezier(0.2, 0.6, 0.35, 1)', fill: 'forwards' },
+    )
+  })
+  document.body.appendChild(burst)
+  void Promise.all(animations.map((animation) => animation.finished)).finally(() => burst.remove())
+}
+
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
 // The first move is the card's labelled button (primary, unless the entry is already done).
-function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void }) {
+function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void | Promise<void> }) {
+  const [finishing, setFinishing] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const main = STATUS_ACTIONS[entry.status][0]
   const MainIcon = ACTION_ICONS[main.to]
-  const classes = ['entry-move', entry.status !== 'done' && 'btn-primary', main.iconOnly && 'entry-move--icon-only']
+  const classes = [
+    'entry-move',
+    entry.status !== 'done' && 'btn-primary',
+    main.iconOnly && 'entry-move--icon-only',
+    main.to === 'done' && 'entry-move--finish',
+    finishing && 'is-finishing',
+  ]
+  const move = async () => {
+    if (main.to !== 'done' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onMove(main.to)
+    if (finishing) return
+    setFinishing(true)
+    const card = buttonRef.current?.closest<HTMLElement>('.media-card')
+    const animations: Animation[] = []
+    await wait(FINISH_BUTTON_MS)
+    if (card) {
+      // Above its neighbours while it swells over them.
+      card.style.zIndex = '1'
+      animations.push(card.animate(CARD_JIGGLE, { duration: 380, easing: 'ease-in-out', fill: 'forwards' }))
+      await animations[0].finished
+      // Held at the end (invisible) until the move lands and the card leaves the tab. The burst
+      // starts as it begins to vanish.
+      animations.push(card.animate(CARD_POP, { duration: 220, fill: 'forwards' }))
+      const rect = card.getBoundingClientRect()
+      window.setTimeout(() => popBurst(rect), 130)
+      await animations[1].finished
+    }
+    try {
+      await onMove(main.to)
+    } catch (error) {
+      // The card stays put, so bring it back as it was.
+      for (const animation of animations) animation.cancel()
+      if (card) card.style.zIndex = ''
+      setFinishing(false)
+      throw error
+    }
+  }
   return (
     <button
+      ref={buttonRef}
       className={classes.filter(Boolean).join(' ')}
-      onClick={() => onMove(main.to)}
+      onClick={() => void move()}
       aria-label={main.iconOnly ? main.label : undefined}
       title={main.iconOnly ? main.label : undefined}
     >
-      {/* A tick beside "Finished" is noise; it only earns its place as a shortcut. */}
-      {main.to !== 'done' && <MainIcon />}
-      {!main.iconOnly && main.label}
+      {/* A tick that sat beside "Finished" all the time would be noise; it draws itself in on hover. */}
+      <MainIcon />
+      {!main.iconOnly && (
+        // Two spans so the label can both shrink (outer, a grid column) and be wiped (inner).
+        <span className="entry-move-label">
+          <span>{main.label}</span>
+        </span>
+      )}
     </button>
   )
 }

@@ -66,7 +66,8 @@ export function SeriesIcon() {
 export function CheckIcon() {
   return (
     <Icon>
-      <path d="M5 12.5 10 17 19 7" />
+      {/* pathLength lets CSS draw the tick in (stroke-dashoffset 1 → 0). */}
+      <path d="M5 12.5 10 17 19 7" pathLength={1} />
     </Icon>
   )
 }
