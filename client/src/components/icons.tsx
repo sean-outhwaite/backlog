@@ -217,32 +217,30 @@ export function SparklesIcon() {
   )
 }
 
-// A little stack of cards: the backlog piling up.
+// A campfire: logs on the fire, the backlog. The flame flickers on hover (see .logo-flame).
 export function LogoMark() {
   return (
     <svg className="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect
-        x="9"
-        y="3"
-        width="16"
-        height="21"
-        rx="3"
-        transform="rotate(10 17 13.5)"
-        fill="currentColor"
-        opacity="0.3"
-      />
-      <rect
-        x="8"
-        y="5"
-        width="16"
-        height="21"
-        rx="3"
-        transform="rotate(-5 16 15.5)"
-        fill="currentColor"
-        opacity="0.55"
-      />
-      <rect x="7" y="8" width="16" height="21" rx="3" fill="currentColor" />
-      <path d="M16 8v8l2.5-1.8L21 16V8" fill="var(--bg)" />
+      <g className="logo-flame">
+        <path
+          d="M16 2.5c3 4.6 7.6 7.8 7 14-.4 4-3.4 6.8-7 6.8s-6.6-2.8-7-6.8c-.3-3.4 1.6-5.6 3.2-7.6.3 2.2 1.2 3.4 2.3 4C14 9.4 14.6 5.8 16 2.5Z"
+          fill="currentColor"
+        />
+        <path
+          d="M16 10.5c2 3 3.9 5 3.6 8.3-.2 2.4-1.7 3.7-3.6 3.7s-3.4-1.3-3.6-3.4c-.2-2.3 1.3-3.6 2.2-5 .4 1.3 1 1.8 1.5 2-.5-1.8-.6-3.6-.1-5.6Z"
+          fill="var(--flame-core)"
+        />
+      </g>
+      <circle cx="24.5" cy="6.5" r="1" fill="var(--flame-core)" opacity="0.8" />
+      <circle cx="7.5" cy="9" r="0.75" fill="currentColor" opacity="0.6" />
+      <g fill="var(--log)">
+        <rect x="4" y="22" width="24" height="5" rx="2.5" transform="rotate(-12 16 24.5)" />
+        <rect x="4" y="22" width="24" height="5" rx="2.5" transform="rotate(12 16 24.5)" />
+      </g>
+      <g fill="none" stroke="var(--flame-core)" strokeWidth="0.9" opacity="0.55">
+        <circle cx="6.8" cy="22.5" r="1.2" />
+        <circle cx="25.2" cy="22.5" r="1.2" />
+      </g>
     </svg>
   )
 }
