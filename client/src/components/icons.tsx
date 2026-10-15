@@ -217,10 +217,15 @@ export function SparklesIcon() {
   )
 }
 
-// A campfire: logs on the fire, the backlog. The flame flickers on hover (see .logo-flame).
+// A campfire: logs on the fire, the backlog. The flame flickers and smokes on hover (see .logo-flame).
 export function LogoMark() {
   return (
     <svg className="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <g className="logo-smoke">
+        <circle cx="16" cy="5" r="1.6" />
+        <circle cx="16" cy="5" r="1.6" />
+        <circle cx="16" cy="5" r="1.6" />
+      </g>
       <g className="logo-flame">
         <path
           d="M16 2.5c3 4.6 7.6 7.8 7 14-.4 4-3.4 6.8-7 6.8s-6.6-2.8-7-6.8c-.3-3.4 1.6-5.6 3.2-7.6.3 2.2 1.2 3.4 2.3 4C14 9.4 14.6 5.8 16 2.5Z"

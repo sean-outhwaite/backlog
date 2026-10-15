@@ -217,6 +217,7 @@
   width: 28px;
   height: 28px;
   color: var(--flame);
+  overflow: visible;
   transition: transform 0.3s var(--ease-spring);
 }
 
@@ -224,10 +225,75 @@
   transform-origin: 50% 72%;
 }
 
+/* Puffs sit hidden at the flame tip until hover, then rise above the mark (hence overflow: visible). */
+.logo-smoke circle {
+  fill: var(--smoke);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* On hover the flame catches: a gentle wobble rather than the whole mark moving. */
 .app-title:hover .logo-flame,
 .auth-card > .logo-mark:hover .logo-flame {
   animation: flicker 0.9s ease-in-out infinite;
+}
+
+.app-title:hover .logo-smoke circle,
+.auth-card > .logo-mark:hover .logo-smoke circle {
+  animation: smoke 2.1s ease-out infinite;
+}
+
+.app-title:hover .logo-smoke circle:nth-child(2),
+.auth-card > .logo-mark:hover .logo-smoke circle:nth-child(2) {
+  animation-name: smoke-alt;
+  animation-delay: 0.7s;
+}
+
+.app-title:hover .logo-smoke circle:nth-child(3),
+.auth-card > .logo-mark:hover .logo-smoke circle:nth-child(3) {
+  animation-delay: 1.4s;
+}
+
+@keyframes smoke {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 0.55;
+  }
+  60% {
+    transform: translate(2px, -11px) scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0.5px, -21px) scale(2.2);
+  }
+}
+
+@keyframes smoke-alt {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  20% {
+    opacity: 0.55;
+  }
+  60% {
+    transform: translate(-2px, -11px) scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-0.5px, -21px) scale(2.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-title:hover .logo-smoke circle,
+  .auth-card > .logo-mark:hover .logo-smoke circle {
+    animation: none;
+  }
 }
 
 @keyframes flicker {
