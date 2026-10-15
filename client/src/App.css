@@ -1640,6 +1640,14 @@ section + section {
   margin-top: auto;
 }
 
+.media-card-actions button:not(.btn-primary, .btn-quiet, .is-sent) {
+  background: var(--card-button);
+}
+
+.media-card-actions button:not(.btn-primary, .btn-quiet, .is-sent):hover:not(:disabled) {
+  background: var(--card-button-hover);
+}
+
 .entry-move {
   white-space: nowrap;
 }
