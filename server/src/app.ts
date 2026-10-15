@@ -15,6 +15,7 @@ import { recommendationsRouter } from './routes/recommendations.js'
 
 export const app = express()
 
+app.disable('x-powered-by')
 app.use(cors({ origin: env.clientOrigin }))
 app.use(express.json())
 

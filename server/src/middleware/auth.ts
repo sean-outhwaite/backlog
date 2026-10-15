@@ -32,8 +32,13 @@ export const requireAuth = asyncHandler(async (req, res, next) => {
 
   let userId: string
   try {
-    const { payload } = await jwtVerify(token, jwks)
+    // Only signed-in users' access tokens: the JWKS alone accepts anything this project signs.
+    const { payload } = await jwtVerify(token, jwks, {
+      issuer: `${env.supabaseUrl}/auth/v1`,
+      audience: 'authenticated',
+    })
     if (typeof payload.sub !== 'string') throw new Error('Missing sub claim')
+    if (payload.is_anonymous === true) throw new Error('Anonymous sessions are not supported')
     userId = payload.sub
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' })
