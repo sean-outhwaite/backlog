@@ -21,13 +21,13 @@
   --accent-fill-text: #fff;
   --accent-fill-icon: #cfeedd;
   --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(22, 38, 58, 0.25);
-  /* A lighter wash of the same fill, for a card's main action, with its own (darker) text. */
-  --accent-soft: linear-gradient(180deg, rgba(53, 127, 91, 0.14), rgba(42, 110, 76, 0.1));
-  --accent-soft-hover: linear-gradient(180deg, rgba(53, 127, 91, 0.24), rgba(42, 110, 76, 0.18));
-  --accent-soft-border: rgba(45, 111, 78, 0.35);
-  --accent-soft-border-hover: rgba(45, 111, 78, 0.55);
+  /* For a card's main action: a pale wheat wash with bark-brown text and a leaf-green icon, the
+     card's own warm pairing next to the green primary. */
+  --accent-soft: linear-gradient(180deg, rgba(214, 170, 90, 0.16), rgba(200, 156, 76, 0.12));
+  --accent-soft-hover: linear-gradient(180deg, rgba(214, 170, 90, 0.28), rgba(200, 156, 76, 0.22));
+  --accent-soft-border: rgba(184, 140, 64, 0.4);
+  --accent-soft-border-hover: rgba(184, 140, 64, 0.6);
   --accent-soft-text: #7a4a1e;
-  /* A soft terracotta ember, the fire's warm note against the green (3:1 on the wash). */
   --accent-soft-icon: #3d7a12;
   /* Paired with the accent in gradients (avatars): moss in light mode, flame yellow at night. */
   --accent-2: #65a30d;
