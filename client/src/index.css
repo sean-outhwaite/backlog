@@ -119,9 +119,9 @@ body {
   background-attachment: fixed;
 }
 
-/* Decorative and fixed, behind everything. By day: cartoon clouds at three depths (near ones
-   big and white; far ones small, pale, outlined and soft), and misty pine ridges along
-   the bottom, paler the further back they are. At night (below): a star field, the glow of a
+/* Decorative and fixed, behind everything. By day: a soft sun glowing in the top-right corner
+   (no hard edges, so it never reads as content), and misty pine ridges along the bottom,
+   paler the further back they are. At night (below): a star field, the glow of a
    fire past the bottom edge, and one dark treeline in front of it. */
 body::before,
 body::after {
@@ -134,29 +134,16 @@ body::after {
 body::before {
   inset: 0;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 112'%3E%3Cg opacity='1'%3E%3Cg fill='%23d3e4f3'%3E%3Crect x='28' y='72' width='184' height='28' rx='14'/%3E%3Ccircle cx='64' cy='76' r='20'/%3E%3Ccircle cx='104' cy='62' r='30'/%3E%3Ccircle cx='126' cy='38' r='26'/%3E%3Ccircle cx='156' cy='60' r='30'/%3E%3Ccircle cx='190' cy='76' r='16'/%3E%3C/g%3E%3Cg fill='%23fff' transform='translate(0 -4)'%3E%3Crect x='28' y='72' width='184' height='28' rx='14'/%3E%3Ccircle cx='64' cy='76' r='20'/%3E%3Ccircle cx='104' cy='62' r='30'/%3E%3Ccircle cx='126' cy='38' r='26'/%3E%3Ccircle cx='156' cy='60' r='30'/%3E%3Ccircle cx='190' cy='76' r='16'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-      no-repeat 54% 184px / 250px 117px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 76'%3E%3Cg opacity='1'%3E%3Cg fill='%23d3e4f3'%3E%3Crect x='18' y='44' width='244' height='24' rx='12'/%3E%3Ccircle cx='48' cy='46' r='15'/%3E%3Ccircle cx='80' cy='36' r='21'/%3E%3Ccircle cx='116' cy='42' r='17'/%3E%3Ccircle cx='150' cy='32' r='23'/%3E%3Ccircle cx='188' cy='40' r='17'/%3E%3Ccircle cx='222' cy='46' r='13'/%3E%3C/g%3E%3Cg fill='%23fff' transform='translate(0 -4)'%3E%3Crect x='18' y='44' width='244' height='24' rx='12'/%3E%3Ccircle cx='48' cy='46' r='15'/%3E%3Ccircle cx='80' cy='36' r='21'/%3E%3Ccircle cx='116' cy='42' r='17'/%3E%3Ccircle cx='150' cy='32' r='23'/%3E%3Ccircle cx='188' cy='40' r='17'/%3E%3Ccircle cx='222' cy='46' r='13'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-      no-repeat 100% 236px / 280px 76px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 80'%3E%3Cg opacity='0.85'%3E%3Cg fill='%23bfd4e8' stroke='%23bfd4e8' stroke-width='4' stroke-linejoin='round'%3E%3Crect x='24' y='50' width='112' height='22' rx='11'/%3E%3Ccircle cx='60' cy='48' r='22'/%3E%3Ccircle cx='98' cy='38' r='27'/%3E%3Ccircle cx='126' cy='56' r='12'/%3E%3C/g%3E%3Cg fill='%23dce8f4'%3E%3Crect x='24' y='50' width='112' height='22' rx='11'/%3E%3Ccircle cx='60' cy='48' r='22'/%3E%3Ccircle cx='98' cy='38' r='27'/%3E%3Ccircle cx='126' cy='56' r='12'/%3E%3C/g%3E%3Cg fill='%23f9fcff' transform='translate(0 -4)'%3E%3Crect x='24' y='50' width='112' height='22' rx='11'/%3E%3Ccircle cx='60' cy='48' r='22'/%3E%3Ccircle cx='98' cy='38' r='27'/%3E%3Ccircle cx='126' cy='56' r='12'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-      no-repeat 2% 204px / 150px 75px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 56'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.7'/%3E%3C/filter%3E%3Cg opacity='0.65' filter='url(%23b)'%3E%3Cg fill='%23d2e1ef' stroke='%23d2e1ef' stroke-width='3' stroke-linejoin='round'%3E%3Crect x='18' y='32' width='84' height='16' rx='8'/%3E%3Ccircle cx='40' cy='32' r='12'/%3E%3Ccircle cx='62' cy='22' r='16'/%3E%3Ccircle cx='86' cy='30' r='11'/%3E%3C/g%3E%3Cg fill='%23e1ecf6'%3E%3Crect x='18' y='32' width='84' height='16' rx='8'/%3E%3Ccircle cx='40' cy='32' r='12'/%3E%3Ccircle cx='62' cy='22' r='16'/%3E%3Ccircle cx='86' cy='30' r='11'/%3E%3C/g%3E%3Cg fill='%23f2f7fc' transform='translate(0 -4)'%3E%3Crect x='18' y='32' width='84' height='16' rx='8'/%3E%3Ccircle cx='40' cy='32' r='12'/%3E%3Ccircle cx='62' cy='22' r='16'/%3E%3Ccircle cx='86' cy='30' r='11'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-      no-repeat 94% 70px / 86px 40px,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 48'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='0.7'/%3E%3C/filter%3E%3Cg opacity='0.65' filter='url(%23b)'%3E%3Cg fill='%23d2e1ef' stroke='%23d2e1ef' stroke-width='3' stroke-linejoin='round'%3E%3Crect x='14' y='26' width='112' height='14' rx='7'/%3E%3Ccircle cx='40' cy='27' r='10'/%3E%3Ccircle cx='64' cy='21' r='13'/%3E%3Ccircle cx='92' cy='25' r='10'/%3E%3C/g%3E%3Cg fill='%23e1ecf6'%3E%3Crect x='14' y='26' width='112' height='14' rx='7'/%3E%3Ccircle cx='40' cy='27' r='10'/%3E%3Ccircle cx='64' cy='21' r='13'/%3E%3Ccircle cx='92' cy='25' r='10'/%3E%3C/g%3E%3Cg fill='%23f2f7fc' transform='translate(0 -4)'%3E%3Crect x='14' y='26' width='112' height='14' rx='7'/%3E%3Ccircle cx='40' cy='27' r='10'/%3E%3Ccircle cx='64' cy='21' r='13'/%3E%3Ccircle cx='92' cy='25' r='10'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
-      no-repeat 28% 64px / 104px 36px;
+    radial-gradient(circle at calc(100% - 90px) 50px, #fffbf4 0, #fff6e8 26px, rgba(255, 244, 228, 0.65) 34px, rgba(255, 238, 222, 0.3) 110px, transparent 300px),
+    radial-gradient(900px 520px at 100% 0, rgba(255, 230, 214, 0.3), transparent 70%);
 }
 
-/* On wide screens: beside the sidebar, and higher, since the cards start sooner there. Same
-   order as the layers above. */
-@media (min-width: 721px) {
+/* Phones: lower, so the sun clears the top bar and sits right of the page heading. */
+@media (max-width: 720px) {
   body::before {
-    left: 232px;
-    background-position:
-      54% 96px,
-      100% 150px,
-      0% 136px,
-      96% 6px,
-      30% 10px;
+    background:
+      radial-gradient(circle at calc(100% - 64px) 112px, #fffbf4 0, #fff6e8 22px, rgba(255, 244, 228, 0.65) 29px, rgba(255, 238, 222, 0.3) 90px, transparent 240px),
+      radial-gradient(600px 420px at 100% 60px, rgba(255, 230, 214, 0.3), transparent 70%);
   }
 }
 
