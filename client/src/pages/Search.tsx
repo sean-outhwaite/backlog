@@ -6,11 +6,11 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
+import { TypeSelect } from '../components/TypeSelect'
 import { listedKeys, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import { isUpcoming } from '../lib/release'
 import type { ListEntry, ListStatus, MediaItem, MediaSearchResult, MediaType } from '../types'
-import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS } from '../lib/mediaTypes'
 
 export function Search() {
   const [query, setQuery] = useState('')
@@ -114,13 +114,7 @@ export function Search() {
             }}
           />
         </label>
-        <select value={typeFilter} onChange={(event) => handleTypeChange(event.target.value as MediaType | 'all')}>
-          {FILTERABLE_MEDIA_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type === 'all' ? 'All types' : MEDIA_TYPE_LABELS[type]}
-            </option>
-          ))}
-        </select>
+        <TypeSelect value={typeFilter} onChange={handleTypeChange} />
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? 'Searching…' : 'Search'}
         </button>

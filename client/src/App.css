@@ -1037,9 +1037,104 @@
   box-shadow: var(--shadow);
 }
 
-.search-bar select,
 .search-bar input {
   border-color: transparent;
+}
+
+/* The search bar's type picker (TypeSelect): a quiet pill that opens a menu like EntryMenu's. */
+.type-select {
+  position: relative;
+}
+
+.type-select-trigger {
+  gap: 8px;
+  padding: 8px 12px;
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-h);
+  white-space: nowrap;
+}
+
+.type-select-trigger .icon {
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.type-select-trigger[aria-expanded='true'] {
+  background: var(--surface-hover);
+}
+
+.type-select-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.type-select-chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--text);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.type-select-trigger[aria-expanded='true'] .type-select-chevron {
+  transform: rotate(180deg);
+}
+
+.type-select-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow-lift);
+  transform-origin: top left;
+  animation: menu-in 0.18s var(--ease-spring) both;
+}
+
+.type-select-panel:focus {
+  outline: none;
+}
+
+.type-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 10px;
+  border-radius: 8px;
+  color: var(--text-h);
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.type-select-option .icon {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.type-select-option.is-active {
+  background: var(--surface-hover);
+}
+
+.type-select-option[aria-selected='true'] {
+  font-weight: 600;
+}
+
+.type-select-option[aria-selected='true'] .icon {
+  color: var(--accent);
 }
 
 .search-input {
