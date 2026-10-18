@@ -1,15 +1,17 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
-import type { MediaItem } from '../types'
+import type { MediaItem, MediaRef } from '../types'
 import { mediaLabel, SERIES_WORDS } from '../lib/mediaTypes'
 import { releaseLabel } from '../lib/release'
 import { CoverArt } from './CoverArt'
 import { MediaDetailsDialog, type DetailsMedia } from './MediaDetailsDialog'
 import { MediaTypeIcon, SeriesIcon } from './icons'
+import { RecommendControl } from './RecommendControl'
 
 export function MediaCard({
   mediaItem,
   actions,
   coverActions,
+  recommend,
   progress,
   stackCovers,
   partCount,
@@ -22,6 +24,8 @@ export function MediaCard({
   actions?: ReactNode
   // Small icon buttons pinned to the cover's top-right, level with the type tag.
   coverActions?: ReactNode
+  // Puts a Recommend icon among the cover actions, and a full Recommend button in the details dialog.
+  recommend?: MediaRef
   // A series' volumes done, shown along the foot of the cover.
   progress?: { done: number; total: number }
   // A series' volume covers from where the reader is up to, stacked in place of the single cover.
@@ -47,7 +51,7 @@ export function MediaCard({
           {stackCovers?.length ? <CoverStack covers={stackCovers} /> : <CoverArt media={mediaItem} />}
           <span className="media-card-type">
             {mediaItem.kind === 'series' ? <SeriesIcon /> : <MediaTypeIcon type={mediaItem.type} />}
-            {mediaLabel(mediaItem)}
+            <span className="media-card-type-label">{mediaLabel(mediaItem)}</span>
           </span>
           {progress && progress.total > 0 && (
             <>
@@ -60,7 +64,12 @@ export function MediaCard({
             </>
           )}
         </button>
-        {coverActions && <div className="media-card-cover-actions">{coverActions}</div>}
+        {(coverActions || recommend) && (
+          <div className="media-card-cover-actions">
+            {recommend && <RecommendControl media={recommend} title={mediaItem.title} icon />}
+            {coverActions}
+          </div>
+        )}
       </div>
       <div className="media-card-body">
         <div className="media-card-heading">
@@ -92,6 +101,7 @@ export function MediaCard({
               <>
                 {coverActions}
                 {actions}
+                {recommend && <RecommendControl media={recommend} title={mediaItem.title} />}
               </>
             )
           }

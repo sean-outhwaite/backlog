@@ -5,7 +5,6 @@ import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
 import { EntryMenu } from '../components/EntryMenu'
 import { EmptyState, PageHeader } from '../components/PageHeader'
-import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
 import { CloseIcon } from '../components/icons'
@@ -112,6 +111,7 @@ export function Recommendations() {
         <MediaCard
           key={resultKey(result)}
           mediaItem={result}
+          recommend={{ type: result.type, externalId: result.externalId }}
           actions={
             <>
               <AddToListButton
@@ -119,7 +119,6 @@ export function Recommendations() {
                 onAdd={(status) => addPopularToList(result, status)}
                 upcoming={isUpcoming(result)}
               />
-              <RecommendControl media={{ type: result.type, externalId: result.externalId }} title={result.title} />
             </>
           }
         />

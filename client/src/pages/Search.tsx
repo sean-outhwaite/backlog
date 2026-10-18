@@ -4,7 +4,6 @@ import { FriendsPopularGrid } from '../components/FriendsPopularGrid'
 import { SearchIcon, SeriesIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
-import { RecommendControl } from '../components/RecommendControl'
 import { LoadingState } from '../components/Spinner'
 import { TypeSelect } from '../components/TypeSelect'
 import { listedKeys, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
@@ -150,6 +149,7 @@ export function Search() {
             stackCovers={result.covers}
             partCount={result.volumeCount}
             offerSeries={!result.series}
+            recommend={{ type: result.type, externalId: result.externalId, kind: result.kind }}
             actions={
               <>
                 <AddToListButton
@@ -168,10 +168,6 @@ export function Search() {
                     title={`Add the whole ${result.series.title} series, and track it volume by volume`}
                   />
                 )}
-                <RecommendControl
-                  media={{ type: result.type, externalId: result.externalId, kind: result.kind }}
-                  title={result.title}
-                />
               </>
             }
           />

@@ -5,7 +5,6 @@ import type { FriendsPopularItem, ListStatus, MediaItem } from '../types'
 import { AddToListButton } from './AddToListButton'
 import { Avatar } from './Avatar'
 import { MediaCard } from './MediaCard'
-import { RecommendControl } from './RecommendControl'
 
 const AVATARS_SHOWN = 3
 
@@ -25,6 +24,7 @@ export function FriendsPopularGrid({
         <MediaCard
           key={mediaItem.id}
           mediaItem={mediaItem}
+          recommend={{ mediaItemId: mediaItem.id }}
           actions={
             <>
               <p className="friends-have">
@@ -42,7 +42,6 @@ export function FriendsPopularGrid({
                 onAdd={(status) => onAdd(mediaItem, status)}
                 upcoming={isUpcoming(mediaItem)}
               />
-              <RecommendControl media={{ mediaItemId: mediaItem.id }} title={mediaItem.title} />
             </>
           }
         />

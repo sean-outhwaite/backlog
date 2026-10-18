@@ -16,8 +16,19 @@ const TOAST_MS = 3000
 const friendName = (friend: Profile) => friend.username ?? 'Unnamed friend'
 
 // A "Recommend" button that opens a picker for sending the title to one or more friends. `primary`
-// (a soft one, like Finished) where recommending is the main thing left to do with a title.
-export function RecommendControl({ media, title, primary }: { media: MediaRef; title: string; primary?: boolean }) {
+// (a soft one, like Finished) where recommending is the main thing left to do with a title. `icon`
+// is a round button for a card's cover, where it's on hand without crowding the card's main action.
+export function RecommendControl({
+  media,
+  title,
+  primary,
+  icon,
+}: {
+  media: MediaRef
+  title: string
+  primary?: boolean
+  icon?: boolean
+}) {
   const [friends, setFriends] = useState<Profile[]>([])
   const [open, setOpen] = useState(false)
   const [sentTo, setSentTo] = useState<string[]>([])
@@ -43,16 +54,28 @@ export function RecommendControl({ media, title, primary }: { media: MediaRef; t
   if (friends.length === 0) return null
 
   const sent = sentTo.length > 0
+  const hint = sent ? `Sent to ${sentTo.join(', ')}` : `Recommend ${title} to friends`
   return (
     <>
-      <button
-        className={`recommend-button${primary ? ' btn-primary btn-soft' : ''}${sent ? ' is-sent' : ''}`}
-        onClick={() => setOpen(true)}
-        title={sent ? `Sent to ${sentTo.join(', ')}` : `Recommend ${title} to friends`}
-      >
-        {sent ? <CheckIcon /> : <SendIcon />}
-        {sent ? 'Recommended' : 'Recommend'}
-      </button>
+      {icon ? (
+        <button
+          className={`btn-icon cover-action cover-action--recommend${sent ? ' is-sent' : ''}`}
+          onClick={() => setOpen(true)}
+          aria-label={hint}
+          title={hint}
+        >
+          {sent ? <CheckIcon /> : <SendIcon />}
+        </button>
+      ) : (
+        <button
+          className={`recommend-button${primary ? ' btn-primary btn-soft' : ''}${sent ? ' is-sent' : ''}`}
+          onClick={() => setOpen(true)}
+          title={hint}
+        >
+          {sent ? <CheckIcon /> : <SendIcon />}
+          {sent ? 'Recommended' : 'Recommend'}
+        </button>
+      )}
       {open && (
         <RecommendDialog
           media={media}

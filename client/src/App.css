@@ -1578,6 +1578,22 @@ section + section {
   color: #4ade80;
 }
 
+/* The paper plane's weight sits up and to the right, so it's nudged back to look centred. */
+.cover-action--recommend:not(.is-sent) .icon {
+  font-size: 13px;
+  transform: translate(-1px, 1px);
+}
+
+/* Once sent, the Recommend icon keeps a green tick, like the Recommended button. */
+.media-card-cover-actions .cover-action--recommend.is-sent,
+.media-card-cover-actions .cover-action--recommend.is-sent:hover:not(:disabled) {
+  color: #4ade80;
+}
+
+.cover-action--recommend.is-sent .icon {
+  animation: pop 0.45s var(--ease-spring) both;
+}
+
 /* Soft fade so the type badge stays legible over any cover. */
 .media-card-cover::after {
   content: '';
@@ -1629,10 +1645,56 @@ section + section {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  transition:
+    gap 0.25s var(--ease-spring),
+    padding 0.25s var(--ease-spring);
 }
 
 .media-card-type .icon {
   font-size: 13px;
+}
+
+.media-card-type-label {
+  max-width: 12em;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    max-width 0.25s var(--ease-spring),
+    opacity 0.15s;
+}
+
+/* Three cover actions leave no room for the type tag's label, so it shrinks to its icon while
+   they're showing. With a mouse they only show on hover (below), so the label comes back after. */
+.media-card:has(.media-card-cover-actions > :nth-child(3)) .media-card-type {
+  gap: 0;
+  padding-right: 7px;
+}
+
+.media-card:has(.media-card-cover-actions > :nth-child(3)) .media-card-type-label {
+  max-width: 0;
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .media-card-cover-actions {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .media-card:is(:hover, :focus-within) .media-card-cover-actions,
+  .media-card-cover-actions:has([aria-expanded='true']) {
+    opacity: 1;
+  }
+
+  .media-card:has(.media-card-cover-actions > :nth-child(3)):not(:hover, :focus-within) .media-card-type {
+    gap: 5px;
+    padding-right: 9px;
+  }
+
+  .media-card:has(.media-card-cover-actions > :nth-child(3)):not(:hover, :focus-within) .media-card-type-label {
+    max-width: 12em;
+    opacity: 1;
+  }
 }
 
 /* A series' volumes from where the reader is up to, fanned up and to the right over a blurred

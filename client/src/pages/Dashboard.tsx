@@ -280,7 +280,7 @@ export function Dashboard() {
               key={entry.id}
               mediaItem={entry.mediaItem}
               coverActions={<EntryMenu onRemove={() => void removeEntry(entry)} />}
-              actions={<RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />}
+              recommend={{ mediaItemId: entry.mediaItem.id }}
               detailsActions={
                 <>
                   <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
@@ -300,6 +300,8 @@ export function Dashboard() {
                 stackCovers={entry.covers}
                 onSeriesAdded={load}
                 details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+                // Finished titles have Recommend as their main button instead.
+                recommend={entry.status === 'done' ? undefined : { mediaItemId: entry.mediaItem.id }}
                 coverActions={
                   <>
                     <MoveShortcuts entry={entry} onMove={(to) => void moveTo(entry, to)} />
@@ -334,13 +336,7 @@ export function Dashboard() {
                       primary
                     />
                   ) : (
-                    <>
-                      <MainMoveButton
-                        entry={entry}
-                        onMove={(to) => moveTo(entry, to, { easeOut: to !== 'done' })}
-                      />
-                      <RecommendControl media={{ mediaItemId: entry.mediaItem.id }} title={entry.mediaItem.title} />
-                    </>
+                    <MainMoveButton entry={entry} onMove={(to) => moveTo(entry, to, { easeOut: to !== 'done' })} />
                   )
                 }
                 detailsActions={
