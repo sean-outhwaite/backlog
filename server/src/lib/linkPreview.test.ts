@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest'
-import { withLinkPreview } from './linkPreview.js'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const readFile = vi.hoisted(() => vi.fn())
+vi.mock('node:fs/promises', () => ({ readFile }))
+
+const { withLinkPreview } = await import('./linkPreview.js')
+
+// A fresh copy each time, since the module keeps the page it read.
+async function freshReadIndexHtml() {
+  vi.resetModules()
+  return (await import('./linkPreview.js')).readIndexHtml
+}
 
 const INDEX = `<!doctype html>
 <html lang="en">
@@ -45,5 +55,45 @@ describe('withLinkPreview', () => {
     })
     expect(html).not.toContain('<script>')
     expect(html).toContain('&quot;&gt;&lt;script&gt;')
+  })
+})
+
+describe('readIndexHtml', () => {
+  afterEach(() => {
+    readFile.mockReset()
+    vi.unstubAllGlobals()
+  })
+
+  it('reads the bundled page once and keeps it', async () => {
+    readFile.mockResolvedValue('<html>bundled</html>')
+    const readIndexHtml = await freshReadIndexHtml()
+    expect(await readIndexHtml()).toBe('<html>bundled</html>')
+    expect(await readIndexHtml()).toBe('<html>bundled</html>')
+    expect(readFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('fetches the static page when the bundled one is missing', async () => {
+    readFile.mockRejectedValue(new Error('ENOENT'))
+    const fetch = vi.fn().mockResolvedValue(new Response('<html>static</html>'))
+    vi.stubGlobal('fetch', fetch)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const readIndexHtml = await freshReadIndexHtml()
+    expect(await readIndexHtml('https://backlog.example')).toBe('<html>static</html>')
+    expect(fetch).toHaveBeenCalledWith('https://backlog.example/index.html')
+  })
+
+  it("fails without an origin, and tries again next time rather than keeping the failure", async () => {
+    readFile.mockRejectedValueOnce(new Error('ENOENT')).mockResolvedValue('<html>bundled</html>')
+    const readIndexHtml = await freshReadIndexHtml()
+    await expect(readIndexHtml()).rejects.toThrow('ENOENT')
+    expect(await readIndexHtml()).toBe('<html>bundled</html>')
+  })
+
+  it('fails when the static page errors too', async () => {
+    readFile.mockRejectedValue(new Error('ENOENT'))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('nope', { status: 404 })))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const readIndexHtml = await freshReadIndexHtml()
+    await expect(readIndexHtml('https://backlog.example')).rejects.toThrow('404')
   })
 })

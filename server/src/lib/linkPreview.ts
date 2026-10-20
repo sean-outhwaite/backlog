@@ -15,12 +15,22 @@ export interface LinkPreview {
 const INDEX_HTML = new URL('../../../client/dist/index.html', import.meta.url)
 let indexHtml: Promise<string> | null = null
 
-export function readIndexHtml(): Promise<string> {
+// `origin` is where the same page is served statically, for if the bundled copy is missing (every
+// invite link would otherwise fail). Only pass a trusted one: the page's own origin on Vercel.
+export function readIndexHtml(origin?: string): Promise<string> {
   if (!indexHtml) {
-    indexHtml = readFile(INDEX_HTML, 'utf8').catch((error) => {
-      indexHtml = null
-      throw error
-    })
+    indexHtml = readFile(INDEX_HTML, 'utf8')
+      .catch(async (error) => {
+        if (!origin) throw error
+        console.error('Bundled index.html is missing; fetching it instead', error)
+        const response = await fetch(`${origin}/index.html`)
+        if (!response.ok) throw new Error(`Fetching ${origin}/index.html failed: ${response.status}`)
+        return response.text()
+      })
+      .catch((error) => {
+        indexHtml = null
+        throw error
+      })
   }
   return indexHtml
 }

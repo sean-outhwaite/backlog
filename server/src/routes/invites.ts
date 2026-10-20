@@ -1,7 +1,7 @@
-import { randomBytes } from 'node:crypto'
 import { Router } from 'express'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
+import { newInviteToken } from '../lib/inviteTokens.js'
 import { prisma } from '../lib/prisma.js'
 import { areFriends, createFriendshipIfMissing } from '../lib/friendship.js'
 
@@ -13,7 +13,7 @@ invitesRouter.get(
     const { userId } = req as unknown as AuthedRequest
     const invite = await prisma.inviteLink.upsert({
       where: { ownerId: userId },
-      create: { ownerId: userId, token: randomBytes(9).toString('base64url') },
+      create: { ownerId: userId, token: newInviteToken() },
       update: {},
     })
     res.json(invite)
@@ -25,7 +25,7 @@ invitesRouter.post(
   '/mine/reset',
   asyncHandler(async (req, res) => {
     const { userId } = req as unknown as AuthedRequest
-    const token = randomBytes(9).toString('base64url')
+    const token = newInviteToken()
     const invite = await prisma.inviteLink.upsert({
       where: { ownerId: userId },
       create: { ownerId: userId, token },
