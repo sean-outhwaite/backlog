@@ -8,11 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm install              # installs both workspaces (client + server)
 npm run dev               # runs client (Vite) and server (tsx watch) together via concurrently
 npm run build              # builds server then client (each runs tsc -b first)
+npm test                   # runs the server's Vitest unit tests once (npx vitest inside server/ to watch)
 npm run prisma:generate    # regenerate Prisma client after editing schema.prisma
 npm run prisma:migrate     # create + apply a migration (prompts for a name)
 ```
 
-There is no test suite/runner in this repo.
+Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded from the `tsc -b` build, so they aren't typechecked by `npm run build`). They cover pure logic only (search ranking, series status, release helpers) and must never hit the database or network: modules that import `lib/prisma.js` or `providers/index.js` (the providers throw at import without API keys) get those mocked with `vi.mock` before the module under test is imported. The client has no tests.
 
 `client/` lints with `oxlint` (`npm run lint` inside `client/`), not eslint. Warnings don't fail the build.
 
