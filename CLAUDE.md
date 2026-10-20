@@ -17,6 +17,8 @@ Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded 
 
 `client/` lints with `oxlint` (`npm run lint` inside `client/`), not eslint. Warnings don't fail the build.
 
+**After adding or changing a dependency, check `package-lock.json` still has the other platforms' native binaries** (`lightningcss-linux-x64-gnu`, `@rolldown/binding-linux-x64-gnu`). npm 11 can drop them when it updates an existing lockfile on macOS, and Vercel's Linux build then fails in Vite (this broke a production deploy once). `npm ci --os=linux --cpu=x64 --libc=glibc --ignore-scripts` in a scratch copy shows whether they install.
+
 ## Architecture
 
 npm workspaces monorepo: `client/` (Vite + React + TypeScript + React Router SPA) and `server/` (Express + TypeScript API, Prisma ORM). No shared package between them — types are duplicated by hand in `client/src/types.ts` to mirror the Prisma models.
