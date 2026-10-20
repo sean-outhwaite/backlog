@@ -53,10 +53,19 @@ export function Friends() {
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
-        <button className="invite-reset btn-quiet" onClick={() => setConfirmingReset(true)} disabled={!invite}>
+
+        <button
+          className="invite-reset btn-quiet"
+          aria-describedby="invite-reset-hint"
+          onClick={() => setConfirmingReset(true)}
+          disabled={!invite}
+        >
           <RefreshIcon />
           Reset link
         </button>
+        <p className="invite-link-info" id="invite-reset-hint">
+          Resetting your link stops the old one from working, so anyone who has it won't be able to add you.
+        </p>
       </section>
 
       <section>

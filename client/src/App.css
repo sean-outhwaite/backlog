@@ -2389,6 +2389,13 @@ section + section {
   font-size: 14px;
 }
 
+.invite-link-info {
+  max-width: 560px;
+  margin-top: 4px;
+  font-style: italic;
+  font-size: 14px;
+}
+
 .friend-list {
   list-style: none;
   padding: 0;
