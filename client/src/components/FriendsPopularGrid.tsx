@@ -34,7 +34,7 @@ export function FriendsPopularGrid({
                   ))}
                 </span>
                 <span>
-                  <strong>{friendNames(friends)}</strong> {friends.length === 1 ? 'has' : 'have'} this
+                  <strong>{friendNames(friends)}</strong> added this
                 </span>
               </p>
               <AddToListButton
