@@ -10,6 +10,10 @@
       "destination": "/api"
     },
     {
+      "source": "/invite/(.*)",
+      "destination": "/api"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -31,7 +35,8 @@
   ],
   "functions": {
     "api/index.mjs": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "client/dist/index.html"
     }
   },
   "crons": [
