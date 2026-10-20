@@ -45,8 +45,8 @@ invitePageRouter.get(
       return
     }
     // One query rather than findUnique + include, which would be several round trips.
-    const [owner] = await prisma.$queryRaw<{ username: string | null; avatarUrl: string | null }[]>`
-      SELECT p."username", p."avatarUrl"
+    const [owner] = await prisma.$queryRaw<{ username: string | null }[]>`
+      SELECT p."username"
       FROM "InviteLink" i
       JOIN "Profile" p ON p."id" = i."ownerId"
       WHERE i."token" = ${req.params.token}
@@ -63,9 +63,10 @@ invitePageRouter.get(
         ((html) =>
           withLinkPreview(html, {
             title: owner.username ? `${owner.username} wants to be friends on Backlog` : "You've been invited to Backlog",
-            description: "Join to see what they're watching, reading, and playing, and swap recommendations.",
-            image: owner.avatarUrl ?? undefined,
-            card: owner.avatarUrl ? 'summary' : 'summary_large_image',
+            description: "Join to see what they're watching, reading, and playing.",
+            // The logo as a thumbnail beside the text, rather than the site banner under it.
+            image: `${process.env.VERCEL ? 'https' : req.protocol}://${req.get('host')}/og-icon.png`,
+            card: 'summary',
           })),
     )
   }),
