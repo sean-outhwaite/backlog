@@ -12,15 +12,16 @@
   --accent-bg: rgba(53, 127, 91, 0.12);
   /* Text and icons sitting on a solid accent (badges, checks). */
   --on-accent: #fff;
-  /* Primary buttons: light mode is a solid forest-green gradient with white text (4.8:1 at its
-     lightest) and pale mint icons; dark mode (below) is a translucent firelight fill, tinting
-     toward the night behind it, with warm white text (8:1) and pine icons. Both are lit from above
-     by a soft inner highlight. */
-  --accent-fill: linear-gradient(180deg, #357f5b, #2a6e4c);
-  --accent-fill-hover: linear-gradient(180deg, #2f7653, #245f42);
+  /* Primary buttons are flat and opaque: light mode is solid forest green with white text and
+     pale mint icons; dark mode (below) is a deep ember orange, the accent's own hue darkened, with
+     warm white text (4.9:1; a brighter orange with dark text measured higher but glared against
+     the night) and peach icons.
+     Hover darkens the green and brightens the ember, both staying above 4.5:1. */
+  --accent-fill: #2f7553;
+  --accent-fill-hover: #255f43;
   --accent-fill-text: #fff;
   --accent-fill-icon: #cfeedd;
-  --accent-fill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(22, 38, 58, 0.25);
+  --accent-fill-shadow: 0 1px 2px rgba(22, 38, 58, 0.15);
   /* For a card's main action: a pale wheat wash with bark-brown text and a leaf-green icon, the
      card's own warm pairing next to the green primary. */
   --accent-soft: linear-gradient(180deg, rgba(214, 170, 90, 0.16), rgba(200, 156, 76, 0.12));
@@ -76,11 +77,11 @@
     --accent: #fb923c;
     --accent-bg: rgba(251, 146, 60, 0.14);
     --on-accent: #1f1209;
-    --accent-fill: linear-gradient(180deg, rgba(251, 158, 60, 0.55), rgba(234, 98, 22, 0.5));
-    --accent-fill-hover: linear-gradient(180deg, rgba(251, 158, 60, 0.68), rgba(234, 98, 22, 0.62));
+    --accent-fill: #b85410;
+    --accent-fill-hover: #bf5811;
     --accent-fill-text: #fff7ed;
-    --accent-fill-icon: #6aa886;
-    --accent-fill-shadow: inset 0 1px 0 rgba(255, 220, 180, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --accent-fill-icon: #fed7aa;
+    --accent-fill-shadow: none;
     --accent-soft: linear-gradient(180deg, rgba(251, 146, 60, 0.22), rgba(234, 88, 12, 0.2));
     --accent-soft-hover: linear-gradient(180deg, rgba(251, 146, 60, 0.36), rgba(234, 88, 12, 0.32));
     --accent-soft-border: rgba(251, 146, 60, 0.4);
