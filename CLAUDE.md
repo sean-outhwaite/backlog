@@ -17,7 +17,9 @@ Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded 
 
 `client/` lints with `oxlint` (`npm run lint` inside `client/`), not eslint. Warnings don't fail the build.
 
-**After adding or changing a dependency, check `package-lock.json` still has the other platforms' native binaries** (`lightningcss-linux-x64-gnu`, `@rolldown/binding-linux-x64-gnu`). npm 11 can drop them when it updates an existing lockfile on macOS, and Vercel's Linux build then fails in Vite (this broke a production deploy once). `npm ci --os=linux --cpu=x64 --libc=glibc --ignore-scripts` in a scratch copy shows whether they install.
+**After adding or changing a dependency, check `package-lock.json` still has the other platforms' native binaries** (`lightningcss-linux-x64-gnu`, `@rolldown/binding-linux-x64-gnu`). npm 11 can drop them when it updates an existing lockfile on macOS, and Vercel's Linux build then fails in Vite (this broke a production deploy once). `npm ci --os=linux --cpu=x64 --libc=glibc --ignore-scripts` in a scratch copy shows whether they install. It can drop _every_ platform's rolldown / lightningcss bindings (macOS too), even on a plain version bump. Restore the dropped `node_modules/@rolldown/binding-*` and `lightningcss-*` entries from the previous lockfile (from the registry if the parent's version changed) rather than regenerating the lockfile. npm also won't apply a new override to a package already in the lockfile, and hand-deleting lockfile entries makes it prune unrelated packages: copy the entry from a fresh `npm install --package-lock-only` in a scratch copy instead.
+
+The root `package.json` `overrides` forces `deepmerge-ts` to ^8 because `@prisma/config` 6.x pins 7.1.5 (GHSA-ggr8-5vv4-36mx); `npm ls` reports it as "invalid", which is expected. Remove it when moving to Prisma 7.
 
 ## Architecture
 
