@@ -16,7 +16,10 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.2.5",
     "prettier": "^3.9.9"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
   }
 }
