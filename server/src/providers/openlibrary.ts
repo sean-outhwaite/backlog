@@ -23,7 +23,14 @@ function openLibraryFetch(url: string | URL, signal: AbortSignal) {
   return fetch(url, { signal, headers: { 'User-Agent': USER_AGENT } })
 }
 
-interface OpenLibrarySearchDoc {
+// Works are titled in their original language ("Ostatnie Życzenie"), so with lang=en the search
+// index also returns the edition that best fits an English reader, to take its title from.
+// Editions are matched against the query too, so a Polish search still gets a Polish edition.
+interface OpenLibraryEditions {
+  editions?: { docs: { key: string; title: string; language?: string[] }[] }
+}
+
+interface OpenLibrarySearchDoc extends OpenLibraryEditions {
   key: string
   title: string
   cover_i?: number
@@ -37,8 +44,10 @@ interface OpenLibrarySearchDoc {
   series_position?: string[]
 }
 
-const SEARCH_FIELDS =
-  'key,title,cover_i,first_publish_year,publish_date,readinglog_count,series_key,series_name,series_position'
+// The edition fields only come back when `key` and `editions` are requested as well.
+const EDITION_FIELDS = 'editions,editions.key,editions.title,editions.language'
+
+const SEARCH_FIELDS = `key,title,cover_i,first_publish_year,publish_date,readinglog_count,series_key,series_name,series_position,${EDITION_FIELDS}`
 
 // Series volumes are few (Berserk has 43), so one page covers all but the longest runs.
 const MAX_SERIES_VOLUMES = 200
@@ -58,14 +67,20 @@ interface OpenLibraryTrendingResponse {
 
 interface OpenLibraryWork {
   title: string
-  description?: string | { value: string }
+  description?: OpenLibraryDescription
   covers?: number[]
   first_publish_date?: string
   subjects?: string[]
 }
 
+type OpenLibraryDescription = string | { value: string }
+
+interface OpenLibraryEdition {
+  description?: OpenLibraryDescription
+}
+
 // Per-work fields the search index aggregates across all editions.
-interface OpenLibraryIndexEntry {
+interface OpenLibraryIndexEntry extends OpenLibraryEditions {
   author_name?: string[]
   series_key?: string[]
   series_name?: string[]
@@ -84,7 +99,7 @@ function toCoverUrl(coverId: number | undefined): string | null {
 
 // Descriptions are user-edited Markdown, often with link references and a trailing
 // "----------" section of source links. Reduce them to plain paragraphs.
-function toDescription(description: OpenLibraryWork['description']): string | null {
+function toDescription(description: OpenLibraryDescription | undefined): string | null {
   if (!description) return null
   const text = (typeof description === 'string' ? description : description.value)
     .replace(/\r\n/g, '\n')
@@ -126,11 +141,20 @@ function releaseFields(publishDates: string[] | undefined, firstPublishYear: num
   }
 }
 
+// The English edition, when its title is a translation of the work's rather than the same
+// title with different casing or punctuation ("Rich dad poor dad"), which the work spells better.
+function englishEdition(entry: OpenLibraryEditions | null, workTitle: string) {
+  const edition = entry?.editions?.docs[0]
+  const letters = (title: string) => title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+  if (!edition?.language?.includes('eng') || letters(edition.title) === letters(workTitle)) return null
+  return edition
+}
+
 function toSearchResult(doc: OpenLibrarySearchDoc): MediaSearchResult {
   return {
     externalId: workKeyToExternalId(doc.key),
     type: 'book',
-    title: doc.title,
+    title: englishEdition(doc, doc.title)?.title ?? doc.title,
     coverImageUrl: toCoverUrl(doc.cover_i),
     description: null,
     ...releaseFields(doc.publish_date, doc.first_publish_year ?? null),
@@ -155,6 +179,7 @@ export const openLibraryProvider: MediaProvider = {
     const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
     url.searchParams.set('q', query)
     url.searchParams.set('limit', '20')
+    url.searchParams.set('lang', 'en')
     url.searchParams.set('fields', SEARCH_FIELDS)
 
     const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
@@ -165,7 +190,7 @@ export const openLibraryProvider: MediaProvider = {
   },
   async popular() {
     const response = await openLibraryFetch(
-      `${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20`,
+      `${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20&lang=en&fields=${SEARCH_FIELDS}`,
       AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     )
     if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
@@ -176,6 +201,7 @@ export const openLibraryProvider: MediaProvider = {
     const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
     url.searchParams.set('q', `series_key:${externalId}`)
     url.searchParams.set('limit', String(MAX_SERIES_VOLUMES))
+    url.searchParams.set('lang', 'en')
     url.searchParams.set('fields', SEARCH_FIELDS)
 
     const signal = AbortSignal.timeout(PROVIDER_TIMEOUT_MS)
@@ -213,13 +239,17 @@ export const openLibraryProvider: MediaProvider = {
     ])
     if (!response.ok) return null
     const work = (await response.json()) as OpenLibraryWork
+    // A translated work's own description is usually in the original language too, so take the
+    // English edition's where it has one (most do).
+    const edition = englishEdition(indexEntry, work.title)
+    const editionDescription = edition && toDescription((await fetchEdition(edition.key))?.description)
 
     return {
       externalId,
       type: 'book',
-      title: work.title,
+      title: edition?.title ?? work.title,
       coverImageUrl: toCoverUrl(work.covers?.[0]),
-      description: toDescription(work.description),
+      description: editionDescription ?? toDescription(work.description),
       ...releaseFields(
         indexEntry?.publish_date ?? (work.first_publish_date ? [work.first_publish_date] : undefined),
         indexEntry?.first_publish_year ?? yearFromDate(work.first_publish_date),
@@ -245,9 +275,10 @@ export const openLibraryProvider: MediaProvider = {
 async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntry | null> {
   const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
   url.searchParams.set('q', `key:/works/${externalId}`)
+  url.searchParams.set('lang', 'en')
   url.searchParams.set(
     'fields',
-    'author_name,first_publish_year,publish_date,number_of_pages_median,series_key,series_name',
+    `key,author_name,first_publish_year,publish_date,number_of_pages_median,series_key,series_name,${EDITION_FIELDS}`,
   )
 
   try {
@@ -255,6 +286,19 @@ async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntr
     if (!response.ok) return null
     const data = (await response.json()) as { docs: OpenLibraryIndexEntry[] }
     return data.docs[0] ?? null
+  } catch {
+    return null
+  }
+}
+
+// Only wanted for its description, which is a nice-to-have like the index entry.
+async function fetchEdition(editionKey: string): Promise<OpenLibraryEdition | null> {
+  try {
+    const response = await openLibraryFetch(
+      `${OPEN_LIBRARY_BASE}${editionKey}.json`,
+      AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+    )
+    return response.ok ? ((await response.json()) as OpenLibraryEdition) : null
   } catch {
     return null
   }
