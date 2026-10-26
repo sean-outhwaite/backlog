@@ -1483,6 +1483,13 @@ section + section {
   cursor: pointer;
 }
 
+/* Two-up on a phone, full posters make each card most of a screen tall; a square crop fits more. */
+@media (max-width: 480px) {
+  .media-card-cover {
+    aspect-ratio: 1;
+  }
+}
+
 .media-card-cover:active:not(:disabled) {
   transform: none;
 }
@@ -1736,6 +1743,21 @@ section + section {
 
 .cover-stack[data-count='1'] .cover-stack-item {
   left: 20%;
+}
+
+/* The square phone cover is shorter; smaller covers keep the fan between its badges and its foot. */
+@media (max-width: 480px) {
+  .cover-stack-item {
+    top: 21%;
+    left: 22%;
+    width: 40%;
+  }
+  .cover-stack[data-count='2'] .cover-stack-item {
+    left: 26%;
+  }
+  .cover-stack[data-count='1'] .cover-stack-item {
+    left: 30%;
+  }
 }
 
 .cover-stack-item:not([data-slot='0']) {
@@ -4054,19 +4076,25 @@ html:has(.modal-dialog[open]) {
   scroll-snap-align: start;
 }
 
-/* Narrow cards: avatars beside the names squeeze them to a word a line, which every card in the
-   row then grows to match. Stacked, the names get the card's full width. A shorter cover crop
-   keeps the row from taking up most of a phone screen. */
+/* Narrow cards: the names wrap to several lines, which every card in the row then grows to
+   match, so only the avatars show (the names stay for screen readers). Covers get the phone crop. */
 @container (max-width: 609px) {
   .carousel .media-card-cover {
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 1;
   }
 
-  .carousel .friends-have {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    font-size: 13px;
+  /* Without a line of names between them, the avatars need more room above the button. */
+  .carousel .media-card-actions {
+    gap: 10px;
+  }
+
+  .carousel .friends-have > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   /* As with .entry-move: keep "+ Backlog" on one line beside the ▾. */
