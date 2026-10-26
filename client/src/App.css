@@ -4068,6 +4068,17 @@ html:has(.modal-dialog[open]) {
     gap: 6px;
     font-size: 13px;
   }
+
+  /* As with .entry-move: keep "+ Backlog" on one line beside the ▾. */
+  .carousel .media-card-body {
+    padding: 12px;
+  }
+
+  .carousel .add-split .add-button {
+    gap: 4px;
+    padding-inline: 6px;
+    font-size: 14px;
+  }
 }
 
 @container (min-width: 400px) {
