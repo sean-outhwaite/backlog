@@ -2156,6 +2156,23 @@ section + section {
   border-right-width: 1px;
 }
 
+/* Phones: on a two-up card the ▾ crowds the label out. Started and finished are still offered
+   in the details dialog, which isn't a card. */
+@media (max-width: 480px) {
+  .media-card .add-split-trigger {
+    display: none;
+  }
+
+  .media-card .add-split.has-menu .add-button {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+
+  .media-card .add-split.has-menu .add-button.btn-soft {
+    border-right-width: 1px;
+  }
+}
+
 /* The plus spins while the add is in flight. */
 .add-button[aria-busy='true'] > .icon {
   animation: spin 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
@@ -4097,15 +4114,18 @@ html:has(.modal-dialog[open]) {
     white-space: nowrap;
   }
 
-  /* As with .entry-move: keep "+ Backlog" on one line beside the ▾. */
-  .carousel .media-card-body {
-    padding: 12px;
+  /* As on phone grids, the ▾ would crowd the label out (see .add-split-trigger above). */
+  .carousel .add-split-trigger {
+    display: none;
   }
 
-  .carousel .add-split .add-button {
-    gap: 4px;
-    padding-inline: 6px;
-    font-size: 14px;
+  .carousel .add-split.has-menu .add-button {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+
+  .carousel .add-split.has-menu .add-button.btn-soft {
+    border-right-width: 1px;
   }
 }
 
