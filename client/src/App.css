@@ -4054,6 +4054,22 @@ html:has(.modal-dialog[open]) {
   scroll-snap-align: start;
 }
 
+/* Narrow cards: avatars beside the names squeeze them to a word a line, which every card in the
+   row then grows to match. Stacked, the names get the card's full width. A shorter cover crop
+   keeps the row from taking up most of a phone screen. */
+@container (max-width: 609px) {
+  .carousel .media-card-cover {
+    aspect-ratio: 3 / 4;
+  }
+
+  .carousel .friends-have {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 13px;
+  }
+}
+
 @container (min-width: 400px) {
   .carousel-track {
     --gap: 20px;
