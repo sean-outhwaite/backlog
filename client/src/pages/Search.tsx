@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
-import { FriendsPopularGrid } from '../components/FriendsPopularGrid'
+import { FriendsPopularCarousel } from '../components/FriendsPopularCarousel'
 import { SearchIcon, SeriesIcon } from '../components/icons'
 import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
@@ -131,7 +131,7 @@ export function Search() {
       {!loading && searchedQuery === null && !!friendsPopular?.length && (
         <section className="popular-section">
           <h2>Popular with your friends</h2>
-          <FriendsPopularGrid items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+          <FriendsPopularCarousel items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
         </section>
       )}
       {!loading && searchedQuery === null && !!popular?.length && <h2>Popular right now</h2>}

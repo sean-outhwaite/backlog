@@ -4019,3 +4019,106 @@ html:has(.modal-dialog[open]) {
   color: var(--text);
   font-size: 14px;
 }
+
+/* ---------- Carousel ---------- */
+
+/* One scrolling row of cards, as wide as the grid's columns would be at the same width. */
+.carousel {
+  position: relative;
+  container-type: inline-size;
+}
+
+.carousel-track {
+  --per-view: 2.25;
+  --gap: 12px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - (var(--per-view) - 1) * var(--gap)) / var(--per-view));
+  gap: var(--gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  /* Room for a hovered card's lift and shadow, which the scroller would otherwise clip. */
+  padding: 8px 6px 24px;
+  margin: -8px -6px -24px;
+  scroll-padding-inline: 6px;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-track > * {
+  scroll-snap-align: start;
+}
+
+@container (min-width: 400px) {
+  .carousel-track {
+    --gap: 20px;
+  }
+}
+@container (min-width: 610px) {
+  .carousel-track {
+    --per-view: 3;
+  }
+}
+@container (min-width: 820px) {
+  .carousel-track {
+    --per-view: 4;
+  }
+}
+@container (min-width: 1030px) {
+  .carousel-track {
+    --per-view: 5;
+  }
+}
+@container (min-width: 1240px) {
+  .carousel-track {
+    --per-view: 6;
+  }
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 35%;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, #fff 15%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--scrim) 75%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-lift);
+  color: #fff;
+  font-size: 18px;
+  translate: 0 -50%;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--scrim) 92%, transparent);
+  color: #fff;
+}
+
+.carousel-arrow--prev {
+  left: -14px;
+}
+
+.carousel-arrow--next {
+  right: -14px;
+}
+
+/* Touch screens swipe instead; the peeking card shows there's more. */
+@media (hover: none) {
+  .carousel-arrow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track {
+    scroll-behavior: auto;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
-import { FriendsPopularGrid } from '../components/FriendsPopularGrid'
+import { FriendsPopularCarousel } from '../components/FriendsPopularCarousel'
 import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
 import { EntryMenu } from '../components/EntryMenu'
@@ -137,7 +137,7 @@ export function Recommendations() {
     <>
       <section className="popular-section">
         <h2>Popular with your friends</h2>
-        <FriendsPopularGrid items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+        <FriendsPopularCarousel items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
       </section>
       {generalGrid && (
         <section className="popular-section">

@@ -171,6 +171,22 @@ export function CloseIcon() {
   )
 }
 
+export function ChevronLeftIcon() {
+  return (
+    <Icon>
+      <path d="m15 18-6-6 6-6" />
+    </Icon>
+  )
+}
+
+export function ChevronRightIcon() {
+  return (
+    <Icon>
+      <path d="m9 18 6-6-6-6" />
+    </Icon>
+  )
+}
+
 export function MoreIcon() {
   return (
     <Icon>
