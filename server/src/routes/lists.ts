@@ -37,7 +37,7 @@ listsRouter.post(
     const { userId } = req as unknown as AuthedRequest
     const parsed = createEntrySchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
 
@@ -82,7 +82,8 @@ const updateEntrySchema = z.object({
   status: listStatusSchema.optional(),
   notes: z.string().nullable().optional(),
   // Set by the client when the entry is dragged: the midpoint of its new neighbours' positions.
-  position: z.number().finite().optional(),
+  // (z.number() already rejects Infinity and NaN.)
+  position: z.number().optional(),
 })
 
 listsRouter.patch(
@@ -91,7 +92,7 @@ listsRouter.patch(
     const { userId } = req as unknown as AuthedRequest
     const parsed = updateEntrySchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
 
@@ -203,9 +204,9 @@ listsRouter.put(
   asyncHandler(async (req, res) => {
     const { userId } = req as unknown as AuthedRequest
     const parsed = updateVolumeSchema.safeParse(req.body)
-    const volumeId = z.string().uuid().safeParse(req.params.volumeId)
+    const volumeId = z.uuid().safeParse(req.params.volumeId)
     if (!parsed.success || !volumeId.success) {
-      res.status(400).json({ error: (parsed.error ?? volumeId.error)?.flatten() })
+      res.status(400).json({ error: parsed.error ? z.flattenError(parsed.error) : z.flattenError(volumeId.error!) })
       return
     }
     const entryId = req.params.id
@@ -244,9 +245,9 @@ listsRouter.post(
   '/:id/volumes/:volumeId/done-before',
   asyncHandler(async (req, res) => {
     const { userId } = req as unknown as AuthedRequest
-    const volumeId = z.string().uuid().safeParse(req.params.volumeId)
+    const volumeId = z.uuid().safeParse(req.params.volumeId)
     if (!volumeId.success) {
-      res.status(400).json({ error: volumeId.error.flatten() })
+      res.status(400).json({ error: z.flattenError(volumeId.error) })
       return
     }
     const entryId = req.params.id

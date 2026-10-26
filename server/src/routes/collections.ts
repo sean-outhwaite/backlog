@@ -33,7 +33,7 @@ collectionsRouter.get(
 )
 
 const containingQuerySchema = z.union([
-  z.object({ mediaItemId: z.string().uuid() }),
+  z.object({ mediaItemId: z.uuid() }),
   z.object({
     type: z.enum(['movie', 'tv', 'book', 'game']),
     externalId: externalIdSchema,
@@ -49,7 +49,7 @@ collectionsRouter.get(
     const { userId } = req as unknown as AuthedRequest
     const parsed = containingQuerySchema.safeParse(req.query)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const ref = parsed.data
@@ -89,7 +89,7 @@ collectionsRouter.post(
     const { userId } = req as unknown as AuthedRequest
     const parsed = createSchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const collection = await prisma.collection.create({
@@ -150,7 +150,7 @@ collectionsRouter.patch(
     const { userId } = req as unknown as AuthedRequest
     const parsed = updateSchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const collection = await ownCollection(userId, req.params.id)
@@ -191,7 +191,7 @@ collectionsRouter.post(
     const { userId } = req as unknown as AuthedRequest
     const parsed = addItemSchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const [collection, mediaItem] = await Promise.all([
@@ -228,7 +228,7 @@ collectionsRouter.patch(
     const { userId } = req as unknown as AuthedRequest
     const parsed = updateItemSchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const collection = await ownCollection(userId, req.params.id)

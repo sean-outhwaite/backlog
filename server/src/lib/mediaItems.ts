@@ -12,7 +12,7 @@ export const externalIdSchema = z.string().regex(/^[A-Za-z0-9_-]+$/)
 // A title can be referenced either by an existing MediaItem row, or (straight from search
 // results, which aren't stored) by its provider identity.
 export const mediaRefSchema = z.union([
-  z.object({ mediaItemId: z.string().uuid() }),
+  z.object({ mediaItemId: z.uuid() }),
   z.object({
     type: z.enum(['movie', 'tv', 'book', 'game']),
     externalId: externalIdSchema,

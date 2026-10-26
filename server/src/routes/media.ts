@@ -104,7 +104,7 @@ mediaRouter.get(
   asyncHandler(async (req, res) => {
     const parsed = searchQuerySchema.safeParse(req.query)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const { q, type } = parsed.data
@@ -156,7 +156,7 @@ mediaRouter.get(
   asyncHandler(async (req, res) => {
     const parsed = popularQuerySchema.safeParse(req.query)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const { type } = parsed.data
@@ -189,7 +189,7 @@ mediaRouter.get(
     const { userId } = req as unknown as AuthedRequest
     const parsed = popularQuerySchema.safeParse(req.query)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     res.json(await friendsPopular(userId, parsed.data.type))
@@ -204,7 +204,7 @@ mediaRouter.get(
     const parsed = detailsParamsSchema.safeParse(req.params)
     const query = detailsQuerySchema.safeParse(req.query)
     if (!parsed.success || !query.success) {
-      res.status(400).json({ error: (parsed.error ?? query.error)?.flatten() })
+      res.status(400).json({ error: parsed.error ? z.flattenError(parsed.error) : z.flattenError(query.error!) })
       return
     }
     const { type, externalId } = parsed.data

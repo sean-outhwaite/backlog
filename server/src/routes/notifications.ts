@@ -10,7 +10,7 @@ const listSchema = z.object({
   unread: z.enum(['true', 'false']).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   // The id of the last notification on the previous page.
-  cursor: z.string().uuid().optional(),
+  cursor: z.uuid().optional(),
 })
 
 // Newest first, a page at a time: the bell menu asks for its few unread ones, the
@@ -21,7 +21,7 @@ notificationsRouter.get(
     const { userId } = req as unknown as AuthedRequest
     const parsed = listSchema.safeParse(req.query)
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     const { unread, limit, cursor } = parsed.data
@@ -59,7 +59,7 @@ notificationsRouter.get(
 
 const markReadSchema = z.object({
   type: z.enum(['recommendation', 'released']).optional(),
-  ids: z.array(z.string().uuid()).max(50).optional(),
+  ids: z.array(z.uuid()).max(50).optional(),
 })
 
 // Marks every unread notification read, or just those of one type, or just the given ones.
@@ -69,7 +69,7 @@ notificationsRouter.post(
     const { userId } = req as unknown as AuthedRequest
     const parsed = markReadSchema.safeParse(req.body ?? {})
     if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.flatten() })
+      res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
     await prisma.notification.updateMany({
