@@ -27,6 +27,7 @@ export function Recommendations() {
   const [hasPending, setHasPending] = useState(true)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
   const generalPopular = usePopular('all', !loading && !hasPending)
   const friendsPopular = useFriendsPopular('all', !loading && !hasPending)
   // Friends' titles first; the general list leaves out any already shown there.
@@ -71,11 +72,18 @@ export function Recommendations() {
 
   useEffect(() => {
     async function load() {
-      const [found, entries, friendsPicks] = await Promise.all([
+      const loaded = await Promise.all([
         api.get<Recommendation[]>('/api/recommendations'),
-        api.get<ListEntry[]>('/api/lists'),
+        // Your own list only marks what's already on it, so the page goes on without it.
+        api.get<ListEntry[]>('/api/lists').catch(() => []),
         api.get<FriendsPick[]>('/api/collections/feed').catch(() => []),
-      ])
+      ]).catch(() => null)
+      if (!loaded) {
+        setFailed(true)
+        setLoading(false)
+        return
+      }
+      const [found, entries, friendsPicks] = loaded
       setPicks(friendsPicks)
       const onList = new Set(entries.map((entry) => entry.mediaItemId))
       setRecommendations(found)
@@ -147,7 +155,8 @@ export function Recommendations() {
       <PageHeader title="Recommendations" subtitle="Things your friends think you'd love." />
 
       {loading && <LoadingState />}
-      {!loading && shownRecommendations.length === 0 && picks.length === 0 && (
+      {failed && <p className="error-text">Couldn't load your recommendations. Reload to try again.</p>}
+      {!loading && !failed && shownRecommendations.length === 0 && picks.length === 0 && (
         <EmptyState className={popularGrid ? 'empty-state--popular' : undefined}>
           {popularGrid ? (
             <>

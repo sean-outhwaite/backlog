@@ -84,11 +84,19 @@ export function Dashboard() {
   const [status, setStatus] = useStatusParam()
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [loading, setLoading] = useState(true)
+  // The list couldn't be fetched, so it's unknown rather than empty. Only shown when there's nothing
+  // on screen: load is also how a failed change is put right, and if that reload fails too, the
+  // list already showing is better than an error over it.
+  const [failed, setFailed] = useState(false)
 
   function load() {
     api
       .get<ListEntry[]>('/api/lists')
-      .then(setEntries)
+      .then((found) => {
+        setEntries(found)
+        setFailed(false)
+      })
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false))
   }
 
@@ -260,7 +268,10 @@ export function Dashboard() {
       </div>
 
       {loading && <LoadingState />}
-      {!loading && visible.length === 0 && (
+      {!loading && failed && entries.length === 0 && (
+        <p className="error-text">Couldn't load your backlog. Check your connection and reload.</p>
+      )}
+      {!loading && !(failed && entries.length === 0) && visible.length === 0 && (
         <EmptyState icon={<LogoMark />}>
           {status === 'want' && (
             <p>

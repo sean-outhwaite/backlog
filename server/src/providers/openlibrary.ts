@@ -209,7 +209,10 @@ export const openLibraryProvider: MediaProvider = {
       openLibraryFetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, signal),
       openLibraryFetch(url, signal),
     ])
-    if (!seriesResponse.ok) return null
+    // Only a 404 means there's no such series; anything else is Open Library failing, which mustn't
+    // look like the series is gone.
+    if (seriesResponse.status === 404) return null
+    if (!seriesResponse.ok) throw new Error(`Open Library request failed: ${seriesResponse.status}`)
     if (!searchResponse.ok) throw new Error(`Open Library request failed: ${searchResponse.status}`)
     const series = (await seriesResponse.json()) as OpenLibrarySeries
     const data = (await searchResponse.json()) as OpenLibrarySearchResponse
@@ -237,7 +240,10 @@ export const openLibraryProvider: MediaProvider = {
       openLibraryFetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, AbortSignal.timeout(PROVIDER_TIMEOUT_MS)),
       fetchIndexEntry(externalId),
     ])
-    if (!response.ok) return null
+    // Only a 404 means there's no such work: the release check stops tracking titles that come back
+    // null, so a rate limit or outage has to throw instead.
+    if (response.status === 404) return null
+    if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const work = (await response.json()) as OpenLibraryWork
     // A translated work's own description is usually in the original language too, so take the
     // English edition's where it has one (most do).
@@ -271,7 +277,9 @@ export const openLibraryProvider: MediaProvider = {
 
 // The work record usually lacks a publish date and only links authors by key; the search
 // index has both (plus page counts) aggregated from all editions, so look the work up there.
-// These are nice-to-haves, so failures yield null rather than failing the whole lookup.
+// Null when the index has no entry for the work. A failed lookup throws instead: the release date
+// comes from here, so without it an upcoming book would read as already out (and the release
+// check would announce it).
 async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntry | null> {
   const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
   url.searchParams.set('q', `key:/works/${externalId}`)
@@ -281,14 +289,10 @@ async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntr
     `key,author_name,first_publish_year,publish_date,number_of_pages_median,series_key,series_name,${EDITION_FIELDS}`,
   )
 
-  try {
-    const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
-    if (!response.ok) return null
-    const data = (await response.json()) as { docs: OpenLibraryIndexEntry[] }
-    return data.docs[0] ?? null
-  } catch {
-    return null
-  }
+  const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
+  if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
+  const data = (await response.json()) as { docs: OpenLibraryIndexEntry[] }
+  return data.docs[0] ?? null
 }
 
 // Only wanted for its description, which is a nice-to-have like the index entry.

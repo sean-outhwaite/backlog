@@ -5,20 +5,30 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EntryMenu } from '../components/EntryMenu'
 import { RefreshIcon, UserMinusIcon } from '../components/icons'
 import { EmptyState, PageHeader } from '../components/PageHeader'
+import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import { invalidateFriends } from '../lib/friends'
 import type { InviteLink, Profile } from '../types'
 
 export function Friends() {
   const [invite, setInvite] = useState<InviteLink | null>(null)
-  const [friends, setFriends] = useState<Profile[]>([])
+  const [inviteFailed, setInviteFailed] = useState(false)
+  // null while loading, so it isn't mistaken for having no friends.
+  const [friends, setFriends] = useState<Profile[] | null>(null)
+  const [friendsFailed, setFriendsFailed] = useState(false)
   const [copied, setCopied] = useState(false)
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [removing, setRemoving] = useState<Profile | null>(null)
 
   useEffect(() => {
-    api.get<InviteLink>('/api/invites/mine').then(setInvite)
-    api.get<Profile[]>('/api/friends').then(setFriends)
+    api
+      .get<InviteLink>('/api/invites/mine')
+      .then(setInvite)
+      .catch(() => setInviteFailed(true))
+    api
+      .get<Profile[]>('/api/friends')
+      .then(setFriends)
+      .catch(() => setFriendsFailed(true))
   }, [])
 
   const inviteUrl = invite ? `${window.location.origin}/invite/${invite.token}` : ''
@@ -37,7 +47,7 @@ export function Friends() {
   async function removeFriend(friend: Profile) {
     await api.delete(`/api/friends/${friend.id}`)
     invalidateFriends()
-    setFriends((prev) => prev.filter((f) => f.id !== friend.id))
+    setFriends((prev) => prev && prev.filter((f) => f.id !== friend.id))
   }
 
   return (
@@ -49,10 +59,11 @@ export function Friends() {
         <p>Share this so a friend can connect with you.</p>
         <div className="invite-link-row">
           <input readOnly value={inviteUrl} onFocus={(event) => event.target.select()} />
-          <button className="btn-primary" onClick={() => void copyInviteUrl()}>
+          <button className="btn-primary" onClick={() => void copyInviteUrl()} disabled={!invite}>
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
+        {inviteFailed && <p className="error-text">Couldn't load your invite link. Reload to try again.</p>}
 
         <button
           className="invite-reset btn-quiet"
@@ -70,13 +81,15 @@ export function Friends() {
 
       <section>
         <h2>Your friends</h2>
-        {friends.length === 0 && (
+        {friendsFailed && <p className="error-text">Couldn't load your friends. Reload to try again.</p>}
+        {!friends && !friendsFailed && <LoadingState />}
+        {friends?.length === 0 && (
           <EmptyState>
             <p>No friends yet. Share your invite link to get started.</p>
           </EmptyState>
         )}
         <ul className="friend-list">
-          {friends.map((friend) => (
+          {friends?.map((friend) => (
             <li key={friend.id} className="friend-item">
               <Link to={`/friends/${friend.id}`} className="friend-card">
                 <Avatar profile={friend} />

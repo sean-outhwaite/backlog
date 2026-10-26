@@ -8,7 +8,7 @@ import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { StatusTabs } from '../components/StatusTabs'
 import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
-import { api } from '../lib/api'
+import { ApiError, api } from '../lib/api'
 import { entryTab, isUpcoming, byReleaseDate } from '../lib/release'
 import type { CollectionSummary, ListEntry, ListStatus, Profile } from '../types'
 
@@ -21,25 +21,36 @@ const EMPTY_MESSAGES: Record<ListTab, string> = {
 
 export function FriendList() {
   const { id } = useParams<{ id: string }>()
-  const [entries, setEntries] = useState<ListEntry[]>([])
-  const [friend, setFriend] = useState<Pick<Profile, 'username' | 'avatarUrl'> | null>(null)
-  const [loading, setLoading] = useState(true)
+  // What the last load found, and for which friend: going to another friend's page shows it loading
+  // rather than the last one's backlog.
+  const [loaded, setLoaded] = useState<
+    | { id: string; friend: FriendProfile | null; entries: ListEntry[] }
+    | { id: string; error: 'not-friends' | 'failed' }
+    | null
+  >(null)
+  const current = loaded?.id === id ? loaded : null
+  const loading = !current
+  const error = current && 'error' in current ? current.error : null
+  const friend = current && 'friend' in current ? current.friend : null
+  const entries = current && 'entries' in current ? current.entries : []
   const [status, setStatus] = useStatusParam()
   // Media item ids already on your own list, so their cards show as added.
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!id) return
-    setLoading(true)
+    let cancelled = false
     api
-      .get<{ friend: Pick<Profile, 'id' | 'username' | 'avatarUrl'> | null; entries: ListEntry[] }>(
-        `/api/friends/${id}/list`,
+      .get<{ friend: FriendProfile | null; entries: ListEntry[] }>(`/api/friends/${id}/list`)
+      .then((list) => !cancelled && setLoaded({ id, ...list }))
+      .catch(
+        (failure) =>
+          !cancelled &&
+          setLoaded({ id, error: failure instanceof ApiError && failure.status === 403 ? 'not-friends' : 'failed' }),
       )
-      .then((list) => {
-        setFriend(list.friend)
-        setEntries(list.entries)
-      })
-      .finally(() => setLoading(false))
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   useEffect(() => {
@@ -67,7 +78,15 @@ export function FriendList() {
       </div>
 
       {loading && <LoadingState />}
-      {!loading && visible.length === 0 && (
+      {error === 'not-friends' && (
+        <EmptyState>
+          <p>
+            You're not friends with them any more. <Link to="/friends">Back to your friends</Link>.
+          </p>
+        </EmptyState>
+      )}
+      {error === 'failed' && <p className="error-text">Couldn't load their backlog.</p>}
+      {!loading && !error && visible.length === 0 && (
         <EmptyState>
           <p>{EMPTY_MESSAGES[status]}</p>
         </EmptyState>

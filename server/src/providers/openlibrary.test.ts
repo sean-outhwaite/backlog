@@ -17,6 +17,19 @@ function stubFetch(routes: [RegExp, unknown][]) {
   return fetchMock
 }
 
+// Like stubFetch, with each route's status given, for failures.
+function stubRoutes(routes: [RegExp, number, unknown][]) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string | URL) => {
+      const route = routes.find(([pattern]) => pattern.test(String(url)))
+      return route
+        ? new Response(JSON.stringify(route[2]), { status: route[1] })
+        : new Response('not found', { status: 404 })
+    }),
+  )
+}
+
 const editions = (title: string, language?: string[]) => ({
   editions: { docs: [{ key: '/books/OL1M', title, ...(language && { language }) }] },
 })
@@ -95,5 +108,51 @@ describe('openLibraryProvider.getById', () => {
     expect(details?.title).toBe('Dune')
     expect(details?.description).toBe('A desert planet.')
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('is null for a work Open Library has no record of', async () => {
+    stubFetch([[/search\.json/, { docs: [] }]])
+
+    expect(await openLibraryProvider.getById('OL1W')).toBeNull()
+  })
+
+  // The release check stops tracking titles that come back null, so an outage mustn't look like one.
+  it('throws when Open Library fails rather than saying the work is gone', async () => {
+    stubRoutes([
+      [/\/works\/OL1W\.json/, 429, 'rate limited'],
+      [/search\.json/, 200, { docs: [] }],
+    ])
+
+    await expect(openLibraryProvider.getById('OL1W')).rejects.toThrow('429')
+  })
+
+  // The release date comes from the index, so without it an upcoming book would read as out.
+  it('throws when only the index lookup fails', async () => {
+    stubRoutes([
+      [/\/works\/OL1W\.json/, 200, { title: 'Dune' }],
+      [/search\.json/, 429, 'rate limited'],
+    ])
+
+    await expect(openLibraryProvider.getById('OL1W')).rejects.toThrow('429')
+  })
+})
+
+describe('openLibraryProvider.getSeries', () => {
+  it('is null for a series Open Library has no record of', async () => {
+    stubRoutes([
+      [/\/series\/OL1L\.json/, 404, 'not found'],
+      [/search\.json/, 200, { docs: [] }],
+    ])
+
+    expect(await openLibraryProvider.getSeries!('OL1L')).toBeNull()
+  })
+
+  it('throws when Open Library fails rather than saying the series is gone', async () => {
+    stubRoutes([
+      [/\/series\/OL1L\.json/, 503, 'unavailable'],
+      [/search\.json/, 200, { docs: [] }],
+    ])
+
+    await expect(openLibraryProvider.getSeries!('OL1L')).rejects.toThrow('503')
   })
 })

@@ -72,16 +72,7 @@ listsRouter.post(
           : await prisma.listEntry.update({ where: key, data })
     }
     // Finishing a series finishes every volume that's out, so its progress agrees.
-    if (status === 'done' && mediaItem.kind === 'series') {
-      const volumes = await prisma.seriesVolume.findMany({
-        where: { seriesId: mediaItem.id, volume: isOutWhere() },
-        select: { volumeId: true },
-      })
-      await markVolumesDone(
-        entry.id,
-        volumes.map((volume) => volume.volumeId),
-      )
-    }
+    if (status === 'done' && mediaItem.kind === 'series') await markSeriesDone(entry.id, mediaItem.id)
     const [withMedia] = await withProgress([{ ...entry, mediaItem }])
     res.status(201).json(withMedia)
   }),
@@ -121,16 +112,21 @@ listsRouter.patch(
       return
     }
 
-    const entry = await prisma.listEntry.update({
-      where: { id: req.params.id },
-      data: {
-        status: parsed.data.status,
-        notes: parsed.data.notes,
-        position: parsed.data.position,
-        completedAt: parsed.data.status === undefined ? undefined : parsed.data.status === 'done' ? new Date() : null,
-      },
-      include: { mediaItem: true },
-    })
+    const [entry] = await Promise.all([
+      prisma.listEntry.update({
+        where: { id: req.params.id },
+        data: {
+          status: parsed.data.status,
+          notes: parsed.data.notes,
+          position: parsed.data.position,
+          completedAt: parsed.data.status === undefined ? undefined : parsed.data.status === 'done' ? new Date() : null,
+        },
+        include: { mediaItem: true },
+      }),
+      // Finishing a series finishes every volume that's out, as adding it finished does, or its
+      // progress would disagree and the next volume change would move it back to in progress.
+      status === 'done' && mediaItem?.kind === 'series' ? markSeriesDone(existing.id, mediaItem.id) : null,
+    ])
     const [withMedia] = await withProgress([entry])
     res.json(withMedia)
   }),
@@ -274,6 +270,18 @@ listsRouter.post(
     res.json(await syncSeriesStatus(entry, link.seriesId))
   }),
 )
+
+// Marks every volume of a series entry's series that's out done.
+async function markSeriesDone(entryId: string, seriesId: string) {
+  const volumes = await prisma.seriesVolume.findMany({
+    where: { seriesId, volume: isOutWhere() },
+    select: { volumeId: true },
+  })
+  await markVolumesDone(
+    entryId,
+    volumes.map((volume) => volume.volumeId),
+  )
+}
 
 // Marks these volumes of a series entry done. Volumes already done keep their original completedAt.
 async function markVolumesDone(entryId: string, volumeIds: string[]) {

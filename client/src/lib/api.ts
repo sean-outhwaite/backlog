@@ -17,6 +17,24 @@ export class ApiError extends Error {
   }
 }
 
+// The server's `error` is either a sentence or zod's flattened validation errors
+// ({ formErrors: [...], fieldErrors: { field: [...] } }); either way, something a person can read.
+function errorMessage(error: unknown, status: number): string {
+  if (typeof error === 'string') return error
+  if (error && typeof error === 'object') {
+    const { formErrors = [], fieldErrors = {} } = error as {
+      formErrors?: string[]
+      fieldErrors?: Record<string, string[] | undefined>
+    }
+    const messages = [
+      ...formErrors,
+      ...Object.entries(fieldErrors).flatMap(([field, errors]) => (errors ?? []).map((text) => `${field}: ${text}`)),
+    ]
+    if (messages.length > 0) return messages.join('. ')
+  }
+  return `Request failed: ${status}`
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const {
     data: { session },
@@ -33,7 +51,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new ApiError(body.error ? JSON.stringify(body.error) : `Request failed: ${response.status}`, response.status)
+    throw new ApiError(errorMessage(body.error, response.status), response.status)
   }
   if (init?.method && path.startsWith('/api/lists')) window.dispatchEvent(new Event(LISTS_CHANGED_EVENT))
   if (response.status === 204) return undefined as T
