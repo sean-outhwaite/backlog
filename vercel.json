@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "npm run prisma:generate && npm run build",
+  "installCommand": "npx --yes pnpm@10.30.3 install --frozen-lockfile",
+  "buildCommand": "pnpm prisma:generate && pnpm build",
   "outputDirectory": "client/dist",
   "regions": ["syd1"],
   "rewrites": [

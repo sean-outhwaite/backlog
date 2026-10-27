@@ -2,16 +2,12 @@
   "name": "backlog",
   "private": true,
   "version": "0.0.0",
-  "workspaces": [
-    "client",
-    "server"
-  ],
   "scripts": {
-    "dev": "concurrently -n client,server -c blue,green \"npm run dev -w client\" \"npm run dev -w server\"",
-    "build": "npm run build -w server && npm run build -w client",
-    "test": "npm test -w server",
-    "prisma:generate": "npm run prisma:generate -w server",
-    "prisma:migrate": "npm run prisma:migrate -w server",
+    "dev": "concurrently -n client,server -c blue,green \"pnpm --filter client dev\" \"pnpm --filter @backlog/server dev\"",
+    "build": "pnpm --filter @backlog/server build && pnpm --filter client build",
+    "test": "pnpm --filter @backlog/server test",
+    "prisma:generate": "pnpm --filter @backlog/server prisma:generate",
+    "prisma:migrate": "pnpm --filter @backlog/server prisma:migrate",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -19,7 +15,16 @@
     "concurrently": "^9.2.5",
     "prettier": "^3.9.9"
   },
-  "overrides": {
-    "deepmerge-ts": "^8.0.2"
+  "packageManager": "pnpm@10.30.3",
+  "pnpm": {
+    "overrides": {
+      "deepmerge-ts": "^8.0.2"
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
   }
 }

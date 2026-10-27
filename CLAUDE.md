@@ -5,25 +5,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm install              # installs both workspaces (client + server)
-npm run dev               # runs client (Vite) and server (tsx watch) together via concurrently
-npm run build              # builds server then client (each runs tsc -b first)
-npm test                   # runs the server's Vitest unit tests once (npx vitest inside server/ to watch)
-npm run prisma:generate    # regenerate Prisma client after editing schema.prisma
-npm run prisma:migrate     # create + apply a migration (prompts for a name)
+pnpm install               # installs both workspaces (client + server)
+pnpm dev                   # runs client (Vite) and server (tsx watch) together via concurrently
+pnpm build                 # builds server then client (each runs tsc -b first)
+pnpm test                  # runs the server's Vitest unit tests once (pnpm exec vitest inside server/ to watch)
+pnpm prisma:generate       # regenerate Prisma client after editing schema.prisma
+pnpm prisma:migrate        # create + apply a migration (prompts for a name)
 ```
 
-Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded from the `tsc -b` build, so they aren't typechecked by `npm run build`). They cover pure logic only (search ranking, series status, release helpers) and must never hit the database or network: modules that import `lib/prisma.js` or `providers/index.js` (the providers throw at import without API keys) get those mocked with `vi.mock` before the module under test is imported. The client has no tests.
+Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded from the `tsc -b` build, so they aren't typechecked by `pnpm build`). They cover pure logic only (search ranking, series status, release helpers) and must never hit the database or network: modules that import `lib/prisma.js` or `providers/index.js` (the providers throw at import without API keys) get those mocked with `vi.mock` before the module under test is imported. The client has no tests.
 
-`client/` lints with `oxlint` (`npm run lint` inside `client/`), not eslint. Warnings don't fail the build.
+`client/` lints with `oxlint` (`pnpm lint` inside `client/`), not eslint. Warnings don't fail the build.
 
-**After adding or changing a dependency, check `package-lock.json` still has the other platforms' native binaries** (`lightningcss-linux-x64-gnu`, `@rolldown/binding-linux-x64-gnu`). npm 11 can drop them when it updates an existing lockfile on macOS, and Vercel's Linux build then fails in Vite (this broke a production deploy once). `npm ci --os=linux --cpu=x64 --libc=glibc --ignore-scripts` in a scratch copy shows whether they install. It can drop _every_ platform's rolldown / lightningcss bindings (macOS too), even on a plain version bump. Restore the dropped `node_modules/@rolldown/binding-*` and `lightningcss-*` entries from the previous lockfile (from the registry if the parent's version changed) rather than regenerating the lockfile. npm also won't apply a new override to a package already in the lockfile, and hand-deleting lockfile entries makes it prune unrelated packages: copy the entry from a fresh `npm install --package-lock-only` in a scratch copy instead.
+**pnpm, not npm.** The repo moved off npm because npm 11 drops other platforms' optional native binaries (`@rolldown/binding-linux-x64-gnu`, `lightningcss-linux-x64-gnu`) when it updates an existing lockfile on macOS, which broke a Vercel deploy once; `pnpm-lock.yaml` always records every platform's. The version is pinned in `packageManager` (root `package.json`) and in `vercel.json`'s `installCommand` (Vercel would otherwise pick pnpm 9 or 10 on its own); bump both together. pnpm 10 only runs install scripts for packages listed in `pnpm.onlyBuiltDependencies` (Prisma, esbuild): a new dependency that needs its postinstall must be added there. pnpm's `node_modules` is strict, so a workspace can only import packages its own `package.json` lists.
 
-The root `package.json` `overrides` forces `deepmerge-ts` to ^8 because `@prisma/config` 6.x pins 7.1.5 (GHSA-ggr8-5vv4-36mx); `npm ls` reports it as "invalid", which is expected. Remove it when moving to Prisma 7.
+`pnpm.overrides` in the root `package.json` forces `deepmerge-ts` to ^8 because `@prisma/config` 6.x pins 7.1.5 (GHSA-ggr8-5vv4-36mx). Remove it when moving to Prisma 7.
 
 ## Architecture
 
-npm workspaces monorepo: `client/` (Vite + React + TypeScript + React Router SPA) and `server/` (Express + TypeScript API, Prisma ORM). No shared package between them — types are duplicated by hand in `client/src/types.ts` to mirror the Prisma models.
+pnpm workspaces monorepo (`pnpm-workspace.yaml`): `client/` (Vite + React + TypeScript + React Router SPA) and `server/` (Express + TypeScript API, Prisma ORM). No shared package between them — types are duplicated by hand in `client/src/types.ts` to mirror the Prisma models.
 
 **Auth + database is Supabase, but auth verification does NOT use a shared secret.** This project's Supabase JWTs are signed asymmetrically (ES256), not with the legacy HS256 shared secret. `server/src/middleware/auth.ts` verifies every request's bearer token against the project's live JWKS endpoint (`<SUPABASE_URL>/auth/v1/.well-known/jwks.json`) using `jose`'s `createRemoteJWKSet` + `jwtVerify` — there is no `SUPABASE_JWT_SECRET` env var, only `SUPABASE_URL`. If a fresh Supabase project somehow uses the legacy secret system instead, this JWKS-based verification will fail; check Project Settings -> API -> JWT Signing Keys to see which system a given project is on.
 

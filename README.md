@@ -27,4 +27,4 @@ Backlog keeps the movies, TV shows, books and games you want to get to in one pl
 - The API never stores a password. It verifies the Supabase-issued JWT on every request.
 - TMDB and RAWG API keys stay server-side. Apart from signing in, the client only talks to our own API.
 - Searches go straight to the media providers and are never stored. A title is saved to the database only when someone first adds or recommends it, using details fetched from the provider rather than trusting what the client sends.
-- `npm audit` currently flags a high-severity advisory in a transitive dependency of the `prisma` CLI (`deepmerge-ts`, via `@prisma/config`). It's a dev-only build tool, not part of the running server, and the fix requires a Prisma major-version bump. It's worth revisiting later but isn't urgent.
+- `pnpm audit` currently flags a high-severity advisory in a transitive dependency of the `prisma` CLI (`deepmerge-ts`, via `@prisma/config`). It's a dev-only build tool, not part of the running server, and the fix requires a Prisma major-version bump. It's worth revisiting later but isn't urgent.
