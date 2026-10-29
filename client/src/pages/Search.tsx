@@ -134,7 +134,7 @@ export function Search() {
           <FriendsPopularCarousel items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
         </section>
       )}
-      {!loading && searchedQuery === null && !!popular?.length && <h2>Popular right now</h2>}
+      {!loading && searchedQuery === null && !!popular?.length && <h2>Trending now</h2>}
       {!loading && searchedQuery !== null && results.length === 0 && (
         <EmptyState icon={<SearchIcon />}>
           <p>Nothing found for “{searchedQuery}”.</p>

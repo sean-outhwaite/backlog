@@ -54,7 +54,8 @@ export function Notifications() {
       {notifications?.length === 0 && (
         <EmptyState icon={<BellIcon />}>
           <p>
-            Nothing yet. You'll hear here when a friend recommends something, or a title you're waiting on comes out.
+            Nothing yet. You'll be notified here when a friend recommends something, or a title you're waiting on comes
+            out.
           </p>
         </EmptyState>
       )}

@@ -241,10 +241,7 @@ export function Dashboard() {
 
   return (
     <div>
-      <PageHeader
-        title={profile?.username ? `${profile.username}'s backlog` : 'My backlog'}
-        subtitle="Everything you're definitely going to get around to finishing."
-      />
+      <PageHeader title={'My backlog'} subtitle="Everything you're definitely going to get around to finishing." />
 
       <div className="list-toolbar">
         <StatusTabs status={status} onChange={setStatus} countFor={countFor} />

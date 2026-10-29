@@ -244,7 +244,7 @@ export function Recommendations() {
 
       {(shownRecommendations.length > 0 || picks.length > 0) && popularGrid && (
         <EmptyState className="empty-state--popular">
-          <p>You're all caught up on recommendations. Here's what's popular right now.</p>
+          <p>You're all caught up on recommendations. Here's what's trending right now.</p>
           {popularGrid}
         </EmptyState>
       )}
