@@ -36,7 +36,6 @@ import { StatusTabs } from '../components/StatusTabs'
 import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
 import { CheckIcon, LogoMark, MediaTypeIcon, PlayIcon, TrashIcon, UndoIcon } from '../components/icons'
-import { useAuth } from '../hooks/useAuth'
 import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS, START_VERBS } from '../lib/mediaTypes'
@@ -79,7 +78,6 @@ function moveFace(entry: ListEntry, action: { to: ListStatus; label: string }) {
 }
 
 export function Dashboard() {
-  const { profile } = useAuth()
   const [entries, setEntries] = useState<ListEntry[]>([])
   const [status, setStatus] = useStatusParam()
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
@@ -241,7 +239,7 @@ export function Dashboard() {
 
   return (
     <div>
-      <PageHeader title={'My backlog'} subtitle="Everything you're definitely going to get around to finishing." />
+      <PageHeader title="My backlog" subtitle="Everything you're definitely going to get around to finishing." />
 
       <div className="list-toolbar">
         <StatusTabs status={status} onChange={setStatus} countFor={countFor} />
