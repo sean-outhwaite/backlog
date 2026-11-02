@@ -1924,21 +1924,19 @@ section + section {
 }
 
 .entry-move {
+  /* The button's own gap, which the shut tick slot and the wiped label cancel out. */
+  --move-gap: 6px;
   white-space: nowrap;
 }
 
 /* Finished (a soft primary, .btn-soft). */
-.entry-move--finish {
-  /* The button's own gap, which the shut tick slot and the wiped label cancel out. */
-  --finish-gap: 6px;
-}
 
 /* Finished's tick is hidden until hover, then its slot opens (nudging the label aside) and the
    stroke draws itself in, springing like the rest of the app's buttons. The negative margin cancels
    the button's gap while the slot is shut, so the label stays centred. */
 .entry-move--finish .icon {
   width: 0;
-  margin-inline-end: calc(-1 * var(--finish-gap));
+  margin-inline-end: calc(-1 * var(--move-gap));
   transition:
     width 0.2s var(--ease-spring),
     margin 0.2s var(--ease-spring),
@@ -2003,14 +2001,15 @@ section + section {
   transition-delay: 0.08s;
 }
 
-/* On click the label is wiped away right to left, back into the tick, while its column closes, so
-   the tick (centred with it) slides to the middle, then grows as the card gets ready to pop. */
-.entry-move--finish.is-finishing .entry-move-label {
+/* On click the label is wiped away right to left, back into the tick (or Start's type icon), while
+   its column closes, so the icon (centred with it) slides to the middle, then grows as the card gets
+   ready to pop, or to play out starting. */
+.entry-move:is(.is-finishing, .is-starting) .entry-move-label {
   grid-template-columns: 0fr;
-  margin-inline-start: calc(-1 * var(--finish-gap));
+  margin-inline-start: calc(-1 * var(--move-gap));
 }
 
-.entry-move--finish.is-finishing .entry-move-label > span {
+.entry-move:is(.is-finishing, .is-starting) .entry-move-label > span {
   clip-path: inset(0 100% 0 0);
 }
 
@@ -2020,6 +2019,12 @@ section + section {
     width 0.2s var(--ease-spring),
     margin 0.2s var(--ease-spring),
     transform 0.45s var(--ease-spring) 0.45s;
+}
+
+/* Start's icon is already showing, so it grows sooner, as the scene comes up over the cover. */
+.entry-move.is-starting .icon {
+  transform: scale(1.5);
+  transition: transform 0.45s var(--ease-spring) 0.2s;
 }
 
 /* With no animation the tick just shows, so the button still says what it does. */
@@ -2056,16 +2061,72 @@ section + section {
   background: var(--cool);
 }
 
+/* What starting a title acts out over its cover (playStartScene): a white drawing on the frosted
+   cover. Each part turns about its own pivot, set here in the drawing's 100-unit grid. */
+.start-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--scrim) 55%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.start-scene svg {
+  width: 78%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.start-scene-drawing {
+  transform-origin: 50px 55px;
+}
+
+.start-scene-ray {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+
+.game {
+  transform-origin: 50px 50px;
+}
+
+.game-button {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.book-page {
+  transform-origin: 50px 50px;
+  fill: rgba(255, 255, 255, 0.35);
+}
+
+.clapper {
+  transform-origin: 50px 82px;
+}
+
+.clapper-stick {
+  transform-origin: 18px 44px;
+}
+
+.tv-antenna {
+  transform-origin: 50px 34px;
+}
+
+.tv-glow {
+  transform-origin: 50px 59px;
+}
+
 /* Two-up phone cards leave ~135px; keep the main move's label on one line. */
 @media (max-width: 480px) {
   .entry-move {
     gap: 4px;
     padding-inline: 6px;
     font-size: 14px;
-  }
-
-  .entry-move--finish {
-    --finish-gap: 4px;
+    --move-gap: 4px;
   }
 }
 

@@ -40,6 +40,7 @@ import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS, START_VERBS } from '../lib/mediaTypes'
 import { byReleaseDate, entryTab } from '../lib/release'
+import { playStartScene } from '../lib/startScene'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
 // The moves offered on each tab's cards; the first is the primary action. Start is worded and drawn
@@ -531,9 +532,24 @@ function popBurst(rect: DOMRect) {
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
+// Starting plays out before the card eases out of the tab: the label is wiped away and the type's
+// icon grows (CSS, via is-starting) as a scene for the type acts out over the cover (playStartScene).
+async function playStart(button: HTMLButtonElement | null, entry: ListEntry, onMove: () => void | Promise<void>) {
+  const cover = button?.closest('.media-card')?.querySelector<HTMLElement>('.media-card-cover-wrap')
+  const scene = cover && playStartScene(cover, entry.mediaItem.type)
+  await scene?.finished
+  try {
+    await onMove()
+  } catch (error) {
+    scene?.remove()
+    throw error
+  }
+}
+
 // The first move is the card's soft primary button (Start or Finished; a finished card leads with Recommend).
 function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: ListStatus) => void | Promise<void> }) {
   const [finishing, setFinishing] = useState(false)
+  const [starting, setStarting] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const main = STATUS_ACTIONS[entry.status][0]
   const face = moveFace(entry, main)
@@ -541,10 +557,19 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
     'entry-move btn-primary btn-soft',
     main.to === 'done' && 'entry-move--finish',
     finishing && 'is-finishing',
+    starting && 'is-starting',
   ]
   const move = async () => {
-    if (main.to !== 'done' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onMove(main.to)
-    if (finishing) return
+    if (finishing || starting) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onMove(main.to)
+    if (entry.status === 'want' && main.to === 'in_progress') {
+      setStarting(true)
+      return playStart(buttonRef.current, entry, () => onMove(main.to)).catch((error: unknown) => {
+        setStarting(false)
+        throw error
+      })
+    }
+    if (main.to !== 'done') return onMove(main.to)
     setFinishing(true)
     const card = buttonRef.current?.closest<HTMLElement>('.media-card')
     const animations: Animation[] = []
