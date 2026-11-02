@@ -28,6 +28,7 @@ import {
 } from 'react'
 import { Link } from 'react-router-dom'
 import { MediaCard } from '../components/MediaCard'
+import { EntryDates } from '../components/EntryDates'
 import { EntryMenu } from '../components/EntryMenu'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
@@ -216,8 +217,10 @@ export function Dashboard() {
     dismissMoved()
     slideFrom.current = cardRects()
     setEntries((prev) => prev.map((e) => (e.id === entry.id ? entry : e)))
+    // Its dates go back too, or undoing a resume would make it finished just now.
+    const { status, startedAt, completedAt } = entry
     api
-      .patch<ListEntry>(`/api/lists/${entry.id}`, { status: entry.status })
+      .patch<ListEntry>(`/api/lists/${entry.id}`, { status, startedAt, completedAt })
       .then((updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e))))
       // If it fails, reloading shows where the entry really is.
       .catch(load)
@@ -306,7 +309,15 @@ export function Dashboard() {
                 progress={entry.progress}
                 stackCovers={entry.covers}
                 onSeriesAdded={load}
-                details={entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+                details={
+                  <>
+                    <EntryDates
+                      entry={entry}
+                      onSaved={(updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))}
+                    />
+                    {entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+                  </>
+                }
                 // Finished titles have Recommend as their main button instead.
                 recommend={entry.status === 'done' ? undefined : { mediaItemId: entry.mediaItem.id }}
                 coverActions={

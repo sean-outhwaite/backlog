@@ -117,6 +117,9 @@ model ListEntry {
   status      ListStatus @default(want)
   notes       String?
   addedAt     DateTime   @default(now())
+  // When it was started and finished: set as its status moves (see statusDates in lib/entryDates),
+  // and editable by the user. Null when unknown, e.g. a title added as already finished.
+  startedAt   DateTime?
   completedAt DateTime?
   // Where the entry sits in the user's list, ascending. Reordering sets it to the midpoint of its new
   // neighbours; new entries go on top (see newEntryPosition in routes/lists).

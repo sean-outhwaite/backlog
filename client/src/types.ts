@@ -63,6 +63,8 @@ export interface ListEntry {
   status: ListStatus
   notes: string | null
   addedAt: string
+  // When it was started and finished; null when that isn't known.
+  startedAt: string | null
   completedAt: string | null
   // Ascending order of the user's list.
   position: number

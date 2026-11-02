@@ -7,6 +7,7 @@ import { isUniqueConstraintError, prisma } from '../lib/prisma.js'
 import { mediaRefSchema, refreshSeries, resolveMediaItem } from '../lib/mediaItems.js'
 import { derivedSeriesStatus, withProgress } from '../lib/series.js'
 import { isOut, isOutWhere } from '../lib/releases.js'
+import { invalidDates, statusDates } from '../lib/entryDates.js'
 
 export const listsRouter = Router()
 
@@ -55,21 +56,26 @@ listsRouter.post(
 
     // mediaItem is attached here rather than via `include`, which would turn a single
     // INSERT into a multi-statement transaction (see isUniqueConstraintError in lib/prisma).
-    const data = { status, completedAt: status === 'done' ? new Date() : null }
     let entry
     try {
       entry = await prisma.listEntry.create({
-        data: { userId, mediaItemId: mediaItem.id, ...data, position: newEntryPosition() },
+        data: {
+          userId,
+          mediaItemId: mediaItem.id,
+          status,
+          ...statusDates({ status: 'want', startedAt: null, completedAt: null }, status),
+          position: newEntryPosition(),
+        },
       })
     } catch (error) {
       if (!isUniqueConstraintError(error)) throw error
       const key = { userId_mediaItemId: { userId, mediaItemId: mediaItem.id } }
       // Already on the list: a plain add leaves it as it is, but adding it as started or
       // finished moves it there.
-      entry =
-        status === 'want'
-          ? await prisma.listEntry.findUniqueOrThrow({ where: key })
-          : await prisma.listEntry.update({ where: key, data })
+      entry = await prisma.listEntry.findUniqueOrThrow({ where: key })
+      if (status !== 'want' && status !== entry.status) {
+        entry = await prisma.listEntry.update({ where: key, data: { status, ...statusDates(entry, status) } })
+      }
     }
     // Finishing a series finishes every volume that's out, so its progress agrees.
     if (status === 'done' && mediaItem.kind === 'series') await markSeriesDone(entry.id, mediaItem.id)
@@ -84,7 +90,13 @@ const updateEntrySchema = z.object({
   // Set by the client when the entry is dragged: the midpoint of its new neighbours' positions.
   // (z.number() already rejects Infinity and NaN.)
   position: z.number().optional(),
+  // Corrections to when it was started or finished (null for unknown). Sent alongside a status,
+  // they're checked against that status; otherwise against the entry's current one.
+  startedAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  completedAt: z.iso.datetime({ offset: true }).nullable().optional(),
 })
+
+const toDate = (iso: string | null | undefined) => (iso == null ? iso : new Date(iso))
 
 listsRouter.patch(
   '/:id',
@@ -113,14 +125,30 @@ listsRouter.patch(
       return
     }
 
+    // A status change moves the dates along, and any the user set themselves win over that.
+    const nextStatus = status ?? existing.status
+    const startedAt = toDate(parsed.data.startedAt)
+    const completedAt = toDate(parsed.data.completedAt)
+    const editingDates = startedAt !== undefined || completedAt !== undefined
+    const moved = statusDates(existing, nextStatus)
+    const dates = {
+      startedAt: startedAt === undefined ? moved.startedAt : startedAt,
+      completedAt: completedAt === undefined ? moved.completedAt : completedAt,
+    }
+    const problem = editingDates && invalidDates(nextStatus, dates)
+    if (problem) {
+      res.status(400).json({ error: problem })
+      return
+    }
+
     const [entry] = await Promise.all([
       prisma.listEntry.update({
         where: { id: req.params.id },
         data: {
-          status: parsed.data.status,
+          status,
           notes: parsed.data.notes,
           position: parsed.data.position,
-          completedAt: parsed.data.status === undefined ? undefined : parsed.data.status === 'done' ? new Date() : null,
+          ...(status !== undefined || editingDates ? dates : {}),
         },
         include: { mediaItem: true },
       }),
@@ -189,7 +217,7 @@ async function syncSeriesStatus(entry: ListEntry & { mediaItem: MediaItem }, ser
   if (nextStatus !== entry.status) {
     const changed = await prisma.listEntry.update({
       where: { id: entry.id },
-      data: { status: nextStatus, completedAt: nextStatus === 'done' ? new Date() : null },
+      data: { status: nextStatus, ...statusDates(entry, nextStatus) },
     })
     updated = { ...changed, mediaItem: entry.mediaItem }
   }
