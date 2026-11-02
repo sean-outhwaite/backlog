@@ -3,6 +3,7 @@ import {
   joinNames,
   parseReleaseDate,
   PROVIDER_TIMEOUT_MS,
+  providerFetch,
   todayIso,
   toFacts,
   yearFromDate,
@@ -19,8 +20,11 @@ const COVER_BASE = 'https://covers.openlibrary.org/b/id'
 // themselves with an app name and contact in the User-Agent.
 const USER_AGENT = env.openLibraryContact ? `Backlog (${env.openLibraryContact})` : 'Backlog'
 
-function openLibraryFetch(url: string | URL, signal: AbortSignal) {
-  return fetch(url, { signal, headers: { 'User-Agent': USER_AGENT } })
+function openLibraryFetch(
+  url: string | URL,
+  { signal, allowNotFound }: { signal?: AbortSignal; allowNotFound?: boolean } = {},
+) {
+  return providerFetch('Open Library', url, { signal, allowNotFound, headers: { 'User-Agent': USER_AGENT } })
 }
 
 // Works are titled in their original language ("Ostatnie Życzenie"), so with lang=en the search
@@ -182,8 +186,7 @@ export const openLibraryProvider: MediaProvider = {
     url.searchParams.set('lang', 'en')
     url.searchParams.set('fields', SEARCH_FIELDS)
 
-    const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
-    if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
+    const response = await openLibraryFetch(url)
     const data = (await response.json()) as OpenLibrarySearchResponse
 
     return data.docs.map(toSearchResult)
@@ -191,9 +194,7 @@ export const openLibraryProvider: MediaProvider = {
   async popular() {
     const response = await openLibraryFetch(
       `${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20&lang=en&fields=${SEARCH_FIELDS}`,
-      AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     )
-    if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const data = (await response.json()) as OpenLibraryTrendingResponse
     return data.works.map(toSearchResult)
   },
@@ -206,14 +207,12 @@ export const openLibraryProvider: MediaProvider = {
 
     const signal = AbortSignal.timeout(PROVIDER_TIMEOUT_MS)
     const [seriesResponse, searchResponse] = await Promise.all([
-      openLibraryFetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, signal),
-      openLibraryFetch(url, signal),
+      openLibraryFetch(`${OPEN_LIBRARY_BASE}/series/${externalId}.json`, { signal, allowNotFound: true }),
+      openLibraryFetch(url, { signal }),
     ])
-    // Only a 404 means there's no such series; anything else is Open Library failing, which mustn't
-    // look like the series is gone.
+    // Only a 404 means there's no such series; anything else is Open Library failing (thrown), which
+    // mustn't look like the series is gone.
     if (seriesResponse.status === 404) return null
-    if (!seriesResponse.ok) throw new Error(`Open Library request failed: ${seriesResponse.status}`)
-    if (!searchResponse.ok) throw new Error(`Open Library request failed: ${searchResponse.status}`)
     const series = (await seriesResponse.json()) as OpenLibrarySeries
     const data = (await searchResponse.json()) as OpenLibrarySearchResponse
 
@@ -237,13 +236,12 @@ export const openLibraryProvider: MediaProvider = {
   },
   async getById(externalId) {
     const [response, indexEntry] = await Promise.all([
-      openLibraryFetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, AbortSignal.timeout(PROVIDER_TIMEOUT_MS)),
+      openLibraryFetch(`${OPEN_LIBRARY_BASE}/works/${externalId}.json`, { allowNotFound: true }),
       fetchIndexEntry(externalId),
     ])
     // Only a 404 means there's no such work: the release check stops tracking titles that come back
-    // null, so a rate limit or outage has to throw instead.
+    // null, so a rate limit or outage has to throw instead (as openLibraryFetch does).
     if (response.status === 404) return null
-    if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
     const work = (await response.json()) as OpenLibraryWork
     // A translated work's own description is usually in the original language too, so take the
     // English edition's where it has one (most do).
@@ -289,8 +287,7 @@ async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntr
     `key,author_name,first_publish_year,publish_date,number_of_pages_median,series_key,series_name,${EDITION_FIELDS}`,
   )
 
-  const response = await openLibraryFetch(url, AbortSignal.timeout(PROVIDER_TIMEOUT_MS))
-  if (!response.ok) throw new Error(`Open Library request failed: ${response.status}`)
+  const response = await openLibraryFetch(url)
   const data = (await response.json()) as { docs: OpenLibraryIndexEntry[] }
   return data.docs[0] ?? null
 }
@@ -298,11 +295,8 @@ async function fetchIndexEntry(externalId: string): Promise<OpenLibraryIndexEntr
 // Only wanted for its description, which is a nice-to-have like the index entry.
 async function fetchEdition(editionKey: string): Promise<OpenLibraryEdition | null> {
   try {
-    const response = await openLibraryFetch(
-      `${OPEN_LIBRARY_BASE}${editionKey}.json`,
-      AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
-    )
-    return response.ok ? ((await response.json()) as OpenLibraryEdition) : null
+    const response = await openLibraryFetch(`${OPEN_LIBRARY_BASE}${editionKey}.json`)
+    return (await response.json()) as OpenLibraryEdition
   } catch {
     return null
   }

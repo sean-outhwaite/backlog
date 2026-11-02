@@ -2,7 +2,7 @@ import { env } from '../lib/env.js'
 import {
   exactDate,
   joinNames,
-  PROVIDER_TIMEOUT_MS,
+  providerFetch,
   todayIso,
   toFacts,
   yearFromDate,
@@ -93,9 +93,8 @@ async function tmdbFetch<T>(path: string, params: Record<string, string>): Promi
   url.searchParams.set('api_key', env.tmdbApiKey)
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
 
-  const response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) })
+  const response = await providerFetch('TMDB', url, { allowNotFound: true })
   if (response.status === 404) return null
-  if (!response.ok) throw new Error(`TMDB request failed: ${response.status}`)
   return (await response.json()) as T
 }
 

@@ -159,3 +159,35 @@ export function exactDate(date: string | null | undefined): string | null {
 
 // Upper bound on any single provider HTTP call, so one hung API can't stall a search.
 export const PROVIDER_TIMEOUT_MS = 5000
+
+// A provider call that failed, saying which provider and endpoint and how, since a bare
+// TimeoutError in the logs doesn't say which API is down. The query is left out of the message:
+// TMDB's and RAWG's carry the API key.
+export class ProviderError extends Error {
+  constructor(provider: string, url: string | URL, problem: string, options?: ErrorOptions) {
+    super(`${provider} GET ${new URL(url).pathname} ${problem}`, options)
+    this.name = 'ProviderError'
+  }
+}
+
+// fetch for provider APIs: times out after PROVIDER_TIMEOUT_MS unless given its own signal, and
+// throws a ProviderError for a timeout, a failed connection or an error status. A 404 is returned
+// rather than thrown when allowNotFound is set, for callers where it means the title doesn't exist.
+export async function providerFetch(
+  provider: string,
+  url: string | URL,
+  { allowNotFound = false, ...init }: RequestInit & { allowNotFound?: boolean } = {},
+): Promise<Response> {
+  let response
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS), ...init })
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === 'TimeoutError'
+    const problem = timedOut ? `timed out after ${PROVIDER_TIMEOUT_MS}ms` : 'failed to connect'
+    throw new ProviderError(provider, url, problem, { cause: error })
+  }
+  if (!response.ok && !(allowNotFound && response.status === 404)) {
+    throw new ProviderError(provider, url, `failed: ${response.status}`)
+  }
+  return response
+}
