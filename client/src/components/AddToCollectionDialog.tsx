@@ -26,6 +26,9 @@ export function AddToCollectionDialog({
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [note, setNote] = useState('')
   const [newName, setNewName] = useState('')
+  // Lists this title was added to while the dialog is open, with the note each was last saved with,
+  // so a note typed after ticking a list still reaches it (lists it was already on keep theirs).
+  const savedNotes = useRef(new Map<string, string | null>())
 
   useEffect(() => {
     // Guarded because StrictMode runs this twice, and showModal throws on an open dialog.
@@ -66,12 +69,15 @@ export function AddToCollectionDialog({
     try {
       if (collection.contains && data?.mediaItemId) {
         await api.delete(`/api/collections/${collection.id}/items/${data.mediaItemId}`)
+        savedNotes.current.delete(collection.id)
         patch(collection.id, { contains: false, itemCount: collection.itemCount - 1 })
       } else {
+        const sent = note.trim() || null
         const item = await api.post<CollectionItem>(`/api/collections/${collection.id}/items`, {
           ...media,
-          note: note.trim() || undefined,
+          note: sent ?? undefined,
         })
+        savedNotes.current.set(collection.id, sent)
         patch(collection.id, { contains: true, itemCount: collection.itemCount + 1 }, item.mediaItemId)
       }
     } catch {
@@ -82,6 +88,24 @@ export function AddToCollectionDialog({
         next.delete(collection.id)
         return next
       })
+    }
+  }
+
+  // Brings the lists added here up to date with the note as it now reads. Runs when the note loses
+  // focus and again on close (Escape doesn't blur it); the map is updated first so it doesn't repeat.
+  function syncNote() {
+    const mediaItemId = data?.mediaItemId
+    if (!mediaItemId) return
+    const current = note.trim() || null
+    for (const [collectionId, saved] of savedNotes.current) {
+      if (saved === current) continue
+      savedNotes.current.set(collectionId, current)
+      api
+        .patch(`/api/collections/${collectionId}/items/${mediaItemId}`, { note: current })
+        .catch(() => {
+          savedNotes.current.set(collectionId, saved)
+          setFailed(true)
+        })
     }
   }
 
@@ -106,6 +130,7 @@ export function AddToCollectionDialog({
       onClose={(event) => {
         // React bubbles close through the portal to its owner, the details dialog.
         event.stopPropagation()
+        syncNote()
         onClose()
       }}
       onClick={(event) => event.target === dialogRef.current && close()}
@@ -123,6 +148,7 @@ export function AddToCollectionDialog({
             rows={2}
             value={note}
             onChange={(event) => setNote(event.target.value)}
+            onBlur={syncNote}
             placeholder="Why it's worth it"
           />
         </label>
