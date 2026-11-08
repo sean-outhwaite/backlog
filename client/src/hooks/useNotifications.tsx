@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import { resyncPush } from '../lib/push'
 import type { AppNotification, NotificationType, UnreadCounts } from '../types'
 
 // While the tab is visible, how often to look for new notifications between navigations.
@@ -17,9 +18,11 @@ interface NotificationsContextValue {
 const NotificationsContext = createContext<NotificationsContextValue | null>(null)
 
 // Unread counts for the bell and the nav badges. No realtime: they're refreshed on every
-// navigation, when the tab comes back into view, and every couple of minutes while it's visible.
+// navigation, when the tab comes back into view, every couple of minutes while it's visible, and
+// when a push arrives on this device.
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [unread, setUnread] = useState<UnreadCounts>(NONE)
 
   const refresh = useCallback(() => {
@@ -30,6 +33,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(refresh, [pathname, refresh])
+
+  // Push (see lib/push.ts): keep this device's subscription known to the server, and listen to
+  // the service worker, which says when a push arrives (refresh now) or a notification was
+  // tapped while the app was open (go where it points, without a reload).
+  useEffect(() => {
+    resyncPush().catch(() => {})
+    if (!('serviceWorker' in navigator)) return
+    const onMessage = (event: MessageEvent<{ type?: string; url?: string }>) => {
+      if (event.data?.type === 'push') refresh()
+      if (event.data?.type === 'navigate' && event.data.url?.startsWith('/')) navigate(event.data.url)
+    }
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [refresh, navigate])
 
   useEffect(() => {
     const onVisible = () => document.visibilityState === 'visible' && refresh()

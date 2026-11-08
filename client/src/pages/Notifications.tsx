@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BellIcon } from '../components/icons'
 import { NotificationItem } from '../components/NotificationItem'
 import { EmptyState, PageHeader } from '../components/PageHeader'
+import { PushToggle } from '../components/PushToggle'
 import { LoadingState, Spinner } from '../components/Spinner'
 import { useNotifications } from '../hooks/useNotifications'
 import { api } from '../lib/api'
@@ -44,6 +45,7 @@ export function Notifications() {
   return (
     <div>
       <PageHeader title="Notifications" subtitle="Recommendations from friends, and preorder release updates." />
+      <PushToggle />
 
       {failed && (
         <EmptyState>

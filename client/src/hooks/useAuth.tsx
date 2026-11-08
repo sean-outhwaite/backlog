@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { api } from '../lib/api'
+import { disablePush } from '../lib/push'
 import type { Profile } from '../types'
 
 interface AuthContextValue {
@@ -83,6 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshProfile: loadProfile,
     retryProfile: tryLoadProfile,
     signOut: async () => {
+      // Turn push off for this device first, so it stops getting this account's notifications
+      // (and while the session still exists, since the API call needs its token). Never holds up
+      // signing out: failures are ignored, and it gives up after a few seconds.
+      await Promise.race([disablePush().catch(() => {}), new Promise((resolve) => setTimeout(resolve, 3000))])
       await supabase.auth.signOut()
     },
   }

@@ -134,6 +134,46 @@
   max-width: 640px;
 }
 
+/* "Push notifications" on/off for this device, above the feed. */
+.push-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 640px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+}
+
+.push-toggle-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.push-toggle h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.push-toggle p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.push-toggle .error-text {
+  margin-top: 6px;
+}
+
+.push-toggle button {
+  flex: none;
+}
+
+@media (max-width: 480px) {
+  .push-toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .notifications-more {
   display: flex;
   justify-content: center;

@@ -13,7 +13,7 @@ export function Privacy() {
       </Link>
 
       <h1>Privacy policy</h1>
-      <p className="legal-updated">Last updated 12 October 2026</p>
+      <p className="legal-updated">Last updated 9 November 2026</p>
 
       <p>
         Backlog is a small personal project for tracking what you want to watch, read, and play, and sharing it with
@@ -29,6 +29,10 @@ export function Privacy() {
         <li>
           Your friends (people who used your invite link, or whose link you used) and the recommendations you send and
           receive.
+        </li>
+        <li>
+          If you turn on push notifications, an address for each device you turned them on for, which your browser
+          provides so we can send notifications to it. Turning them off, or signing out on that device, deletes it.
         </li>
       </ul>
 
@@ -54,6 +58,10 @@ export function Privacy() {
         </li>
         <li>
           <strong>Vercel</strong> hosts the app.
+        </li>
+        <li>
+          <strong>Apple, Google, Mozilla, or Microsoft</strong>, depending on your browser, deliver push notifications
+          if you turn them on. Each notification says who recommended what, or which title is out.
         </li>
         <li>
           <strong>Google</strong> provides Google sign-in and the fonts the app uses.
