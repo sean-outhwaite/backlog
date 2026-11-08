@@ -2715,6 +2715,24 @@ section + section {
   color: var(--text-h);
 }
 
+.auth-code-form input {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.15em;
+}
+
+/* Resend / different email, under the code form. */
+.auth-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.auth-code-actions button {
+  font-size: 13px;
+}
+
 .auth-floaters {
   position: absolute;
   inset: 0;
