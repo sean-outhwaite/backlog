@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // checkReleases; the helpers tested here touch neither.
 vi.mock('./prisma.js', () => ({ prisma: {} }))
 vi.mock('../providers/index.js', () => ({ providersByType: {} }))
+// releases.ts sends pushes through push.js, which reads env (API keys required at import).
+vi.mock('./push.js', () => ({ sendPush: vi.fn(), releasePush: vi.fn() }))
 
 const { isOut, isOutWhere, releaseColumns } = await import('./releases.js')
 

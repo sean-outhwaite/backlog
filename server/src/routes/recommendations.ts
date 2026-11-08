@@ -1,9 +1,11 @@
+import { waitUntil } from '@vercel/functions'
 import { Router } from 'express'
 import { z } from 'zod'
 import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { prisma } from '../lib/prisma.js'
 import { mediaRefSchema, resolveMediaItem } from '../lib/mediaItems.js'
+import { recommendationPush, sendPush } from '../lib/push.js'
 
 export const recommendationsRouter = Router()
 
@@ -86,6 +88,9 @@ recommendationsRouter.post(
         ),
       ),
     ])
+    // After the response, without holding it up: on Vercel, waitUntil keeps the function alive
+    // until the pushes are sent; locally it's a no-op and the promise just runs.
+    waitUntil(sendPush([{ userIds: toUserIds, payload: recommendationPush(fromUser, mediaItem, message) }]))
     res.status(201).json(recommendations.map((recommendation) => ({ ...recommendation, fromUser, mediaItem })))
   }),
 )

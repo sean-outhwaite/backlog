@@ -12,6 +12,7 @@ import { listsRouter } from './routes/lists.js'
 import { mediaRouter } from './routes/media.js'
 import { notificationsRouter } from './routes/notifications.js'
 import { profileRouter } from './routes/profile.js'
+import { pushRouter } from './routes/push.js'
 import { recommendationsRouter } from './routes/recommendations.js'
 
 export const app = express()
@@ -32,6 +33,7 @@ app.use('/api/friends', requireAuth, friendsRouter)
 app.use('/api/recommendations', requireAuth, recommendationsRouter)
 app.use('/api/notifications', requireAuth, notificationsRouter)
 app.use('/api/collections', requireAuth, collectionsRouter)
+app.use('/api/push', requireAuth, pushRouter)
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   // Body parsers flag client errors (too large, malformed) as `expose`; pass those through as-is.

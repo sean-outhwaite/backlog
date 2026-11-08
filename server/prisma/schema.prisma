@@ -49,6 +49,7 @@ model Profile {
   notifications           Notification[]   @relation("NotificationRecipient")
   notificationsCaused     Notification[]   @relation("NotificationActor")
   collections             Collection[]
+  pushSubscriptions       PushSubscription[]
 }
 
 model MediaItem {
@@ -192,6 +193,22 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+// One per browser/device that turned on push notifications (Web Push). The endpoint is the push
+// service URL the browser gave us; p256dh and auth are its keys for encrypting payloads. A device
+// that someone else signs in on moves to them, since the endpoint is unique.
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // "picks" is each user's one list of things they recommend to every friend (created lazily, and

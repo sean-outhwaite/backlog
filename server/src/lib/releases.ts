@@ -1,6 +1,7 @@
 import type { MediaItem } from '@prisma/client'
 import { prisma } from './prisma.js'
 import { providersByType } from '../providers/index.js'
+import { releasePush, sendPush, type PushMessage } from './push.js'
 import type { NormalizedMediaResult } from '../providers/types.js'
 
 // How many titles one run re-checks, and how long it may take: the cron function has a minute, and
@@ -9,6 +10,9 @@ import type { NormalizedMediaResult } from '../providers/types.js'
 const BATCH_SIZE = 60
 const TIME_BUDGET_MS = 40_000
 const CONCURRENCY = 3
+// Pushes go out once the checks are done (TIME_BUDGET_MS plus the last checks in flight), and must
+// finish inside the function's 60s limit along with them.
+const PUSH_DEADLINE_MS = 10_000
 
 // The MediaItem columns for a title's release, from what its provider says now. A title stored
 // while still to come is marked checked, so its release can be announced (see checkReleases).
@@ -58,12 +62,17 @@ export async function checkReleases(): Promise<ReleaseCheckSummary> {
   })
 
   const summary: ReleaseCheckSummary = { checked: 0, released: [], failed: 0 }
+  const pushes: PushMessage[] = []
   const queue = [...candidates]
   async function worker() {
     for (let item = queue.shift(); item; item = queue.shift()) {
       if (Date.now() - startedAt > TIME_BUDGET_MS) return
       try {
-        if (await checkOne(item)) summary.released.push(item.title)
+        const announced = await checkOne(item)
+        if (announced) {
+          summary.released.push(item.title)
+          pushes.push(announced)
+        }
         summary.checked++
       } catch (error) {
         summary.failed++
@@ -72,16 +81,17 @@ export async function checkReleases(): Promise<ReleaseCheckSummary> {
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker))
+  await sendPush(pushes, PUSH_DEADLINE_MS)
   return summary
 }
 
-// Returns whether this check found the title newly out (and announced it).
-async function checkOne(item: MediaItem): Promise<boolean> {
+// When this check finds the title newly out (and announces it), returns the push to send for it.
+async function checkOne(item: MediaItem): Promise<PushMessage | null> {
   const details = await providersByType[item.type].getById(item.externalId)
   if (!details) {
     // Gone from the provider: stop asking about it.
     await prisma.mediaItem.update({ where: { id: item.id }, data: { releasePending: false } })
-    return false
+    return null
   }
 
   const wasSeenUpcoming = item.releaseCheckedAt !== null
@@ -97,15 +107,16 @@ async function checkOne(item: MediaItem): Promise<boolean> {
       ...(details.coverImageUrl && { coverImageUrl: details.coverImageUrl }),
     },
   })
-  if (releasePending || !wasSeenUpcoming) return false
+  if (releasePending || !wasSeenUpcoming) return null
 
-  await announceRelease(item)
-  return true
+  const userIds = await announceRelease(item)
+  return { userIds, payload: releasePush(item) }
 }
 
 // A title is out: anyone with it on their list (and not already done with it) or with a series
 // it's in gets a notification, and those series' finished entries move back to in progress.
-async function announceRelease(item: MediaItem) {
+// Returns who was notified.
+async function announceRelease(item: MediaItem): Promise<string[]> {
   const links = await prisma.seriesVolume.findMany({ where: { volumeId: item.id }, select: { seriesId: true } })
   const seriesIds = links.map((link) => link.seriesId)
 
@@ -125,8 +136,9 @@ async function announceRelease(item: MediaItem) {
   const userIds = new Set(
     entries.filter((entry) => entry.mediaItemId !== item.id || entry.status !== 'done').map((entry) => entry.userId),
   )
-  if (userIds.size === 0) return
+  if (userIds.size === 0) return []
   await prisma.notification.createMany({
     data: [...userIds].map((userId) => ({ userId, type: 'released' as const, mediaItemId: item.id })),
   })
+  return [...userIds]
 }

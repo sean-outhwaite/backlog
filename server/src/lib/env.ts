@@ -15,5 +15,16 @@ export const env = {
   tmdbApiKey: required('TMDB_API_KEY'),
   rawgApiKey: required('RAWG_API_KEY'),
   openLibraryContact: process.env.OPEN_LIBRARY_CONTACT,
+  // Web Push (VAPID) keys, from `npx web-push generate-vapid-keys`, and a contact (mailto: or
+  // https:) push services can reach us at. Optional: without all three, push is off and
+  // GET /api/push/key returns 503. Changing the keys invalidates every stored subscription.
+  vapid:
+    process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT
+      ? {
+          publicKey: process.env.VAPID_PUBLIC_KEY,
+          privateKey: process.env.VAPID_PRIVATE_KEY,
+          subject: process.env.VAPID_SUBJECT,
+        }
+      : null,
   clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5174',
 }
