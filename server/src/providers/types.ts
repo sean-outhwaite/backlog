@@ -162,11 +162,20 @@ export const PROVIDER_TIMEOUT_MS = 5000
 
 // A provider call that failed, saying which provider and endpoint and how, since a bare
 // TimeoutError in the logs doesn't say which API is down. The query is left out of the message:
-// TMDB's and RAWG's carry the API key.
+// TMDB's and RAWG's carry the API key, Twitch's token request the client secret.
 export class ProviderError extends Error {
-  constructor(provider: string, url: string | URL, problem: string, options?: ErrorOptions) {
-    super(`${provider} GET ${new URL(url).pathname} ${problem}`, options)
+  // The HTTP status, when the provider answered with an error one.
+  readonly status?: number
+
+  constructor(
+    provider: string,
+    url: string | URL,
+    problem: string,
+    { method = 'GET', status, ...options }: ErrorOptions & { method?: string; status?: number } = {},
+  ) {
+    super(`${provider} ${method} ${new URL(url).pathname} ${problem}`, options)
     this.name = 'ProviderError'
+    this.status = status
   }
 }
 
@@ -184,10 +193,13 @@ export async function providerFetch(
   } catch (error) {
     const timedOut = error instanceof Error && error.name === 'TimeoutError'
     const problem = timedOut ? `timed out after ${PROVIDER_TIMEOUT_MS}ms` : 'failed to connect'
-    throw new ProviderError(provider, url, problem, { cause: error })
+    throw new ProviderError(provider, url, problem, { cause: error, method: init.method })
   }
   if (!response.ok && !(allowNotFound && response.status === 404)) {
-    throw new ProviderError(provider, url, `failed: ${response.status}`)
+    throw new ProviderError(provider, url, `failed: ${response.status}`, {
+      method: init.method,
+      status: response.status,
+    })
   }
   return response
 }
