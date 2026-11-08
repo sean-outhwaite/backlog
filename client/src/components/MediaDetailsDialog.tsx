@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from 'react-dom'
 import { api } from '../lib/api'
 import { fetchMediaDetails } from '../lib/mediaDetails'
-import { MEDIA_SOURCE_NAMES, mediaLabel } from '../lib/mediaTypes'
+import { MEDIA_SOURCE_NAMES, SOURCE_BY_TYPE, isRetiredSource, mediaLabel } from '../lib/mediaTypes'
 import { releaseLabel, type ReleaseInfo } from '../lib/release'
 import type { ListStatus, MediaDetails, MediaItem, SeriesRef } from '../types'
 import { ClampedDescription } from './ClampedDescription'
@@ -12,8 +12,9 @@ import { AddToCollectionDialog } from './AddToCollectionDialog'
 import { BookmarkIcon, MediaTypeIcon, SeriesIcon } from './icons'
 import { Spinner } from './Spinner'
 
+// id, source and description are there for stored titles (list entries, picks), not search results.
 export type DetailsMedia = Pick<MediaItem, 'type' | 'externalId' | 'title' | 'coverImageUrl' | 'releaseYear'> &
-  Partial<Pick<MediaItem, 'kind'>> &
+  Partial<Pick<MediaItem, 'kind' | 'id' | 'source' | 'description'>> &
   ReleaseInfo
 
 // Shows what the card already knows straight away, then fills in the rest from the provider.
@@ -47,15 +48,19 @@ export function MediaDetailsDialog({
     if (dialog && !dialog.open) dialog.showModal()
   }, [])
 
+  // A RAWG game that couldn't be moved to IGDB has nothing live to fetch: show what's stored.
+  const retired = isRetiredSource(media)
+
   useEffect(() => {
+    if (retired) return
     let cancelled = false
-    fetchMediaDetails(media.type, media.externalId, media.kind)
+    fetchMediaDetails(media.type, media.externalId, media.kind, media.source)
       .then((found) => !cancelled && setDetails(found))
       .catch(() => !cancelled && setFailed(true))
     return () => {
       cancelled = true
     }
-  }, [media.type, media.externalId, media.kind])
+  }, [media.type, media.externalId, media.kind, media.source, retired])
 
   async function addSeries(series: SeriesRef, status: ListStatus) {
     await api.post('/api/lists', { type: media.type, externalId: series.externalId, kind: 'series', status })
@@ -100,7 +105,10 @@ export function MediaDetailsDialog({
           <h2 id="details-title">{media.title}</h2>
           {details?.tagline && <p className="details-tagline">{details.tagline}</p>}
 
-          {!details && !failed && (
+          {retired && media.description && (
+            <ClampedDescription text={media.description} className="details-description" lines={6} />
+          )}
+          {!details && !failed && !retired && (
             <p className="details-loading" role="status">
               <Spinner /> Loading details…
             </p>
@@ -159,14 +167,17 @@ export function MediaDetailsDialog({
 
           {details && (
             <a className="details-source" href={details.url} target="_blank" rel="noreferrer">
-              View on {MEDIA_SOURCE_NAMES[media.type]} ↗
+              View on {MEDIA_SOURCE_NAMES[media.source ?? SOURCE_BY_TYPE[media.type]]} ↗
             </a>
           )}
         </div>
       </div>
       {pickingList && (
         <AddToCollectionDialog
-          media={{ type: media.type, externalId: media.externalId, kind: media.kind }}
+          // A stored title by its id, so a RAWG game is never looked up as an IGDB one.
+          media={
+            media.id ? { mediaItemId: media.id } : { type: media.type, externalId: media.externalId, kind: media.kind }
+          }
           title={media.title}
           onClose={() => setPickingList(false)}
         />

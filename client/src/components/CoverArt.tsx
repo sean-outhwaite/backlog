@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import type { MediaItem } from '../types'
 import { MediaTypeIcon } from './icons'
 
-// A title's cover, or a generated stand-in (type icon + title) when the provider has none.
+// A title's cover, or a generated stand-in (type icon + title) when the provider has none or the
+// image won't load (a retired provider's CDN, such as RAWG's, going away).
 export function CoverArt({ media }: { media: Pick<MediaItem, 'type' | 'title' | 'coverImageUrl'> }) {
-  if (media.coverImageUrl) return <img src={media.coverImageUrl} alt="" loading="lazy" />
+  const [brokenUrl, setBrokenUrl] = useState<string | null>(null)
+  if (media.coverImageUrl && media.coverImageUrl !== brokenUrl) {
+    return <img src={media.coverImageUrl} alt="" loading="lazy" onError={() => setBrokenUrl(media.coverImageUrl)} />
+  }
   return (
     <div className="cover-placeholder">
       <MediaTypeIcon type={media.type} />

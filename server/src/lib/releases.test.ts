@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // releases.ts imports the Prisma client and the providers (which need API keys at import) for
 // checkReleases; the helpers tested here touch neither.
 vi.mock('./prisma.js', () => ({ prisma: {} }))
-vi.mock('../providers/index.js', () => ({ providersByType: {} }))
+vi.mock('../providers/index.js', () => ({ activeSources: [], providerFor: () => null }))
 // releases.ts sends pushes through push.js, which reads env (API keys required at import).
 vi.mock('./push.js', () => ({ sendPush: vi.fn(), releasePush: vi.fn() }))
 

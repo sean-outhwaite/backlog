@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 // series.ts imports the Prisma client and (through releases.ts) the providers, which need API
 // keys at import; derivedSeriesStatus touches neither.
 vi.mock('./prisma.js', () => ({ prisma: {} }))
-vi.mock('../providers/index.js', () => ({ providersByType: {} }))
+vi.mock('../providers/index.js', () => ({ providersByType: {}, providerFor: () => null }))
 // releases.ts sends pushes through push.js, which reads env (API keys required at import).
 vi.mock('./push.js', () => ({ sendPush: vi.fn(), releasePush: vi.fn() }))
 

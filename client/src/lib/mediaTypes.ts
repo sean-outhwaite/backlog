@@ -1,4 +1,4 @@
-import type { MediaKind, MediaType, SeriesVolume } from '../types'
+import type { MediaKind, MediaSource, MediaType, SeriesVolume } from '../types'
 
 export const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
   movie: 'Movie',
@@ -37,9 +37,23 @@ export const FILTERABLE_MEDIA_TYPES: Array<MediaType | 'all'> = [
   ...(Object.keys(MEDIA_TYPE_LABELS) as MediaType[]),
 ]
 
-export const MEDIA_SOURCE_NAMES: Record<MediaType, string> = {
-  movie: 'TMDB',
-  tv: 'TMDB',
-  book: 'Open Library',
-  game: 'RAWG',
+export const MEDIA_SOURCE_NAMES: Record<MediaSource, string> = {
+  tmdb: 'TMDB',
+  openlibrary: 'Open Library',
+  rawg: 'RAWG',
+  igdb: 'IGDB',
+}
+
+// Where each type's titles come from now (mirrors sourceByType on the server).
+export const SOURCE_BY_TYPE: Record<MediaType, MediaSource> = {
+  movie: 'tmdb',
+  tv: 'tmdb',
+  book: 'openlibrary',
+  game: 'igdb',
+}
+
+// A stored title from a source its type has moved off (a RAWG game): it has no live details, and
+// its externalId means nothing to (or another title on) the type's current provider.
+export function isRetiredSource(media: { type: MediaType; source?: MediaSource }): boolean {
+  return !!media.source && media.source !== SOURCE_BY_TYPE[media.type]
 }

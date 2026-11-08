@@ -1,11 +1,11 @@
 import type { MediaItem, MediaType } from '@prisma/client'
 import { z } from 'zod'
 import { isUniqueConstraintError, prisma } from './prisma.js'
-import { providersByType, sourceByType } from '../providers/index.js'
+import { providerFor, providersByType, sourceByType } from '../providers/index.js'
 import type { SeriesDetails, SeriesVolumeResult } from '../providers/types.js'
 import { releaseColumns } from './releases.js'
 
-// Provider ids (TMDB/RAWG numbers, Open Library "OL123W") are interpolated into provider URL
+// Provider ids (TMDB/IGDB numbers, Open Library "OL123W") are interpolated into provider URL
 // paths, so only allow characters that can't change the path.
 export const externalIdSchema = z.string().regex(/^[A-Za-z0-9_-]+$/)
 
@@ -104,7 +104,7 @@ export async function refreshSeries(series: MediaItem): Promise<MediaItem> {
 
   let details: SeriesDetails | null | undefined
   try {
-    details = await providersByType[series.type].getSeries?.(series.externalId)
+    details = await providerFor(series.source, series.type)?.getSeries?.(series.externalId)
   } catch (error) {
     console.warn(`Refreshing series ${series.id} failed:`, error)
     return series

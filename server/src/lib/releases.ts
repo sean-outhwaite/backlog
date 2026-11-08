@@ -1,6 +1,6 @@
 import type { MediaItem } from '@prisma/client'
 import { prisma } from './prisma.js'
-import { providersByType } from '../providers/index.js'
+import { activeSources, providerFor } from '../providers/index.js'
 import { releasePush, sendPush, type PushMessage } from './push.js'
 import type { NormalizedMediaResult } from '../providers/types.js'
 
@@ -55,6 +55,9 @@ export async function checkReleases(): Promise<ReleaseCheckSummary> {
     where: {
       kind: 'title',
       releasePending: true,
+      // Rows from a retired source (RAWG) can't be checked; filtered here rather than skipped, so
+      // they don't sit at the front of the oldest-checked-first order taking the batch.
+      source: { in: activeSources },
       OR: [{ listEntries: { some: {} } }, { inSeries: { some: { series: { listEntries: { some: {} } } } } }],
     },
     orderBy: { releaseCheckedAt: { sort: 'asc', nulls: 'first' } },
@@ -87,7 +90,9 @@ export async function checkReleases(): Promise<ReleaseCheckSummary> {
 
 // When this check finds the title newly out (and announces it), returns the push to send for it.
 async function checkOne(item: MediaItem): Promise<PushMessage | null> {
-  const details = await providersByType[item.type].getById(item.externalId)
+  const provider = providerFor(item.source, item.type)
+  if (!provider) return null
+  const details = await provider.getById(item.externalId)
   if (!details) {
     // Gone from the provider: stop asking about it.
     await prisma.mediaItem.update({ where: { id: item.id }, data: { releasePending: false } })

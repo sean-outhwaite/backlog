@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { isRetiredSource } from '../lib/mediaTypes'
 import type { FriendsPopularItem, ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 
 // What's popular right now, for filling pages that would otherwise be empty. null while
@@ -57,9 +58,14 @@ export function seriesKey(type: MediaType, seriesExternalId: string) {
 }
 
 // externalId alone isn't unique across types (a TMDB movie and show can share an id), or
-// between a provider's series and titles.
-export function resultKey(result: Pick<MediaItem, 'type' | 'externalId'> & Partial<Pick<MediaItem, 'kind'>>) {
-  return result.kind === 'series' ? seriesKey(result.type, result.externalId) : `${result.type}:${result.externalId}`
+// between a provider's series and titles. A stored title from a retired source (a RAWG game) gets
+// its own prefix, so its id can't mark a different IGDB game as already added.
+export function resultKey(
+  result: Pick<MediaItem, 'type' | 'externalId'> & Partial<Pick<MediaItem, 'kind' | 'source'>>,
+) {
+  const key =
+    result.kind === 'series' ? seriesKey(result.type, result.externalId) : `${result.type}:${result.externalId}`
+  return isRetiredSource(result) ? `${result.source}:${key}` : key
 }
 
 // The keys of everything on your list, so results already there show as added on arrival.
