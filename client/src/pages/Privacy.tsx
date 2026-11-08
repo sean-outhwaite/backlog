@@ -67,8 +67,11 @@ export function Privacy() {
           <strong>Google</strong> provides Google sign-in and the fonts the app uses.
         </li>
         <li>
-          <strong>TMDB, Open Library, and RAWG</strong> supply movie, TV, book, and game details. Searches are sent to
-          them from our server, without anything that identifies you.
+          <strong>TMDB, Open Library, and IGDB</strong> supply movie, TV, book, and game details (game data from{' '}
+          <a href="https://www.igdb.com" target="_blank" rel="noreferrer">
+            IGDB.com
+          </a>
+          ). Searches are sent to them from our server, without anything that identifies you.
         </li>
       </ul>
 
