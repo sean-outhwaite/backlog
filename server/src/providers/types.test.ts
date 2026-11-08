@@ -5,7 +5,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const url = 'https://api.rawg.io/api/games/53743?key=secret'
+const url = 'https://api.themoviedb.org/3/movie/603?api_key=secret'
 
 describe('providerFetch', () => {
   it('names the provider and endpoint when a call times out, without the query', async () => {
@@ -16,8 +16,8 @@ describe('providerFetch', () => {
       }),
     )
 
-    const failure = providerFetch('RAWG', url)
-    await expect(failure).rejects.toThrow('RAWG GET /api/games/53743 timed out after 5000ms')
+    const failure = providerFetch('TMDB', url)
+    await expect(failure).rejects.toThrow('TMDB GET /3/movie/603 timed out after 5000ms')
     await expect(failure).rejects.not.toThrow('secret')
   })
 
@@ -29,7 +29,7 @@ describe('providerFetch', () => {
       }),
     )
 
-    await expect(providerFetch('RAWG', url)).rejects.toThrow('RAWG GET /api/games/53743 failed to connect')
+    await expect(providerFetch('TMDB', url)).rejects.toThrow('TMDB GET /3/movie/603 failed to connect')
   })
 
   it('throws on an error status, with the status', async () => {
@@ -38,7 +38,7 @@ describe('providerFetch', () => {
       vi.fn(async () => new Response('', { status: 522 })),
     )
 
-    await expect(providerFetch('RAWG', url)).rejects.toThrow('RAWG GET /api/games/53743 failed: 522')
+    await expect(providerFetch('TMDB', url)).rejects.toThrow('TMDB GET /3/movie/603 failed: 522')
   })
 
   it('returns a 404 only when told it means not found', async () => {
@@ -47,7 +47,7 @@ describe('providerFetch', () => {
       vi.fn(async () => new Response('', { status: 404 })),
     )
 
-    expect((await providerFetch('RAWG', url, { allowNotFound: true })).status).toBe(404)
-    await expect(providerFetch('RAWG', url)).rejects.toThrow('failed: 404')
+    expect((await providerFetch('TMDB', url, { allowNotFound: true })).status).toBe(404)
+    await expect(providerFetch('TMDB', url)).rejects.toThrow('failed: 404')
   })
 })

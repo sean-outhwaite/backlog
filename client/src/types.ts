@@ -3,8 +3,7 @@ export type ListStatus = 'want' | 'in_progress' | 'done'
 // A series (e.g. a manga run) is a MediaItem of its own, whose volumes are ordinary titles.
 export type MediaKind = 'title' | 'series'
 
-// rawg: games before the move to IGDB, for rows that couldn't be moved (see SOURCE_BY_TYPE).
-export type MediaSource = 'tmdb' | 'openlibrary' | 'rawg' | 'igdb'
+export type MediaSource = 'tmdb' | 'openlibrary' | 'igdb'
 
 export interface MediaItem {
   id: string

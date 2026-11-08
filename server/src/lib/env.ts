@@ -13,8 +13,6 @@ export const env = {
   // Shared with Vercel Cron, which sends it as a bearer token. Without it the cron routes refuse.
   cronSecret: process.env.CRON_SECRET,
   tmdbApiKey: required('TMDB_API_KEY'),
-  // RAWG went down in November 2026 and games moved to IGDB; the key is only for rawg.ts until it's deleted.
-  rawgApiKey: process.env.RAWG_API_KEY ?? '',
   // A Twitch app's credentials, for IGDB (games). dev.twitch.tv -> Console -> Applications.
   twitchClientId: required('TWITCH_CLIENT_ID'),
   twitchClientSecret: required('TWITCH_CLIENT_SECRET'),

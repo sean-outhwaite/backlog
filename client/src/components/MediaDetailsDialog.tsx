@@ -48,7 +48,7 @@ export function MediaDetailsDialog({
     if (dialog && !dialog.open) dialog.showModal()
   }, [])
 
-  // A RAWG game that couldn't be moved to IGDB has nothing live to fetch: show what's stored.
+  // A title from a source its type has moved off has nothing live to fetch: show what's stored.
   const retired = isRetiredSource(media)
 
   useEffect(() => {
@@ -174,7 +174,7 @@ export function MediaDetailsDialog({
       </div>
       {pickingList && (
         <AddToCollectionDialog
-          // A stored title by its id, so a RAWG game is never looked up as an IGDB one.
+          // A stored title by its id, so a retired source's id is never looked up on the current provider.
           media={
             media.id ? { mediaItemId: media.id } : { type: media.type, externalId: media.externalId, kind: media.kind }
           }

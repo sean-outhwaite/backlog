@@ -24,9 +24,10 @@ export const sourceByType: Record<MediaType, MediaSource> = {
 // Every source a type is still fetched from, for queries over stored rows.
 export const activeSources: MediaSource[] = [...new Set(Object.values(sourceByType))]
 
-// The provider for a stored row. Null for a source that's been retired (games' RAWG rows, from
-// before the move to IGDB): those show from what's stored and are never fetched again, since
-// their ids mean nothing to the type's current provider, or would mean a different title.
+// The provider for a stored row. Null for a source its type has moved off (as games moved from
+// RAWG to IGDB): such rows show from what's stored and are never fetched again, since their ids
+// mean nothing to the type's current provider, or would mean a different title. No stored rows
+// are like that now; keep looking stored rows up through this if a provider is ever swapped.
 export function providerFor(source: MediaSource, type: MediaType): MediaProvider | null {
   return sourceByType[type] === source ? providersByType[type] : null
 }

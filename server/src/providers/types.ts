@@ -15,7 +15,7 @@ export interface NormalizedMediaResult {
 
 // Search results also carry a rough popularity signal, used to rank results from different
 // providers against each other. Each provider maps it from a "how many people engaged with
-// this" count (TMDB vote_count, Open Library readinglog_count, RAWG added), which land on
+// this" count (TMDB vote_count, Open Library readinglog_count, IGDB ratings and hype), which land on
 // roughly the same scale: thousands for hits, single digits for obscure titles.
 export interface MediaSearchResult extends NormalizedMediaResult {
   popularity: number
@@ -162,7 +162,7 @@ export const PROVIDER_TIMEOUT_MS = 5000
 
 // A provider call that failed, saying which provider and endpoint and how, since a bare
 // TimeoutError in the logs doesn't say which API is down. The query is left out of the message:
-// TMDB's and RAWG's carry the API key, Twitch's token request the client secret.
+// TMDB's carries the API key, Twitch's token request the client secret.
 export class ProviderError extends Error {
   // The HTTP status, when the provider answered with an error one.
   readonly status?: number

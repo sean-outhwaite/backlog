@@ -2,7 +2,7 @@ import type { MediaSearchResult } from '../providers/types.js'
 
 // Lowercase, strip accents and punctuation, collapse whitespace, so "METAL GEAR SOLID"
 // and "Metal Gear Solid:" compare equal.
-export function normalize(text: string): string {
+function normalize(text: string): string {
   return text
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')

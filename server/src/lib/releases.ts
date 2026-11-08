@@ -55,7 +55,7 @@ export async function checkReleases(): Promise<ReleaseCheckSummary> {
     where: {
       kind: 'title',
       releasePending: true,
-      // Rows from a retired source (RAWG) can't be checked; filtered here rather than skipped, so
+      // Rows from a retired source can't be checked; filtered here rather than skipped, so
       // they don't sit at the front of the oldest-checked-first order taking the batch.
       source: { in: activeSources },
       OR: [{ listEntries: { some: {} } }, { inSeries: { some: { series: { listEntries: { some: {} } } } } }],

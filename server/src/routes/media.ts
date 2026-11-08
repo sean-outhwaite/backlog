@@ -53,9 +53,9 @@ const detailsParamsSchema = z.object({
 
 const detailsQuerySchema = z.object({
   kind: z.enum(['title', 'series']).default('title'),
-  // A stored title's source, which may be one its type has moved off (RAWG games). Search results
-  // leave it out: they're from the type's current provider.
-  source: z.enum(['tmdb', 'openlibrary', 'rawg', 'igdb']).optional(),
+  // A stored title's source, which may be one its type has moved off (see providerFor). Search
+  // results leave it out: they're from the type's current provider.
+  source: z.enum(['tmdb', 'openlibrary', 'igdb']).optional(),
 })
 
 const SERIES_PART_LABELS: Record<MediaType, string> = { book: 'Volumes', movie: 'Films', tv: 'Seasons', game: 'Games' }
@@ -115,7 +115,7 @@ mediaRouter.get(
 
     // Search results are returned straight from the providers and never stored; a
     // MediaItem row is only created when a title is added or recommended (see
-    // resolveMediaItem), so search does no DB work at all. allSettled so one slow or failing provider (RAWG used to hang for 20s before failing)
+    // resolveMediaItem), so search does no DB work at all. allSettled so one slow or failing provider (RAWG, the old games provider, used to hang for 20s before failing)
     // doesn't take the whole search down with it.
     // Each type's titles, plus whole series for providers that search those separately.
     const searches = typesToSearch.flatMap((mediaType) => {

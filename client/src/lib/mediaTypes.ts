@@ -40,7 +40,6 @@ export const FILTERABLE_MEDIA_TYPES: Array<MediaType | 'all'> = [
 export const MEDIA_SOURCE_NAMES: Record<MediaSource, string> = {
   tmdb: 'TMDB',
   openlibrary: 'Open Library',
-  rawg: 'RAWG',
   igdb: 'IGDB',
 }
 
@@ -52,7 +51,7 @@ export const SOURCE_BY_TYPE: Record<MediaType, MediaSource> = {
   game: 'igdb',
 }
 
-// A stored title from a source its type has moved off (a RAWG game): it has no live details, and
+// A stored title from a source its type has moved off (as games moved from RAWG to IGDB): it has no live details, and
 // its externalId means nothing to (or another title on) the type's current provider.
 export function isRetiredSource(media: { type: MediaType; source?: MediaSource }): boolean {
   return !!media.source && media.source !== SOURCE_BY_TYPE[media.type]

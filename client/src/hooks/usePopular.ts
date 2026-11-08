@@ -58,7 +58,7 @@ export function seriesKey(type: MediaType, seriesExternalId: string) {
 }
 
 // externalId alone isn't unique across types (a TMDB movie and show can share an id), or
-// between a provider's series and titles. A stored title from a retired source (a RAWG game) gets
+// between a provider's series and titles. A stored title from a retired source (see isRetiredSource) gets
 // its own prefix, so its id can't mark a different IGDB game as already added.
 export function resultKey(
   result: Pick<MediaItem, 'type' | 'externalId'> & Partial<Pick<MediaItem, 'kind' | 'source'>>,

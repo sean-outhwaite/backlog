@@ -12,5 +12,3 @@ dist-ssr
 
 todo.md
 branding
-# Output of server/src/scripts/remapRawgGames.ts (one-off RAWG to IGDB move)
-rawg-remap.json

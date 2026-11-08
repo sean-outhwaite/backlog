@@ -10,8 +10,6 @@ datasource db {
 enum MediaSource {
   tmdb
   openlibrary
-  // Games until RAWG went down in November 2026; kept for rows that couldn't be moved to IGDB.
-  rawg
   igdb
 }
 
