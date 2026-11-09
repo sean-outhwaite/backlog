@@ -34,10 +34,10 @@ const DATE_FORMAT_TBD = 7
 const POPULARITY_SCALE = 10
 
 const SUMMARY_FIELDS =
-  'name,cover.image_id,first_release_date,release_dates.date,release_dates.date_format,game_status,total_rating_count,hypes'
+  'name,cover.image_id,first_release_date,release_dates.date,release_dates.date_format,game_status,total_rating_count,hypes,platforms.name,platforms.abbreviation,release_dates.platform'
 const DETAIL_FIELDS = [
   SUMMARY_FIELDS,
-  'summary,url,genres.name,platforms.name,aggregated_rating',
+  'summary,url,genres.name,aggregated_rating',
   'involved_companies.company.name,involved_companies.developer,involved_companies.publisher',
   'age_ratings.organization.name,age_ratings.rating_category.rating',
 ].join(',')
@@ -45,6 +45,8 @@ const DETAIL_FIELDS = [
 interface IgdbReleaseDate {
   date?: number
   date_format?: number
+  // The platform's id.
+  platform?: number
 }
 
 export interface IgdbGame {
@@ -60,7 +62,7 @@ export interface IgdbGame {
   summary?: string
   url?: string
   genres?: Array<{ name: string }>
-  platforms?: Array<{ name: string }>
+  platforms?: Array<{ id: number; name: string; abbreviation?: string }>
   aggregated_rating?: number
   involved_companies?: Array<{ company: { name: string }; developer: boolean; publisher: boolean }>
   age_ratings?: Array<{ organization?: { name: string }; rating_category?: { rating: string } }>
@@ -137,6 +139,105 @@ export function releaseFields(game: IgdbGame) {
   }
 }
 
+// Short labels for search cards, keyed by IGDB platform name, newest first within each family.
+// Mac and Linux count as PC, so a PC game with Mac and Linux ports leads with just "PC".
+const PLATFORM_LABELS: Array<[name: string, label: string, family: string]> = [
+  ['PlayStation 5', 'PS5', 'PlayStation'],
+  ['PlayStation 4', 'PS4', 'PlayStation'],
+  ['PlayStation 3', 'PS3', 'PlayStation'],
+  ['PlayStation Vita', 'Vita', 'PlayStation'],
+  ['PlayStation 2', 'PS2', 'PlayStation'],
+  ['PlayStation Portable', 'PSP', 'PlayStation'],
+  ['PlayStation', 'PS1', 'PlayStation'],
+  ['Xbox Series X|S', 'Xbox Series', 'Xbox'],
+  ['Xbox One', 'Xbox One', 'Xbox'],
+  ['Xbox 360', 'Xbox 360', 'Xbox'],
+  ['Xbox', 'Xbox', 'Xbox'],
+  ['Nintendo Switch 2', 'Switch 2', 'Nintendo'],
+  ['Nintendo Switch', 'Switch', 'Nintendo'],
+  ['Wii U', 'Wii U', 'Nintendo'],
+  ['Nintendo 3DS', '3DS', 'Nintendo'],
+  ['New Nintendo 3DS', 'New 3DS', 'Nintendo'],
+  ['Wii', 'Wii', 'Nintendo'],
+  ['Nintendo DS', 'DS', 'Nintendo'],
+  ['Nintendo DSi', 'DSi', 'Nintendo'],
+  ['Nintendo GameCube', 'GameCube', 'Nintendo'],
+  ['Game Boy Advance', 'GBA', 'Nintendo'],
+  ['Nintendo 64', 'N64', 'Nintendo'],
+  ['Game Boy Color', 'GBC', 'Nintendo'],
+  ['Super Nintendo Entertainment System', 'SNES', 'Nintendo'],
+  ['Super Famicom', 'Super Famicom', 'Nintendo'],
+  ['Game Boy', 'Game Boy', 'Nintendo'],
+  ['Nintendo Entertainment System', 'NES', 'Nintendo'],
+  ['Family Computer', 'Famicom', 'Nintendo'],
+  ['Family Computer Disk System', 'Famicom Disk', 'Nintendo'],
+  ['PC (Microsoft Windows)', 'PC', 'PC'],
+  ['Mac', 'Mac', 'PC'],
+  ['Linux', 'Linux', 'PC'],
+  ['DOS', 'DOS', 'PC'],
+  ['iOS', 'iOS', 'Mobile'],
+  ['Android', 'Android', 'Mobile'],
+  ['Sega Mega Drive/Genesis', 'Genesis', 'Sega'],
+  ['Sega Saturn', 'Saturn', 'Sega'],
+  ['Dreamcast', 'Dreamcast', 'Sega'],
+]
+const PLATFORM_BY_NAME = new Map(PLATFORM_LABELS.map(([name, label, family], rank) => [name, { label, family, rank }]))
+
+interface PlatformLabel {
+  label: string
+  family: string
+  rank: number
+}
+
+function labelFor(platform: { name: string; abbreviation?: string }): PlatformLabel {
+  const entry = PLATFORM_BY_NAME.get(platform.name)
+  if (entry) return entry
+  // Unknown platforms rank after every known one, in IGDB's order, each its own family.
+  const label = platform.abbreviation && platform.abbreviation.length <= 8 ? platform.abbreviation : platform.name
+  return { label, family: platform.name, rank: Infinity }
+}
+
+// The platform a game first came out on, where it came out there before anywhere else (Castlevania
+// III on the NES, not its Wii U re-release). Platforms tied for first count when they're one
+// family (Windows and Linux on the same day), and the best-ranked of them leads. None for a
+// launch across families, or when every platform came out the same day.
+function originalPlatform(
+  game: Pick<IgdbGame, 'release_dates'>,
+  labels: Map<number, PlatformLabel>,
+): PlatformLabel | null {
+  const earliest = new Map<number, number>()
+  for (const { platform, date } of game.release_dates ?? []) {
+    if (platform === undefined || date === undefined || !labels.has(platform)) continue
+    earliest.set(platform, Math.min(date, earliest.get(platform) ?? Infinity))
+  }
+  const first = Math.min(...earliest.values())
+  const firsts = [...earliest].filter(([, date]) => date === first).map(([id]) => labels.get(id)!)
+  if (firsts.length === earliest.size || new Set(firsts.map((l) => l.family)).size > 1) return null
+  return firsts.sort((a, b) => a.rank - b.rank)[0]
+}
+
+// Short labels for a game's platforms, most telling first: the original platform where there's a
+// clear one (so a retro game's NES isn't buried under re-releases), then the newest platform from
+// each family (PS5, Xbox Series, Switch, PC), then the rest. Unknown platforms come last, as their
+// abbreviation where that's short ("Arcade", "C64") or else their name.
+export function platformLabels(game: Pick<IgdbGame, 'platforms' | 'release_dates'>): string[] {
+  const labels = new Map((game.platforms ?? []).map((platform) => [platform.id, labelFor(platform)]))
+  const original = originalPlatform(game, labels)
+  // A stable sort keeps unknown platforms (all ranked Infinity) in IGDB's order.
+  const sorted = [...labels.values()].filter((l) => l !== original).sort((a, b) => a.rank - b.rank)
+  const seenFamilies = new Set<string>()
+  const leads = []
+  const rest = []
+  for (const entry of sorted) {
+    if (entry.rank === Infinity || seenFamilies.has(entry.family)) rest.push(entry.label)
+    else {
+      seenFamilies.add(entry.family)
+      leads.push(entry.label)
+    }
+  }
+  return [...new Set([...(original ? [original.label] : []), ...leads, ...rest])]
+}
+
 export function toSearchResult(game: IgdbGame): MediaSearchResult {
   return {
     externalId: String(game.id),
@@ -145,6 +246,7 @@ export function toSearchResult(game: IgdbGame): MediaSearchResult {
     coverImageUrl: coverUrl(game),
     description: null,
     ...releaseFields(game),
+    platforms: platformLabels(game),
     // Hype (people following an unreleased game) keeps upcoming games from ranking as unknowns.
     popularity: ((game.total_rating_count ?? 0) + (game.hypes ?? 0)) * POPULARITY_SCALE,
   }

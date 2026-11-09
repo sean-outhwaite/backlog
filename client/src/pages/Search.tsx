@@ -148,6 +148,7 @@ export function Search() {
             mediaItem={result}
             stackCovers={result.covers}
             partCount={result.volumeCount}
+            platforms={result.platforms}
             offerSeries={!result.series}
             recommend={{ type: result.type, externalId: result.externalId, kind: result.kind }}
             actions={

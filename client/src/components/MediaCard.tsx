@@ -15,6 +15,7 @@ export function MediaCard({
   progress,
   stackCovers,
   partCount,
+  platforms,
   details,
   detailsActions,
   offerSeries,
@@ -32,6 +33,8 @@ export function MediaCard({
   stackCovers?: string[]
   // How many volumes/films a series has, shown beside the year.
   partCount?: number
+  // A game's short platform labels, most relevant first; the first few show under the year.
+  platforms?: string[]
   // Extra content for the details dialog, such as a series' volumes.
   details?: ReactNode
   // The details dialog's actions, when the card's own (sized for the cover) don't suit a toolbar.
@@ -85,6 +88,7 @@ export function MediaCard({
                 .join(' · ')}
             </span>
           )}
+          {!!platforms?.length && <PlatformLine platforms={platforms} />}
           {release && (
             <span className={`release-badge${release.upcoming ? ' release-badge--upcoming' : ''}`}>{release.text}</span>
           )}
@@ -111,6 +115,25 @@ export function MediaCard({
         </MediaDetailsDialog>
       )}
     </article>
+  )
+}
+
+const PLATFORMS_SHOWN = 3
+
+// Outlined tags, "PS5 | Xbox Series | PC +2", with every platform in the tooltip (the details view
+// lists them too).
+function PlatformLine({ platforms }: { platforms: string[] }) {
+  const shown = platforms.slice(0, PLATFORMS_SHOWN)
+  const more = platforms.length - shown.length
+  return (
+    <span className="media-card-platforms" title={platforms.join(', ')}>
+      {shown.map((platform) => (
+        <span key={platform} className="media-card-platform">
+          {platform}
+        </span>
+      ))}
+      {more > 0 && <span className="media-card-platforms-more">+{more}</span>}
+    </span>
   )
 }
 

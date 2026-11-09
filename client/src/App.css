@@ -1951,6 +1951,36 @@ section + section {
   color: var(--text);
 }
 
+/* One row of outlined tags, set apart from the year above and the filled release badge below.
+   A long label shrinks to an ellipsis before the "+N" does. */
+.media-card-platforms {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.media-card-platform {
+  min-width: 0;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-card-platforms-more {
+  flex-shrink: 0;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .media-card-actions {
   display: flex;
   flex-direction: column;

@@ -19,6 +19,8 @@ export interface NormalizedMediaResult {
 // roughly the same scale: thousands for hits, single digits for obscure titles.
 export interface MediaSearchResult extends NormalizedMediaResult {
   popularity: number
+  // Short platform labels for a game, most relevant first ("PS5", "Xbox Series", "PC").
+  platforms?: string[]
   // Set when the provider knows this title is part of a series (Open Library search results).
   series?: SeriesRef
   // Set on results that are a whole series (from searchSeries) rather than a single title.

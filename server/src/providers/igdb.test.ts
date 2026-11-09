@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // env.ts throws at import without every provider's keys; IGDB only needs the Twitch pair.
 vi.mock('../lib/env.js', () => ({ env: { twitchClientId: 'client-id', twitchClientSecret: 'secret' } }))
 
-const { igdbProvider, releaseFields, resetIgdbToken } = await import('./igdb.js')
+const { igdbProvider, platformLabels, releaseFields, resetIgdbToken } = await import('./igdb.js')
 const { ProviderError } = await import('./types.js')
 
 // 2026-11-10 00:00 UTC, as unix seconds.
@@ -54,6 +54,13 @@ describe('igdbProvider.search', () => {
             release_dates: [{ date: 1645747200, date_format: 0 }],
             total_rating_count: 2345,
             hypes: 96,
+            platforms: [
+              { id: 6, name: 'PC (Microsoft Windows)', abbreviation: 'PC' },
+              { id: 48, name: 'PlayStation 4', abbreviation: 'PS4' },
+              { id: 49, name: 'Xbox One', abbreviation: 'XONE' },
+              { id: 167, name: 'PlayStation 5', abbreviation: 'PS5' },
+              { id: 169, name: 'Xbox Series X|S', abbreviation: 'Series X|S' },
+            ],
           },
         ],
       ],
@@ -70,6 +77,7 @@ describe('igdbProvider.search', () => {
       releaseYear: 2022,
       releaseDate: '2022-02-25',
       unreleased: false,
+      platforms: ['PS5', 'Xbox Series', 'PC', 'PS4', 'Xbox One'],
       popularity: 24410,
     })
     const [[url, init]] = igdbCalls(fetchMock)
@@ -171,6 +179,85 @@ describe('igdbProvider.getById', () => {
         { label: 'Age rating', value: 'M (ESRB), 16 (PEGI)' },
       ],
     })
+  })
+})
+
+describe('platformLabels', () => {
+  it('leads with the newest platform per family, then the rest', () => {
+    expect(
+      platformLabels({
+        platforms: [
+          { id: 3, name: 'Linux' },
+          { id: 130, name: 'Nintendo Switch' },
+          { id: 14, name: 'Mac' },
+          { id: 6, name: 'PC (Microsoft Windows)' },
+          { id: 41, name: 'Wii U' },
+        ],
+      }),
+    ).toEqual(['Switch', 'PC', 'Wii U', 'Mac', 'Linux'])
+  })
+
+  it('shows an unknown platform as its short abbreviation, else its name, after the known ones', () => {
+    expect(
+      platformLabels({
+        platforms: [
+          { id: 52, name: 'Arcade', abbreviation: 'Arcade' },
+          { id: 130, name: 'Nintendo Switch', abbreviation: 'Switch' },
+          { id: 15, name: 'Commodore C64/128/MAX', abbreviation: 'C64' },
+          { id: 121, name: 'Sharp X68000', abbreviation: 'Sharp X68000' },
+        ],
+      }),
+    ).toEqual(['Switch', 'Arcade', 'C64', 'Sharp X68000'])
+    expect(platformLabels({})).toEqual([])
+  })
+
+  it('leads with the platform a game came out on first, ahead of later re-releases', () => {
+    const platforms = [
+      { id: 41, name: 'Wii U' },
+      { id: 37, name: 'Nintendo 3DS' },
+      { id: 18, name: 'Nintendo Entertainment System' },
+    ]
+    expect(
+      platformLabels({
+        platforms,
+        release_dates: [
+          { platform: 41, date: 1380000000 },
+          { platform: 18, date: 652000000 },
+          { platform: 37, date: 1360000000 },
+          { platform: 18, date: 900000000 },
+        ],
+      }),
+    ).toEqual(['NES', 'Wii U', '3DS'])
+    // A same-day launch has no original, so the family order stands.
+    expect(
+      platformLabels({
+        platforms,
+        release_dates: [
+          { platform: 41, date: 1380000000 },
+          { platform: 18, date: 1380000000 },
+        ],
+      }),
+    ).toEqual(['Wii U', '3DS', 'NES'])
+  })
+
+  it('takes a same-day launch within one family as the original, led by its best-ranked platform', () => {
+    const platforms = [
+      { id: 48, name: 'PlayStation 4' },
+      { id: 3, name: 'Linux' },
+      { id: 6, name: 'PC (Microsoft Windows)' },
+      { id: 130, name: 'Nintendo Switch' },
+    ]
+    const later = [
+      { platform: 48, date: 1481673600 },
+      { platform: 130, date: 1507161600 },
+    ]
+    expect(
+      platformLabels({ platforms, release_dates: [{ platform: 3, date: 1456444800 }, { platform: 6, date: 1456444800 }, ...later] }),
+    ).toEqual(['PC', 'PS4', 'Switch', 'Linux'])
+    // Tied across families: no original.
+    expect(
+      platformLabels({ platforms, release_dates: [{ platform: 48, date: 1456444800 }, { platform: 6, date: 1456444800 }, { platform: 130, date: 1507161600 }] }),
+    ).toEqual(['PS4', 'Switch', 'PC', 'Linux'])
   })
 })
 

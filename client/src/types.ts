@@ -29,6 +29,8 @@ export type MediaSearchResult = Pick<
 > & {
   // Straight from the provider: not out yet.
   unreleased?: boolean
+  // A game's short platform labels, most relevant first ("PS5", "Xbox Series", "PC").
+  platforms?: string[]
   series?: SeriesRef
   // Set on results that are a whole series rather than a single title.
   kind?: 'series'
