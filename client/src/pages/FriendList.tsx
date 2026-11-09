@@ -34,8 +34,8 @@ export function FriendList() {
   const friend = current && 'friend' in current ? current.friend : null
   const entries = current && 'entries' in current ? current.entries : []
   const [status, setStatus] = useStatusParam()
-  // Media item ids already on your own list, so their cards show as added.
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  // The status of what's already on your own list, by media item id, so their cards show it.
+  const [listed, setListed] = useState<Map<string, ListStatus>>(new Map())
 
   useEffect(() => {
     if (!id) return
@@ -56,13 +56,13 @@ export function FriendList() {
   useEffect(() => {
     api
       .get<ListEntry[]>('/api/lists')
-      .then((own) => setAddedIds((prev) => new Set([...prev, ...own.map((entry) => entry.mediaItemId)])))
+      .then((own) => setListed((prev) => new Map([...own.map((entry) => [entry.mediaItemId, entry.status] as const), ...prev])))
       .catch(() => {})
   }, [])
 
   async function addToList(mediaItemId: string, status: ListStatus) {
     await api.post('/api/lists', { mediaItemId, status })
-    setAddedIds((prev) => new Set(prev).add(mediaItemId))
+    setListed((prev) => new Map(prev).set(mediaItemId, status))
   }
 
   const countFor = (tab: ListTab) => entries.filter((entry) => entryTab(entry) === tab).length
@@ -101,7 +101,7 @@ export function FriendList() {
             stackCovers={entry.covers}
             actions={
               <AddToListButton
-                added={addedIds.has(entry.mediaItemId)}
+                added={listed.get(entry.mediaItemId) ?? false}
                 onAdd={(status) => addToList(entry.mediaItemId, status)}
                 upcoming={isUpcoming(entry.mediaItem)}
                 label={entry.mediaItem.kind === 'series' ? 'Add series' : undefined}

@@ -68,7 +68,7 @@ export function resultKey(
   return isRetiredSource(result) ? `${result.source}:${key}` : key
 }
 
-// The keys of everything on your list, so results already there show as added on arrival.
-export function listedKeys(entries: ListEntry[]) {
-  return new Set(entries.map((entry) => resultKey(entry.mediaItem)))
+// The status of everything on your list by resultKey, so results already there show it on arrival.
+export function listedStatuses(entries: ListEntry[]) {
+  return new Map(entries.map((entry) => [resultKey(entry.mediaItem), entry.status]))
 }

@@ -1,14 +1,17 @@
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { usePopover } from '../hooks/usePopover'
 import type { ListStatus } from '../types'
-import { CheckIcon, PlayIcon, PlusIcon } from './icons'
+import { BookmarkIcon, CheckIcon, PlayIcon, PlusIcon, TrophyIcon } from './icons'
 import { Spinner } from './Spinner'
 
-const ADDED_LABELS: Record<ListStatus, string> = { want: 'Added', in_progress: 'Started', done: 'Finished' }
+const ADDED_LABELS: Record<ListStatus, string> = { want: 'In backlog', in_progress: 'In progress', done: 'Finished' }
+const ADDED_ICONS: Record<ListStatus, ReactNode> = { want: <BookmarkIcon />, in_progress: <PlayIcon />, done: <TrophyIcon /> }
 const ADDING_LABELS: Record<ListStatus, string> = { want: 'Backlogging…', in_progress: 'Starting…', done: 'Finishing…' }
 
 // Adds to the backlog in one click; the ▾ beside it adds straight to in progress or done instead.
-// Pass upcoming for unreleased titles, which can only be wanted.
+// Pass upcoming for unreleased titles, which can only be wanted. added can be the status the title
+// already has on your list, which the button shows (and the card's border colours, see App.css);
+// true means it's on there with a status this page doesn't know.
 export function AddToListButton({
   added,
   onAdd,
@@ -18,7 +21,7 @@ export function AddToListButton({
   title,
   upcoming = false,
 }: {
-  added: boolean
+  added: boolean | ListStatus
   onAdd: (status: ListStatus) => Promise<void>
   label?: string
   icon?: ReactNode
@@ -35,6 +38,7 @@ export function AddToListButton({
   const panelId = useId()
 
   usePopover(open, setOpen, rootRef, triggerRef)
+  const shownStatus = typeof added === 'string' ? added : addedAs
 
   async function add(status: ListStatus) {
     setOpen(false)
@@ -62,8 +66,8 @@ export function AddToListButton({
   } else if (added) {
     content = (
       <>
-        <CheckIcon />
-        {ADDED_LABELS[addedAs]}
+        {ADDED_ICONS[shownStatus]}
+        {ADDED_LABELS[shownStatus]}
       </>
     )
   } else {
@@ -84,9 +88,10 @@ export function AddToListButton({
     <div className={`add-split${offerStatuses ? ' has-menu' : ''}${adding ? ' is-busy' : ''}`} ref={rootRef}>
       <button
         className={`${tint}add-button${added ? ' is-added' : ''}`}
+        data-status={added ? shownStatus : undefined}
         title={title}
         onClick={() => void add('want')}
-        disabled={adding || added}
+        disabled={adding || !!added}
         aria-busy={adding}
       >
         {content}

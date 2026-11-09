@@ -6,7 +6,7 @@ import { MediaCard } from '../components/MediaCard'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { LoadingState } from '../components/Spinner'
 import { TypeSelect } from '../components/TypeSelect'
-import { listedKeys, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
+import { listedStatuses, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import { isUpcoming } from '../lib/release'
 import type { ListEntry, ListStatus, MediaItem, MediaSearchResult, MediaType } from '../types'
@@ -16,14 +16,15 @@ export function Search() {
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [results, setResults] = useState<MediaSearchResult[]>([])
   const [searchedQuery, setSearchedQuery] = useState<string | null>(null)
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  // What's on your list and with what status, by resultKey (series by seriesKey).
+  const [listed, setListed] = useState<Map<string, ListStatus>>(new Map())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     api
       .get<ListEntry[]>('/api/lists')
-      .then((entries) => setAddedIds((prev) => new Set([...prev, ...listedKeys(entries)])))
+      .then((entries) => setListed((prev) => new Map([...listedStatuses(entries), ...prev])))
       .catch(() => {})
   }, [])
 
@@ -75,12 +76,12 @@ export function Search() {
       kind: result.kind,
       status,
     })
-    setAddedIds((prev) => new Set(prev).add(resultKey(result)))
+    setListed((prev) => new Map(prev).set(resultKey(result), status))
   }
 
   async function addFriendsPick(mediaItem: MediaItem, status: ListStatus) {
     await api.post('/api/lists', { mediaItemId: mediaItem.id, status })
-    setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
+    setListed((prev) => new Map(prev).set(resultKey(mediaItem), status))
   }
 
   // Keyed by series rather than result, so every volume's card shows the series as added.
@@ -90,7 +91,7 @@ export function Search() {
     status: ListStatus,
   ) {
     await api.post('/api/lists', { type: result.type, externalId: series.externalId, kind: 'series', status })
-    setAddedIds((prev) => new Set(prev).add(seriesKey(result.type, series.externalId)))
+    setListed((prev) => new Map(prev).set(seriesKey(result.type, series.externalId), status))
   }
 
   return (
@@ -131,7 +132,7 @@ export function Search() {
       {!loading && searchedQuery === null && !!friendsPopular?.length && (
         <section className="popular-section">
           <h2>Popular with your friends</h2>
-          <FriendsPopularCarousel items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+          <FriendsPopularCarousel items={friendsPopular} listed={listed} onAdd={addFriendsPick} />
         </section>
       )}
       {!loading && searchedQuery === null && !!popular?.length && <h2>Trending now</h2>}
@@ -154,14 +155,14 @@ export function Search() {
             actions={
               <>
                 <AddToListButton
-                  added={addedIds.has(resultKey(result))}
+                  added={listed.get(resultKey(result)) ?? false}
                   onAdd={(status) => addToList(result, status)}
                   upcoming={isUpcoming(result)}
                   label={result.kind === 'series' ? 'Add series' : undefined}
                 />
                 {result.series && (
                   <AddToListButton
-                    added={addedIds.has(seriesKey(result.type, result.series.externalId))}
+                    added={listed.get(seriesKey(result.type, result.series.externalId)) ?? false}
                     onAdd={(status) => addSeries(result, result.series!, status)}
                     label="Add series"
                     icon={<SeriesIcon />}

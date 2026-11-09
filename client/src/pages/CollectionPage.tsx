@@ -22,8 +22,8 @@ export function CollectionPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'failed'>('loading')
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  // Media item ids on your backlog, so a friend's titles you already have show as added.
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  // The status of what's on your backlog, by media item id, so a friend's titles you already have show it.
+  const [listed, setListed] = useState<Map<string, ListStatus>>(new Map())
 
   useEffect(() => {
     if (!id) return
@@ -46,7 +46,7 @@ export function CollectionPage() {
   useEffect(() => {
     api
       .get<ListEntry[]>('/api/lists')
-      .then((own) => setAddedIds((prev) => new Set([...prev, ...own.map((entry) => entry.mediaItemId)])))
+      .then((own) => setListed((prev) => new Map([...own.map((entry) => [entry.mediaItemId, entry.status] as const), ...prev])))
       .catch(() => {})
   }, [])
 
@@ -69,7 +69,7 @@ export function CollectionPage() {
 
   async function addToBacklog(mediaItemId: string, status: ListStatus) {
     await api.post('/api/lists', { mediaItemId, status })
-    setAddedIds((prev) => new Set(prev).add(mediaItemId))
+    setListed((prev) => new Map(prev).set(mediaItemId, status))
   }
 
   async function saveNote(mediaItemId: string, note: string | null) {
@@ -177,7 +177,7 @@ export function CollectionPage() {
                 <NoteEditor note={item.note} editable={isOwn} onSave={(note) => saveNote(item.mediaItemId, note)} />
                 {!isOwn && (
                   <AddToListButton
-                    added={addedIds.has(item.mediaItemId)}
+                    added={listed.get(item.mediaItemId) ?? false}
                     onAdd={(status) => addToBacklog(item.mediaItemId, status)}
                     upcoming={isUpcoming(item.mediaItem)}
                   />

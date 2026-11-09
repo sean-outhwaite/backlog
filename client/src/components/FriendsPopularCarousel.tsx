@@ -11,14 +11,14 @@ import { MediaCard } from './MediaCard'
 const AVATARS_SHOWN = 3
 
 // A row of cards for titles your friends have, each saying who, scrolled a page at a time.
-// addedKeys holds resultKeys of what's on your list.
+// listed holds the status of what's on your list, by resultKey.
 export function FriendsPopularCarousel({
   items,
-  addedKeys,
+  listed,
   onAdd,
 }: {
   items: FriendsPopularItem[]
-  addedKeys: Set<string>
+  listed: ReadonlyMap<string, ListStatus>
   onAdd: (mediaItem: MediaItem, status: ListStatus) => Promise<void>
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -68,7 +68,7 @@ export function FriendsPopularCarousel({
                   </span>
                 </p>
                 <AddToListButton
-                  added={addedKeys.has(resultKey(mediaItem))}
+                  added={listed.get(resultKey(mediaItem)) ?? false}
                   onAdd={(status) => onAdd(mediaItem, status)}
                   upcoming={isUpcoming(mediaItem)}
                 />

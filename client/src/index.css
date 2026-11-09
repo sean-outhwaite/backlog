@@ -40,6 +40,8 @@
   /* The cool counterpart to the accent, for what sits apart from the main flow (the Preorders
      tab): sky blue by day, pine at night. */
   --cool: #2f68a8;
+  /* Finished titles: a gold edge on their cards and a gold trophy. */
+  --gold: #d4a017;
   /* Logo: the flame, its heart and the logs under it. The flame is brighter than --accent, which
      has to stay dark enough for text. */
   --flame: #f97316;
@@ -92,6 +94,7 @@
     --card-button-hover: var(--surface-hover);
     --danger: #f87171;
     --cool: #5fb79a;
+    --gold: #facc15;
     --accent-2: #f59e0b;
     --flame: #fb923c;
     --flame-core: #fde68a;

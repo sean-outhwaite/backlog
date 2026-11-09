@@ -9,7 +9,7 @@ import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
 import { CloseIcon } from '../components/icons'
 import { useNotifications } from '../hooks/useNotifications'
-import { listedKeys, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
+import { listedStatuses, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import { friendNames } from '../lib/friends'
 import { isUpcoming } from '../lib/release'
@@ -25,7 +25,8 @@ export function Recommendations() {
   // A recommendation is pending until its title is on your list. Decided once on load, so
   // adding one here doesn't make popular titles pop in underneath mid-visit.
   const [hasPending, setHasPending] = useState(true)
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
+  // Your list's statuses, keyed by both mediaItemId (recommendations, picks) and resultKey (popular titles).
+  const [listed, setListed] = useState<Map<string, ListStatus>>(new Map())
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const generalPopular = usePopular('all', !loading && !hasPending)
@@ -88,7 +89,10 @@ export function Recommendations() {
       const onList = new Set(entries.map((entry) => entry.mediaItemId))
       setRecommendations(found)
       // Recommendations are keyed by mediaItemId and popular titles by resultKey; both start from your list.
-      setAddedIds((prev) => new Set([...prev, ...onList, ...listedKeys(entries)]))
+      setListed(
+        (prev) =>
+          new Map([...entries.map((entry) => [entry.mediaItemId, entry.status] as const), ...listedStatuses(entries), ...prev]),
+      )
       setHasPending(found.some((rec) => !onList.has(rec.mediaItemId)))
       setLoading(false)
       await markRead('recommendation')
@@ -98,17 +102,17 @@ export function Recommendations() {
 
   async function addToList(mediaItemId: string, status: ListStatus) {
     await api.post('/api/lists', { mediaItemId, status })
-    setAddedIds((prev) => new Set(prev).add(mediaItemId))
+    setListed((prev) => new Map(prev).set(mediaItemId, status))
   }
 
   async function addFriendsPick(mediaItem: MediaItem, status: ListStatus) {
     await api.post('/api/lists', { mediaItemId: mediaItem.id, status })
-    setAddedIds((prev) => new Set(prev).add(resultKey(mediaItem)))
+    setListed((prev) => new Map(prev).set(resultKey(mediaItem), status))
   }
 
   async function addPopularToList(result: MediaSearchResult, status: ListStatus) {
     await api.post('/api/lists', { type: result.type, externalId: result.externalId, status })
-    setAddedIds((prev) => new Set(prev).add(resultKey(result)))
+    setListed((prev) => new Map(prev).set(resultKey(result), status))
   }
 
   // Shown in place of the empty state, or under the recommendations once none are pending. With
@@ -123,7 +127,7 @@ export function Recommendations() {
           actions={
             <>
               <AddToListButton
-                added={addedIds.has(resultKey(result))}
+                added={listed.get(resultKey(result)) ?? false}
                 onAdd={(status) => addPopularToList(result, status)}
                 upcoming={isUpcoming(result)}
               />
@@ -137,7 +141,7 @@ export function Recommendations() {
     <>
       <section className="popular-section">
         <h2>Popular with your friends</h2>
-        <FriendsPopularCarousel items={friendsPopular} addedKeys={addedIds} onAdd={addFriendsPick} />
+        <FriendsPopularCarousel items={friendsPopular} listed={listed} onAdd={addFriendsPick} />
       </section>
       {generalGrid && (
         <section className="popular-section">
@@ -190,7 +194,7 @@ export function Recommendations() {
                 </p>
                 {rec.message && <p className="recommendation-message">“{rec.message}”</p>}
                 <AddToListButton
-                  added={addedIds.has(rec.mediaItemId)}
+                  added={listed.get(rec.mediaItemId) ?? false}
                   onAdd={(status) => addToList(rec.mediaItemId, status)}
                   upcoming={isUpcoming(rec.mediaItem)}
                 />
@@ -229,7 +233,7 @@ export function Recommendations() {
                         </p>
                       )}
                       <AddToListButton
-                        added={addedIds.has(mediaItem.id)}
+                        added={listed.get(mediaItem.id) ?? false}
                         onAdd={(status) => addToList(mediaItem.id, status)}
                         upcoming={isUpcoming(mediaItem)}
                       />
