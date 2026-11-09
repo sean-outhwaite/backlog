@@ -13,7 +13,7 @@ import {
 // IGDB (Twitch's games database). Every call is a POST of an Apicalypse query, authorised with a
 // Twitch app token. Its rate limit (4 requests/s, 8 open) is per client id across every Vercel
 // instance, so each search or lookup is kept to one request by expanding related fields inline.
-const IGDB_GAMES_URL = 'https://api.igdb.com/v4/games'
+const IGDB_URL = 'https://api.igdb.com/v4'
 const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
 
 // Main games, expansions, remakes, remasters, expanded editions and ports. Leaves out
@@ -32,6 +32,28 @@ const DATE_FORMAT_TBD = 7
 // IGDB's counts run about a tenth of TMDB vote_count for comparable hits (Elden Ring ~2.3k ratings,
 // a hit film 20-30k votes), so they're scaled up to rank fairly against films, TV and books.
 const POPULARITY_SCALE = 10
+
+// popularity_primitives types from IGDB's own site: visits to a game's page lately, and how many
+// people mark it as wanting to play it. Visits pick up what's current (new releases, upcoming
+// remakes) but also free-to-play games people look up, and adult games (left out by theme).
+// "Want to play" leans to long-running favourites and has few unreleased games near the top, so
+// popular() digs deeper for those. ("Playing", type 3, was steadier but mostly evergreen games.)
+const POPULARITY_VISITS = 1
+const POPULARITY_WANT_TO_PLAY = 2
+const VISITED_CANDIDATES = 60
+// IGDB's "Erotic" theme. Visits rank many adult games highly; they're left out of popular().
+const THEME_EROTIC = 42
+const WANTED_CANDIDATES = 300
+// Games whose huge, steady player bases keep them near the top of visits whether or not anything
+// is happening with them: Free Fire, Roblox, Minecraft, Minecraft: Java Edition, Granny (2017).
+const ALWAYS_POPULAR = new Set([87622, 17269, 135400, 121, 87514])
+const POPULAR_RELEASED = 15
+const POPULAR_UPCOMING = 5
+
+interface IgdbPopularity {
+  game_id: number
+  value: number
+}
 
 const SUMMARY_FIELDS =
   'name,cover.image_id,first_release_date,release_dates.date,release_dates.date_format,game_status,total_rating_count,hypes,platforms.name,platforms.abbreviation,release_dates.platform'
@@ -99,9 +121,9 @@ export function resetIgdbToken() {
   pendingToken = null
 }
 
-async function igdbQuery(query: string): Promise<IgdbGame[]> {
+async function igdbPost<T>(endpoint: string, query: string): Promise<T> {
   const send = async () =>
-    providerFetch('IGDB', IGDB_GAMES_URL, {
+    providerFetch('IGDB', `${IGDB_URL}/${endpoint}`, {
       method: 'POST',
       headers: { 'Client-ID': env.twitchClientId, Authorization: `Bearer ${await getToken()}` },
       body: query,
@@ -115,7 +137,34 @@ async function igdbQuery(query: string): Promise<IgdbGame[]> {
     token = null
     response = await send()
   }
-  return (await response.json()) as IgdbGame[]
+  return (await response.json()) as T
+}
+
+function igdbQuery(query: string): Promise<IgdbGame[]> {
+  return igdbPost<IgdbGame[]>('games', query)
+}
+
+// Released games in "visits" order (less the ALWAYS_POPULAR ones), with an upcoming game from
+// "want to play" after every third. Ids the game filter dropped (DLC, editions) are missing from games and skipped.
+export function mixPopular(visited: number[], wanted: number[], games: IgdbGame[]): IgdbGame[] {
+  const byId = new Map(games.map((game) => [game.id, game]))
+  const pick = (ids: number[], upcoming: boolean, count: number) =>
+    ids
+      .map((id) => byId.get(id))
+      .filter((game): game is IgdbGame => !!game && releaseFields(game).unreleased === upcoming)
+      .slice(0, count)
+  const released = pick(
+    visited.filter((id) => !ALWAYS_POPULAR.has(id)),
+    false,
+    POPULAR_RELEASED,
+  )
+  const upcoming = pick(wanted, true, POPULAR_UPCOMING)
+  const mixed: IgdbGame[] = []
+  released.forEach((game, i) => {
+    mixed.push(game)
+    if (i % 3 === 2 && upcoming.length) mixed.push(upcoming.shift()!)
+  })
+  return [...mixed, ...upcoming]
 }
 
 function coverUrl(game: IgdbGame): string | null {
@@ -302,14 +351,19 @@ export const igdbProvider: MediaProvider = {
     const games = await igdbQuery(`search "${text}"; fields ${SUMMARY_FIELDS}; where ${GAME_FILTER}; limit 20;`)
     return games.map(toSearchResult)
   },
-  // The most-rated games released in the past year.
+  // The games IGDB's visitors are looking at now, with the most wanted upcoming games mixed in.
   async popular() {
-    const now = Math.floor(Date.now() / 1000)
-    const yearAgo = now - 365 * 24 * 60 * 60
+    const [visited, wanted] = await igdbPost<Array<{ name: string; result: IgdbPopularity[] }>>(
+      'multiquery',
+      `query popularity_primitives "visited" { fields game_id,value; where popularity_type = ${POPULARITY_VISITS}; sort value desc; limit ${VISITED_CANDIDATES}; };` +
+        `query popularity_primitives "wanted" { fields game_id,value; where popularity_type = ${POPULARITY_WANT_TO_PLAY}; sort value desc; limit ${WANTED_CANDIDATES}; };`,
+    ).then((lists) => lists.map((list) => list.result.map((entry) => entry.game_id)))
+    const ids = [...new Set([...visited, ...wanted])]
+    if (ids.length === 0) return []
     const games = await igdbQuery(
-      `fields ${SUMMARY_FIELDS}; where ${GAME_FILTER} & first_release_date > ${yearAgo} & first_release_date <= ${now} & total_rating_count != null; sort total_rating_count desc; limit 20;`,
+      `fields ${SUMMARY_FIELDS}; where id = (${ids.join(',')}) & ${GAME_FILTER} & themes != (${THEME_EROTIC}); limit ${ids.length};`,
     )
-    return games.map(toSearchResult)
+    return mixPopular(visited, wanted, games).map(toSearchResult)
   },
   async getById(externalId) {
     if (!/^\d+$/.test(externalId)) return null

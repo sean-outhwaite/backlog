@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // env.ts throws at import without every provider's keys; IGDB only needs the Twitch pair.
 vi.mock('../lib/env.js', () => ({ env: { twitchClientId: 'client-id', twitchClientSecret: 'secret' } }))
 
-const { igdbProvider, platformLabels, releaseFields, resetIgdbToken } = await import('./igdb.js')
+const { igdbProvider, mixPopular, platformLabels, releaseFields, resetIgdbToken } = await import('./igdb.js')
 const { ProviderError } = await import('./types.js')
 
 // 2026-11-10 00:00 UTC, as unix seconds.
@@ -252,11 +252,21 @@ describe('platformLabels', () => {
       { platform: 130, date: 1507161600 },
     ]
     expect(
-      platformLabels({ platforms, release_dates: [{ platform: 3, date: 1456444800 }, { platform: 6, date: 1456444800 }, ...later] }),
+      platformLabels({
+        platforms,
+        release_dates: [{ platform: 3, date: 1456444800 }, { platform: 6, date: 1456444800 }, ...later],
+      }),
     ).toEqual(['PC', 'PS4', 'Switch', 'Linux'])
     // Tied across families: no original.
     expect(
-      platformLabels({ platforms, release_dates: [{ platform: 48, date: 1456444800 }, { platform: 6, date: 1456444800 }, { platform: 130, date: 1507161600 }] }),
+      platformLabels({
+        platforms,
+        release_dates: [
+          { platform: 48, date: 1456444800 },
+          { platform: 6, date: 1456444800 },
+          { platform: 130, date: 1507161600 },
+        ],
+      }),
     ).toEqual(['PS4', 'Switch', 'PC', 'Linux'])
   })
 })
@@ -318,5 +328,59 @@ describe('releaseFields', () => {
         release_dates: [{ date_format: 7 }],
       }).unreleased,
     ).toBe(false)
+  })
+})
+
+describe('igdbProvider.popular', () => {
+  it('asks for both popularity lists in one multiquery, then the games in one request', async () => {
+    const out = { id: 1, name: 'Out', first_release_date: NOW - 100 * DAY }
+    const fetchMock = stubIgdb([
+      [
+        200,
+        [
+          { name: 'visited', result: [{ game_id: 1, value: 0.5 }] },
+          {
+            name: 'wanted',
+            result: [
+              { game_id: 1, value: 0.2 },
+              { game_id: 2, value: 0.1 },
+            ],
+          },
+        ],
+      ],
+      [200, [out]],
+    ])
+    const results = await igdbProvider.popular()
+    expect(results.map((r) => r.title)).toEqual(['Out'])
+    const calls = igdbCalls(fetchMock)
+    expect(calls.map(([url]) => String(url))).toEqual([
+      'https://api.igdb.com/v4/multiquery',
+      'https://api.igdb.com/v4/games',
+    ])
+    expect(calls[1][1]?.body).toContain('where id = (1,2) & version_parent = null')
+    expect(calls[1][1]?.body).toContain('themes != (42)')
+  })
+})
+
+describe('mixPopular', () => {
+  const released = (id: number) => ({ id, name: `R${id}`, first_release_date: NOW - 100 * DAY })
+  const upcoming = (id: number) => ({ id, name: `U${id}`, first_release_date: NOW + 100 * DAY })
+
+  it('puts an upcoming game after every third released one, in each list’s order', () => {
+    const games = [released(1), released(2), released(3), released(4), upcoming(10), upcoming(11)]
+    const mixed = mixPopular([4, 3, 2, 1], [11, 10, 1], games)
+    expect(mixed.map((g) => g.name)).toEqual(['R4', 'R3', 'R2', 'U11', 'R1', 'U10'])
+  })
+
+  it('leaves out games that are always at the top of visits', () => {
+    const roblox = { id: 17269, name: 'Roblox', first_release_date: NOW - 7000 * DAY }
+    const mixed = mixPopular([17269, 1], [], [roblox, released(1)])
+    expect(mixed.map((g) => g.name)).toEqual(['R1'])
+  })
+
+  it('skips ids the filter dropped and keeps upcoming games out of the visits list', () => {
+    const games = [released(1), upcoming(10)]
+    const mixed = mixPopular([99, 10, 1], [98, 1, 10], games)
+    expect(mixed.map((g) => g.name)).toEqual(['R1', 'U10'])
   })
 })
