@@ -16,12 +16,12 @@ import {
 const IGDB_GAMES_URL = 'https://api.igdb.com/v4/games'
 const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token'
 
-// Main games, standalone expansions, remakes, remasters, expanded editions and ports. Leaves out
+// Main games, expansions, remakes, remasters, expanded editions and ports. Leaves out
 // DLC, bundles, mods, episodes, seasons, updates and packs. Ports stay in because IGDB files some
 // originals as ports (Castlevania III is the NES port of a Famicom game); a minor port has few or
 // no ratings, so rankSearchResults puts it below the original. version_parent = null drops
-// editions ("Ultimate Edition").
-const GAME_FILTER = 'version_parent = null & game_type = (0,4,8,9,10,11)'
+// editions ("Ultimate Edition"). Handheld Electronic LCD (411) is excluded as a platform.
+const GAME_FILTER = 'version_parent = null & game_type = (0,2,4,8,9,10,11) & platforms != (411)'
 
 // Cancelled games never come out, so they're never tracked as upcoming.
 const STATUS_CANCELLED = 6
