@@ -17,6 +17,9 @@ export const env = {
   twitchClientId: required('TWITCH_CLIENT_ID'),
   twitchClientSecret: required('TWITCH_CLIENT_SECRET'),
   openLibraryContact: process.env.OPEN_LIBRARY_CONTACT,
+  // New York Times Books API key, for the bestsellers shown before searching. Optional: without it
+  // the books list falls back to Open Library's trending works.
+  nytApiKey: process.env.NYT_API_KEY,
   // Web Push (VAPID) keys, from `npx web-push generate-vapid-keys`, and a contact (mailto: or
   // https:) push services can reach us at. Optional: without all three, push is off and
   // GET /api/push/key returns 503. Changing the keys invalidates every stored subscription.

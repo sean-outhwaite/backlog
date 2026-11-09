@@ -3,15 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 // env.ts throws at import without the other providers' API keys, which Open Library doesn't use.
 vi.mock('../lib/env.js', () => ({ env: {} }))
 
-const { openLibraryProvider } = await import('./openlibrary.js')
+const { env } = (await import('../lib/env.js')) as unknown as { env: { nytApiKey?: string } }
+const { bestsellerQuery, matchBestsellers, openLibraryProvider } = await import('./openlibrary.js')
 
 // Answers each request with the first route whose pattern its URL matches.
 function stubFetch(routes: [RegExp, unknown][]) {
   const fetchMock = vi.fn(async (url: string | URL) => {
     const route = routes.find(([pattern]) => pattern.test(String(url)))
-    return route
-      ? new Response(JSON.stringify(route[1]), { status: 200 })
-      : new Response('not found', { status: 404 })
+    return route ? new Response(JSON.stringify(route[1]), { status: 200 }) : new Response('not found', { status: 404 })
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
@@ -84,6 +83,30 @@ describe('openLibraryProvider.getById', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
+  it('strips Markdown headings, emphasis and rule lines from descriptions', async () => {
+    const description = [
+      "***He can resist any woman in the world...except for the one he shouldn't want.***",
+      '',
+      '* * *',
+      '',
+      '## About the book',
+      'Famed **goalkeeper** Noah Wilson reads _Dune_ and __The Hobbit__, not snake_case_names or 2*3*4.',
+    ].join('\n')
+    stubFetch([
+      [/\/works\/OL1W\.json/, { title: 'The Keeper', description }],
+      [/search\.json/, { docs: [editions('The Keeper', ['eng'])] }],
+    ])
+    const details = await openLibraryProvider.getById('OL1W')
+    expect(details?.description).toBe(
+      [
+        "He can resist any woman in the world...except for the one he shouldn't want.",
+        '',
+        'About the book',
+        'Famed goalkeeper Noah Wilson reads Dune and The Hobbit, not snake_case_names or 2*3*4.',
+      ].join('\n'),
+    )
+  })
+
   it("falls back to the work's description when the edition has none", async () => {
     stubFetch([
       [/\/works\/OL1W\.json/, { title: 'Czas pogardy', description: 'Świat Ciri i wiedźmina…' }],
@@ -154,5 +177,88 @@ describe('openLibraryProvider.getSeries', () => {
     ])
 
     await expect(openLibraryProvider.getSeries!('OL1L')).rejects.toThrow('503')
+  })
+})
+
+describe('bestsellerQuery', () => {
+  it('searches every ISBN at once, then each title with its lead author surname', () => {
+    const query = bestsellerQuery([
+      { title: "THE KEEPER'S SON", author: 'Michael Douglas with Shane Salerno', isbns: ['111', '222'] },
+      { title: 'WTF AMERICA?!', author: 'Ben Meiselas, Brett Meiselas', isbns: ['222'] },
+    ])
+    expect(query).toBe(
+      'isbn:(111 OR 222) OR (title:"the keeper s son" AND author:douglas) OR (title:"wtf america" AND author:meiselas)',
+    )
+  })
+})
+
+describe('matchBestsellers', () => {
+  const book = (title: string, author: string, isbns: string[] = []) => ({ title, author, isbns })
+
+  it('matches by ISBN, else by title and surname, in bestseller order, each work once', () => {
+    const docs = [
+      { key: '/works/A', title: 'A Court of Thorns and Roses', isbn: ['111'] },
+      { key: '/works/B', title: 'The Hollow: A Novel', author_name: ['Michael Connelly'] },
+      { key: '/works/C', title: 'The Hollow', author_name: ['Someone Else'] },
+    ]
+    const matched = matchBestsellers(
+      [
+        book('THE HOLLOW', 'Michael Connelly'),
+        book('A COURT OF THORNS AND ROSES', 'Sarah J. Maas', ['999', '111']),
+        book('A COURT OF THORNS AND ROSES', 'Sarah J. Maas', ['111']),
+        book('PARTITA', 'Barbara Kingsolver', ['555']),
+      ],
+      docs,
+    )
+    expect(matched.map((doc) => doc.key)).toEqual(['/works/B', '/works/A'])
+  })
+})
+
+describe('openLibraryProvider.popular', () => {
+  afterEach(() => {
+    delete env.nytApiKey
+  })
+
+  it("uses Open Library's trending works without an NYT key", async () => {
+    const fetchMock = stubFetch([
+      [/\/trending\/weekly\.json/, { works: [{ key: '/works/OL1W', title: 'Atomic Habits' }] }],
+    ])
+    const results = await openLibraryProvider.popular()
+    expect(results.map((r) => r.title)).toEqual(['Atomic Habits'])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses the NYT bestsellers with covers, matched to works in one search, with a key', async () => {
+    env.nytApiKey = 'nyt-key'
+    const overview = {
+      results: {
+        lists: [
+          {
+            list_name_encoded: 'combined-print-and-e-book-fiction',
+            books: [
+              { title: 'VERITY', author: 'Colleen Hoover', primary_isbn13: '111', isbns: [{ isbn13: '111' }] },
+              { title: 'THE HOLLOW', author: 'Michael Connelly', primary_isbn13: '222', isbns: [{ isbn13: '222' }] },
+            ],
+          },
+        ],
+      },
+    }
+    const fetchMock = stubFetch([
+      [/api\.nytimes\.com/, overview],
+      [
+        /search\.json/,
+        {
+          docs: [
+            { key: '/works/OL2W', title: 'Verity', isbn: ['111'], cover_i: 5 },
+            { key: '/works/OL3W', title: 'The Hollow', isbn: ['222'] },
+          ],
+        },
+      ],
+    ])
+    const results = await openLibraryProvider.popular()
+    expect(results.map((r) => [r.externalId, r.title])).toEqual([['OL2W', 'Verity']])
+    const urls = fetchMock.mock.calls.map(([url]) => new URL(String(url)))
+    expect(urls[0].searchParams.get('api-key')).toBe('nyt-key')
+    expect(urls[1].searchParams.get('q')).toContain('isbn:(111 OR 222)')
   })
 })

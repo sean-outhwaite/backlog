@@ -1,4 +1,5 @@
 import { env } from '../lib/env.js'
+import { bestsellersEnabled, fetchBestsellers, type Bestseller } from './nyt.js'
 import {
   joinNames,
   parseReleaseDate,
@@ -37,6 +38,9 @@ interface OpenLibraryEditions {
 interface OpenLibrarySearchDoc extends OpenLibraryEditions {
   key: string
   title: string
+  // Only requested when matching bestsellers.
+  author_name?: string[]
+  isbn?: string[]
   cover_i?: number
   first_publish_year?: number
   readinglog_count?: number
@@ -52,6 +56,12 @@ interface OpenLibrarySearchDoc extends OpenLibraryEditions {
 const EDITION_FIELDS = 'editions,editions.key,editions.title,editions.language'
 
 const SEARCH_FIELDS = `key,title,cover_i,first_publish_year,publish_date,readinglog_count,series_key,series_name,series_position,${EDITION_FIELDS}`
+
+// Without the edition fields: bestsellers are English already, and with ~50 works the English
+// edition lookup (lang=en) takes Open Library about 10s instead of 1.
+const BESTSELLER_FIELDS =
+  'key,title,cover_i,first_publish_year,publish_date,readinglog_count,series_key,series_name,series_position,author_name,isbn'
+const POPULAR_LIMIT = 20
 
 // Series volumes are few (Berserk has 43), so one page covers all but the longest runs.
 const MAX_SERIES_VOLUMES = 200
@@ -101,7 +111,7 @@ function toCoverUrl(coverId: number | undefined): string | null {
   return coverId ? `${COVER_BASE}/${coverId}-M.jpg` : null
 }
 
-// Descriptions are user-edited Markdown, often with link references and a trailing
+// Descriptions are user-edited Markdown, often with link references, emphasis and a trailing
 // "----------" section of source links. Reduce them to plain paragraphs.
 function toDescription(description: OpenLibraryDescription | undefined): string | null {
   if (!description) return null
@@ -111,6 +121,10 @@ function toDescription(description: OpenLibraryDescription | undefined): string 
     .replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, '')
     .replace(/\[([^\]]+)\](\([^)]*\)|\[[^\]]*\])/g, '$1')
     .replace(/^>\s?/gm, '')
+    // Headings and emphasis ("***He can resist any woman***", "_Dune_"), and rule lines ("* * *").
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\s*([*_-])(\s*\1){2,}\s*$/gm, '')
+    .replace(/(\*{1,3}|_{1,3})(?=\S)([\s\S]*?\S)\1(?![\p{L}\p{N}])/gu, '$2')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   return text || null
@@ -145,11 +159,13 @@ function releaseFields(publishDates: string[] | undefined, firstPublishYear: num
   }
 }
 
+// Letters and digits only, for comparing titles and names that differ in case or punctuation.
+const letters = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+
 // The English edition, when its title is a translation of the work's rather than the same
 // title with different casing or punctuation ("Rich dad poor dad"), which the work spells better.
 function englishEdition(entry: OpenLibraryEditions | null, workTitle: string) {
   const edition = entry?.editions?.docs[0]
-  const letters = (title: string) => title.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
   if (!edition?.language?.includes('eng') || letters(edition.title) === letters(workTitle)) return null
   return edition
 }
@@ -178,6 +194,68 @@ function seriesPosition(doc: OpenLibrarySearchDoc, seriesKey: string): number | 
   return position && /^\d+(\.\d+)?$/.test(position.trim()) ? Number(position) : null
 }
 
+// The first author's surname: "Michael Douglas with Shane Salerno" -> "douglas".
+function leadSurname(author: string): string {
+  const first = author.split(/,| and | with /i)[0]
+  return letters(first.trim().split(/\s+/).at(-1) ?? '')
+}
+
+// Words only, for a quoted Solr phrase.
+const phrase = (text: string) =>
+  text
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+
+// One search that finds every bestseller: by ISBN, which misses new releases whose editions Open
+// Library hasn't imported yet, or by title and the lead author's surname.
+export function bestsellerQuery(books: Bestseller[]): string {
+  const isbns = [...new Set(books.flatMap((book) => book.isbns))]
+  const titles = books.map((book) => `(title:"${phrase(book.title)}" AND author:${leadSurname(book.author)})`)
+  return [...(isbns.length ? [`isbn:(${isbns.join(' OR ')})`] : []), ...titles].join(' OR ')
+}
+
+// Each bestseller's work, in the bestsellers' order: by ISBN, else a work with the same title
+// (ignoring a subtitle) by an author with the lead surname. Unmatched books are left out.
+export function matchBestsellers(books: Bestseller[], docs: OpenLibrarySearchDoc[]): OpenLibrarySearchDoc[] {
+  const byIsbn = new Map<string, OpenLibrarySearchDoc>()
+  for (const doc of docs) for (const isbn of doc.isbn ?? []) if (!byIsbn.has(isbn)) byIsbn.set(isbn, doc)
+  const seen = new Set<string>()
+  const matched: OpenLibrarySearchDoc[] = []
+  for (const book of books) {
+    const surname = leadSurname(book.author)
+    const doc =
+      book.isbns.map((isbn) => byIsbn.get(isbn)).find((found) => found) ??
+      docs.find(
+        (candidate) =>
+          letters(candidate.title.split(':')[0]) === letters(book.title) &&
+          !!candidate.author_name?.some((name) => letters(name).includes(surname)),
+      )
+    if (!doc || seen.has(doc.key)) continue
+    seen.add(doc.key)
+    matched.push(doc)
+  }
+  return matched
+}
+
+async function bestsellers(): Promise<MediaSearchResult[]> {
+  const books = await fetchBestsellers()
+  if (books.length === 0) return []
+  // About 50 books make a query of roughly 3 KB, well within URL limits.
+  const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
+  url.searchParams.set('q', bestsellerQuery(books))
+  url.searchParams.set('limit', '200')
+  url.searchParams.set('fields', BESTSELLER_FIELDS)
+  const response = await openLibraryFetch(url)
+  const data = (await response.json()) as OpenLibrarySearchResponse
+  // Works without a cover are new to Open Library and usually lack a description and the rest too.
+  return matchBestsellers(books, data.docs)
+    .filter((doc) => doc.cover_i)
+    .slice(0, POPULAR_LIMIT)
+    .map(toSearchResult)
+}
+
 export const openLibraryProvider: MediaProvider = {
   async search(query) {
     const url = new URL(`${OPEN_LIBRARY_BASE}/search.json`)
@@ -191,7 +269,10 @@ export const openLibraryProvider: MediaProvider = {
 
     return data.docs.map(toSearchResult)
   },
+  // The NYT bestsellers when there's a key: Open Library's own trending works are mostly the same
+  // self-help classics week after week.
   async popular() {
+    if (bestsellersEnabled()) return bestsellers()
     const response = await openLibraryFetch(
       `${OPEN_LIBRARY_BASE}/trending/weekly.json?limit=20&lang=en&fields=${SEARCH_FIELDS}`,
     )

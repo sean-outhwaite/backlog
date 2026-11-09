@@ -73,6 +73,10 @@ export function Privacy() {
           </a>
           ). Searches are sent to them from our server, without anything that identifies you.
         </li>
+        <li>
+          <strong>The New York Times</strong> supplies the bestseller lists shown under Books before you search (data
+          provided by The New York Times). Our server fetches the lists; nothing about you is sent.
+        </li>
       </ul>
 
       <h2>Cookies and browser storage</h2>
