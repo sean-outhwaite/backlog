@@ -1931,7 +1931,9 @@ section + section {
   text-align: left;
 }
 
+/* Just the colour change: the global button hover background boxes a wrapped title oddly. */
 .media-card-title:hover:not(:disabled) {
+  background: none;
   color: var(--accent);
 }
 
