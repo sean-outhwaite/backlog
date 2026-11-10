@@ -38,6 +38,10 @@ export type MediaSearchResult = Pick<
   covers?: string[]
 }
 
+// A title like ones on your list, for Recommendations' "For you" row: because holds the titles
+// of yours it's like, most telling first.
+export type ForYouResult = MediaSearchResult & { because: string[] }
+
 export interface SeriesRef {
   externalId: string
   title: string

@@ -381,6 +381,32 @@ export const igdbProvider: MediaProvider = {
     )
     return mixPopular(visited, wanted, games).map(toSearchResult)
   },
+  // IGDB's similar_games for each game: two requests for any number of games, since a where on
+  // the first only filters the games asked about, not their similar games. The second applies
+  // the same filters as search and popular (no DLC, editions or adult games), keeping each
+  // game's similar games in IGDB's order.
+  async similar(externalIds) {
+    const ids = externalIds.filter((id) => /^\d+$/.test(id))
+    const found = new Map<string, MediaSearchResult[]>(externalIds.map((id) => [id, []]))
+    if (ids.length === 0) return found
+    const games = await igdbPost<Array<{ id: number; similar_games?: number[] }>>(
+      'games',
+      `fields similar_games; where id = (${ids.join(',')}); limit ${ids.length};`,
+    )
+    const similarIds = [...new Set(games.flatMap((game) => game.similar_games ?? []))]
+    if (similarIds.length === 0) return found
+    const similarGames = await igdbQuery(
+      `fields ${SUMMARY_FIELDS}; where id = (${similarIds.join(',')}) & ${GAME_FILTER} & themes != (${THEME_EROTIC}); limit ${similarIds.length};`,
+    )
+    const byId = new Map(similarGames.map((game) => [game.id, toSearchResult(game)]))
+    for (const game of games) {
+      found.set(
+        String(game.id),
+        (game.similar_games ?? []).flatMap((id) => byId.get(id) ?? []),
+      )
+    }
+    return found
+  },
   async getById(externalId) {
     if (!/^\d+$/.test(externalId)) return null
     const [game] = await igdbQuery(`fields ${DETAIL_FIELDS}; where id = ${externalId};`)

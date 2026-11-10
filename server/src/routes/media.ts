@@ -8,6 +8,7 @@ import { toFacts, type MediaDetails, type MediaSearchResult } from '../providers
 import { externalIdSchema } from '../lib/mediaItems.js'
 import { rankSearchResults } from '../lib/searchRanking.js'
 import { friendsPopular } from '../lib/friendsPopular.js'
+import { forYou } from '../lib/forYou.js'
 import type { AuthedRequest } from '../middleware/auth.js'
 
 const RESULTS_PER_TYPE_WHEN_UNFILTERED = 8
@@ -198,6 +199,15 @@ mediaRouter.get(
       return
     }
     res.json(await friendsPopular(userId, parsed.data.type))
+  }),
+)
+
+// Titles like the ones on your list, for Recommendations' "For you" row (see lib/forYou.ts).
+mediaRouter.get(
+  '/for-you',
+  asyncHandler(async (req, res) => {
+    const { userId } = req as unknown as AuthedRequest
+    res.json(await forYou(userId))
   }),
 )
 

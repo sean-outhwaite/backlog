@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { isRetiredSource } from '../lib/mediaTypes'
-import type { FriendsPopularItem, ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
+import type { ForYouResult, FriendsPopularItem, ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 
 // What's popular right now, for filling pages that would otherwise be empty. null while
 // loading (or while disabled); an empty array if nothing could be fetched. All types gets a few of
@@ -52,6 +52,29 @@ export function useFriendsPopular(type: MediaType | 'all', enabled = true): Frie
   }, [type, enabled])
 
   return enabled ? items : null
+}
+
+// Titles like the ones on your list. Same null/empty contract as usePopular. Fetched on its own,
+// since the first visit after adding titles waits on the providers.
+export function useForYou(): ForYouResult[] | null {
+  const [items, setItems] = useState<ForYouResult[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .get<ForYouResult[]>('/api/media/for-you')
+      .then((found) => {
+        if (!cancelled) setItems(found)
+      })
+      .catch(() => {
+        if (!cancelled) setItems([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return items
 }
 
 export function seriesKey(type: MediaType, seriesExternalId: string) {

@@ -398,3 +398,40 @@ describe('mixPopular', () => {
     expect(mixed.map((g) => g.name)).toEqual(['R1', 'U10'])
   })
 })
+
+describe('igdbProvider.similar', () => {
+  it('looks up every game in two requests, filtering the similar games and keeping their order', async () => {
+    const fetchMock = stubIgdb([
+      [
+        200,
+        [
+          { id: 10, similar_games: [3, 2, 99] },
+          { id: 20, similar_games: [2] },
+        ],
+      ],
+      [
+        200,
+        [
+          { id: 2, name: 'Two', first_release_date: NOW - 100 * DAY },
+          { id: 3, name: 'Three', first_release_date: NOW - 100 * DAY },
+        ],
+      ],
+    ])
+    const found = await igdbProvider.similar!(['10', '20', '30'])
+    expect(found.get('10')?.map((r) => r.title)).toEqual(['Three', 'Two'])
+    expect(found.get('20')?.map((r) => r.title)).toEqual(['Two'])
+    // A game IGDB didn't return has nothing similar, rather than being left out as a failure.
+    expect(found.get('30')).toEqual([])
+    const calls = igdbCalls(fetchMock)
+    expect(calls).toHaveLength(2)
+    expect(calls[0][1]?.body).toBe('fields similar_games; where id = (10,20,30); limit 3;')
+    expect(calls[1][1]?.body).toContain('where id = (3,2,99) & version_parent = null')
+    expect(calls[1][1]?.body).toContain('themes != (42)')
+  })
+
+  it('makes no request when no id is an IGDB id', async () => {
+    const fetchMock = stubIgdb([])
+    expect(await igdbProvider.similar!(['abc'])).toEqual(new Map([['abc', []]]))
+    expect(igdbCalls(fetchMock)).toHaveLength(0)
+  })
+})

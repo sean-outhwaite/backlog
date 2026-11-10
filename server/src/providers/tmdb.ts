@@ -179,7 +179,28 @@ async function getCollection(externalId: string): Promise<SeriesDetails | null> 
   }
 }
 
+// TMDB's recommendations for each title, one request per title (TMDB's rate limit is generous).
+// A 404 (a title TMDB has dropped) is an empty list; a failed request leaves that title out.
+async function similarFrom<T>(
+  path: 'movie' | 'tv',
+  externalIds: string[],
+  toResult: (r: T) => MediaSearchResult,
+): Promise<Map<string, MediaSearchResult[]>> {
+  const settled = await Promise.allSettled(
+    externalIds.map((id) => tmdbFetch<TmdbSearchResponse<T>>(`/${path}/${id}/recommendations`, {})),
+  )
+  const found = new Map<string, MediaSearchResult[]>()
+  settled.forEach((outcome, i) => {
+    if (outcome.status === 'fulfilled') found.set(externalIds[i], (outcome.value?.results ?? []).map(toResult))
+  })
+  if (found.size === 0 && externalIds.length > 0) {
+    throw (settled.find((outcome) => outcome.status === 'rejected') as PromiseRejectedResult).reason
+  }
+  return found
+}
+
 export const tmdbMovieProvider: MediaProvider = {
+  similar: (externalIds) => similarFrom('movie', externalIds, toMovieResult),
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbMovieResult>>('/search/movie', { query })
     return (data?.results ?? []).map(toMovieResult)
@@ -226,6 +247,7 @@ export const tmdbMovieProvider: MediaProvider = {
 }
 
 export const tmdbTvProvider: MediaProvider = {
+  similar: (externalIds) => similarFrom('tv', externalIds, toTvResult),
   async search(query) {
     const data = await tmdbFetch<TmdbSearchResponse<TmdbTvResult>>('/search/tv', { query })
     return (data?.results ?? []).map(toTvResult)

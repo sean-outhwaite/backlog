@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AddToListButton } from '../components/AddToListButton'
+import { Carousel } from '../components/Carousel'
 import { FriendsPopularCarousel } from '../components/FriendsPopularCarousel'
 import { Avatar } from '../components/Avatar'
 import { MediaCard } from '../components/MediaCard'
@@ -9,7 +10,7 @@ import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
 import { CloseIcon } from '../components/icons'
 import { useNotifications } from '../hooks/useNotifications'
-import { listedStatuses, resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
+import { listedStatuses, resultKey, useForYou, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
 import { friendNames } from '../lib/friends'
 import { isUpcoming } from '../lib/release'
@@ -34,6 +35,8 @@ export function Recommendations() {
   // Friends' titles first; the general list leaves out any already shown there.
   const friendsKeys = new Set(friendsPopular?.map((item) => resultKey(item.mediaItem)))
   const popular = generalPopular && generalPopular.filter((result) => !friendsKeys.has(resultKey(result)))
+  // Titles like the ones on your list. Loaded on its own, so a slow first fetch never holds up the page.
+  const forYou = useForYou()
   const { markRead } = useNotifications()
 
   // Dismissing hides the recommendation straight away but holds off deleting it, so Undo can bring
@@ -91,7 +94,11 @@ export function Recommendations() {
       // Recommendations are keyed by mediaItemId and popular titles by resultKey; both start from your list.
       setListed(
         (prev) =>
-          new Map([...entries.map((entry) => [entry.mediaItemId, entry.status] as const), ...listedStatuses(entries), ...prev]),
+          new Map([
+            ...entries.map((entry) => [entry.mediaItemId, entry.status] as const),
+            ...listedStatuses(entries),
+            ...prev,
+          ]),
       )
       setHasPending(found.some((rec) => !onList.has(rec.mediaItemId)))
       setLoading(false)
@@ -114,6 +121,34 @@ export function Recommendations() {
     await api.post('/api/lists', { type: result.type, externalId: result.externalId, status })
     setListed((prev) => new Map(prev).set(resultKey(result), status))
   }
+
+  const forYouSection = !!forYou?.length && (
+    <section className="popular-section">
+      <h2>Things we think you might like...</h2>
+      <Carousel>
+        {forYou.map((result) => (
+          <MediaCard
+            key={resultKey(result)}
+            mediaItem={result}
+            platforms={result.platforms}
+            recommend={{ type: result.type, externalId: result.externalId }}
+            actions={
+              <>
+                <p className="for-you-because">
+                  Similar to <strong>{result.because.join(' and ')}</strong>
+                </p>
+                <AddToListButton
+                  added={listed.get(resultKey(result)) ?? false}
+                  onAdd={(status) => addPopularToList(result, status)}
+                  upcoming={isUpcoming(result)}
+                />
+              </>
+            }
+          />
+        ))}
+      </Carousel>
+    </section>
+  )
 
   // Shown in place of the empty state, or under the recommendations once none are pending. With
   // friends' titles too, each part gets a heading.
@@ -161,15 +196,14 @@ export function Recommendations() {
       {loading && <LoadingState />}
       {failed && <p className="error-text">Couldn't load your recommendations. Reload to try again.</p>}
       {!loading && !failed && shownRecommendations.length === 0 && picks.length === 0 && (
-        <EmptyState className={popularGrid ? 'empty-state--popular' : undefined}>
+        <EmptyState className={popularGrid || forYouSection ? 'empty-state--popular' : undefined}>
           {popularGrid ? (
-            <>
-              <p>No recommendations from friends yet, but check out these popular titles.</p>
-              {popularGrid}
-            </>
+            <p>No recommendations from friends yet, but check out these popular titles.</p>
           ) : (
             <p>No recommendations yet. When a friend sends you something, it'll land here.</p>
           )}
+          {forYouSection}
+          {popularGrid}
         </EmptyState>
       )}
 
@@ -245,6 +279,8 @@ export function Recommendations() {
           </div>
         </section>
       )}
+
+      {(shownRecommendations.length > 0 || picks.length > 0) && forYouSection}
 
       {(shownRecommendations.length > 0 || picks.length > 0) && popularGrid && (
         <EmptyState className="empty-state--popular">

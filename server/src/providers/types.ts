@@ -84,6 +84,10 @@ export interface MediaProvider {
   // Whole series matching a query, for providers whose title results don't say which series
   // they're in (TMDB movies). Open Library's do, so it adds series from its title results instead.
   searchSeries?(query: string): Promise<MediaSearchResult[]>
+  // Titles like each of the given ones, in the provider's order, keyed by the given externalId.
+  // Ids the provider doesn't know map to []; ids whose lookup failed are left out, so a failure
+  // is never cached as "nothing similar". Rejects only if every lookup failed.
+  similar?(externalIds: string[]): Promise<Map<string, MediaSearchResult[]>>
 }
 
 const STACKED_COVERS = 3

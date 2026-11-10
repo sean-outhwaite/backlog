@@ -246,3 +246,16 @@ model CollectionItem {
 
   @@id([collectionId, mediaItemId])
 }
+
+// What a provider suggests for one title (TMDB recommendations, IGDB similar games), cached for
+// the "For you" row on Recommendations. Not per user: everyone with the title shares the row, and
+// it's refetched at most daily. results is MediaSearchResult[] straight from the provider, in its order.
+model SimilarTitles {
+  source     MediaSource
+  type       MediaType
+  externalId String
+  results    Json
+  fetchedAt  DateTime
+
+  @@id([source, type, externalId])
+}
