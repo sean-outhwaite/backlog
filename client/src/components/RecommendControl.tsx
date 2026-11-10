@@ -6,6 +6,7 @@ import { Avatar } from './Avatar'
 import { CheckIcon, SearchIcon, SendIcon } from './icons'
 import { Spinner } from './Spinner'
 import { Toast } from './Toast'
+import { haptic } from '../lib/haptics'
 import type { MediaRef, Profile } from '../types'
 
 // Past this many friends the picker gets a search box.
@@ -138,6 +139,7 @@ function RecommendDialog({
   }
 
   async function send() {
+    haptic()
     setStatus('sending')
     try {
       await api.post('/api/recommendations', {

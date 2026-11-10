@@ -41,6 +41,7 @@ import { useStatusParam, type ListTab } from '../hooks/useStatusParam'
 import { api } from '../lib/api'
 import { FILTERABLE_MEDIA_TYPES, MEDIA_TYPE_LABELS, START_VERBS } from '../lib/mediaTypes'
 import { byReleaseDate, entryTab } from '../lib/release'
+import { haptic } from '../lib/haptics'
 import { playStartScene } from '../lib/startScene'
 import type { ListEntry, ListStatus, MediaType } from '../types'
 
@@ -211,6 +212,12 @@ export function Dashboard() {
     movedTimer.current = window.setTimeout(() => setMoved(null), UNDO_MS)
   }
 
+  // A move straight from a tap. (The main button runs its animation first, so it buzzes itself.)
+  function tapMove(entry: ListEntry, to: ListStatus) {
+    haptic()
+    void moveTo(entry, to)
+  }
+
   function undoMove() {
     if (!moved) return
     const { entry } = moved
@@ -322,7 +329,7 @@ export function Dashboard() {
                 recommend={entry.status === 'done' ? undefined : { mediaItemId: entry.mediaItem.id }}
                 coverActions={
                   <>
-                    <MoveShortcuts entry={entry} onMove={(to) => void moveTo(entry, to)} />
+                    <MoveShortcuts entry={entry} onMove={(to) => tapMove(entry, to)} />
                     <EntryMenu
                       onRemove={() => void removeEntry(entry)}
                       actions={
@@ -331,12 +338,12 @@ export function Dashboard() {
                               {
                                 label: 'Resume',
                                 icon: <PlayIcon />,
-                                onClick: () => void moveTo(entry, 'in_progress'),
+                                onClick: () => tapMove(entry, 'in_progress'),
                               },
                               {
                                 label: 'Move to backlog',
                                 icon: <UndoIcon />,
-                                onClick: () => void moveTo(entry, 'want'),
+                                onClick: () => tapMove(entry, 'want'),
                               },
                             ]
                           : []
@@ -359,7 +366,7 @@ export function Dashboard() {
                 }
                 detailsActions={
                   <>
-                    <DetailsMoves entry={entry} onMove={(to) => void moveTo(entry, to)} />
+                    <DetailsMoves entry={entry} onMove={(to) => tapMove(entry, to)} />
                     <RecommendControl
                       media={{ mediaItemId: entry.mediaItem.id }}
                       title={entry.mediaItem.title}
@@ -572,6 +579,7 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
   ]
   const move = async () => {
     if (finishing || starting) return
+    haptic()
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onMove(main.to)
     if (entry.status === 'want' && main.to === 'in_progress') {
       setStarting(true)

@@ -5,6 +5,7 @@ import { SERIES_WORDS } from '../lib/mediaTypes'
 import { formatReleaseDate, isUpcoming } from '../lib/release'
 import type { ListEntry, ListStatus, MediaDetails, MediaType, SeriesVolume } from '../types'
 import { ClampedDescription } from './ClampedDescription'
+import { haptic } from '../lib/haptics'
 import { CoverArt } from './CoverArt'
 import { CheckIcon, PlayIcon } from './icons'
 import { Spinner } from './Spinner'
@@ -87,6 +88,7 @@ export function SeriesVolumes({ entry, onChanged }: { entry: ListEntry; onChange
   }
 
   function setStatus(volume: SeriesVolume, status: ListStatus) {
+    haptic()
     return save(
       (prev) => prev.map((v) => (v.id === volume.id ? { ...v, status } : v)),
       () => api.put(`/api/lists/${entry.id}/volumes/${volume.id}`, { status }),
@@ -94,6 +96,7 @@ export function SeriesVolumes({ entry, onChanged }: { entry: ListEntry; onChange
   }
 
   function markEarlierDone(volume: SeriesVolume) {
+    haptic()
     return save(
       (prev) => prev.map((v) => (v.position < volume.position && !isUpcoming(v) ? { ...v, status: 'done' } : v)),
       () => api.post(`/api/lists/${entry.id}/volumes/${volume.id}/done-before`, {}),

@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ComponentType, type CSSProperties } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { NotificationsProvider, useNotifications } from '../hooks/useNotifications'
+import { haptic } from '../lib/haptics'
 import type { UnreadCounts } from '../types'
 import { InProgressPanel } from './InProgressPanel'
 import { NotificationsMenu } from './NotificationsMenu'
@@ -106,7 +107,13 @@ function Shell() {
           {NAV_ITEMS.map(({ to, label, shortLabel, icon: NavIcon, end, badge }) => {
             const count = badge ? unread[badge] : 0
             return (
-              <NavLink key={to} to={to} end={end} aria-label={count ? `${label}, ${count} new` : label}>
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                aria-label={count ? `${label}, ${count} new` : label}
+                onClick={haptic}
+              >
                 <NavIcon />
                 <span className="app-nav-label">{label}</span>
                 <span className="app-nav-short-label" aria-hidden="true">

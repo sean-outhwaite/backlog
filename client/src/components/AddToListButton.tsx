@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { usePopover } from '../hooks/usePopover'
+import { haptic } from '../lib/haptics'
 import type { ListStatus } from '../types'
 import { BookmarkIcon, CheckIcon, PlayIcon, PlusIcon, TrophyIcon } from './icons'
 import { Spinner } from './Spinner'
@@ -41,6 +42,7 @@ export function AddToListButton({
   const shownStatus = typeof added === 'string' ? added : addedAs
 
   async function add(status: ListStatus) {
+    haptic()
     setOpen(false)
     setAddedAs(status)
     setAdding(true)
