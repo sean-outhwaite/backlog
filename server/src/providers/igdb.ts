@@ -8,6 +8,7 @@ import {
   type MediaDetails,
   type MediaProvider,
   type MediaSearchResult,
+  type Screenshot,
 } from './types.js'
 
 // IGDB (Twitch's games database). Every call is a POST of an Apicalypse query, authorised with a
@@ -62,7 +63,11 @@ const DETAIL_FIELDS = [
   'summary,url,genres.name,aggregated_rating',
   'involved_companies.company.name,involved_companies.developer,involved_companies.publisher',
   'age_ratings.organization.name,age_ratings.rating_category.rating',
+  'screenshots.image_id',
 ].join(',')
+
+// Enough to get a feel for a game without the details dialog turning into a gallery.
+const MAX_SCREENSHOTS = 10
 
 interface IgdbReleaseDate {
   date?: number
@@ -88,6 +93,7 @@ export interface IgdbGame {
   aggregated_rating?: number
   involved_companies?: Array<{ company: { name: string }; developer: boolean; publisher: boolean }>
   age_ratings?: Array<{ organization?: { name: string }; rating_category?: { rating: string } }>
+  screenshots?: Array<{ image_id: string }>
 }
 
 // The app token lasts about two months; it's fetched when first needed and kept per instance.
@@ -301,6 +307,15 @@ export function toSearchResult(game: IgdbGame): MediaSearchResult {
   }
 }
 
+// IGDB image sizes: t_screenshot_med is 569x320 (a thumbnail at 2x), t_1080p the full shot.
+function screenshots(game: IgdbGame): Screenshot[] {
+  const url = (size: string, id: string) => `https://images.igdb.com/igdb/image/upload/${size}/${id}.jpg`
+  return (game.screenshots ?? []).slice(0, MAX_SCREENSHOTS).map(({ image_id }) => ({
+    thumbnailUrl: url('t_screenshot_med', image_id),
+    url: url('t_1080p', image_id),
+  }))
+}
+
 // ESRB and PEGI, where rated: "M (ESRB), 16 (PEGI)".
 function ageRating(game: IgdbGame): string | null {
   const ratings = ['ESRB', 'PEGI'].flatMap((organization) => {
@@ -335,6 +350,7 @@ export function toDetails(game: IgdbGame): MediaDetails {
       ['Age rating', ageRating(game)],
     ]),
     url: game.url ?? 'https://www.igdb.com',
+    screenshots: screenshots(game),
   }
 }
 

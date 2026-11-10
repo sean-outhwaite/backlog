@@ -10,6 +10,7 @@ import { CoverArt } from './CoverArt'
 import { AddToListButton } from './AddToListButton'
 import { AddToCollectionDialog } from './AddToCollectionDialog'
 import { BookmarkIcon, MediaTypeIcon, SeriesIcon } from './icons'
+import { Screenshots } from './Screenshots'
 import { Spinner } from './Spinner'
 
 // id, source and description are there for stored titles (list entries, picks), not search results.
@@ -137,6 +138,7 @@ export function MediaDetailsDialog({
               {details.description && (
                 <ClampedDescription text={details.description} className="details-description" lines={6} />
               )}
+              {!!details.screenshots?.length && <Screenshots screenshots={details.screenshots} title={media.title} />}
               {details.series && offerSeries && media.kind !== 'series' && (
                 <div className="details-series">
                   <SeriesIcon />

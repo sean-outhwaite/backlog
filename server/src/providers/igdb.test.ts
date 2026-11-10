@@ -178,6 +178,20 @@ describe('igdbProvider.getById', () => {
         { label: 'Critic score', value: '97' },
         { label: 'Age rating', value: 'M (ESRB), 16 (PEGI)' },
       ],
+      screenshots: [],
+    })
+  })
+
+  it('builds thumbnail and full-size screenshot URLs, up to ten', async () => {
+    const shots = Array.from({ length: 12 }, (_, i) => ({ image_id: `sc${i}` }))
+    stubIgdb([[200, [{ id: 1, name: 'Game', screenshots: shots }]]])
+
+    const details = await igdbProvider.getById('1')
+
+    expect(details?.screenshots).toHaveLength(10)
+    expect(details?.screenshots?.[0]).toEqual({
+      thumbnailUrl: 'https://images.igdb.com/igdb/image/upload/t_screenshot_med/sc0.jpg',
+      url: 'https://images.igdb.com/igdb/image/upload/t_1080p/sc0.jpg',
     })
   })
 })

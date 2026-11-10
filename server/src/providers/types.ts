@@ -65,6 +65,14 @@ export interface MediaDetails extends NormalizedMediaResult {
   url: string
   // The series this title belongs to, when the provider says and it can be added whole.
   series?: SeriesRef
+  // Stills from the title itself (IGDB game screenshots), where the provider has them.
+  screenshots?: Screenshot[]
+}
+
+export interface Screenshot {
+  // A small version for the strip in the details view, and the full-size one it opens.
+  thumbnailUrl: string
+  url: string
 }
 
 export interface MediaProvider {

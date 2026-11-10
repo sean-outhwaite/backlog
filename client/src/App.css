@@ -3164,6 +3164,141 @@ html:has(.modal-dialog[open]) {
   color: var(--text-h);
 }
 
+/* A game's screenshots under its description, a page and a half in view so the next one peeks. */
+.screenshots {
+  position: relative;
+}
+
+.screenshots-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 10px) / 1.6);
+  gap: 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  border-radius: 10px;
+}
+
+.screenshots-track::-webkit-scrollbar {
+  display: none;
+}
+
+.screenshot-thumb {
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+  scroll-snap-align: start;
+  cursor: zoom-in;
+}
+
+.screenshot-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.screenshot-thumb:hover img {
+  transform: scale(1.04);
+}
+
+.screenshots .carousel-arrow {
+  top: 50%;
+  width: 34px;
+  height: 34px;
+}
+
+.screenshots-arrow--prev {
+  left: 6px;
+}
+
+.screenshots-arrow--next {
+  right: 6px;
+}
+
+/* Full size, over everything, including the details dialog it opened from. */
+.screenshot-viewer {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100svh;
+  max-height: 100svh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.screenshot-viewer[open] {
+  animation: fade-in 0.2s ease-out both;
+}
+
+.screenshot-viewer::backdrop {
+  background: color-mix(in srgb, #000 88%, transparent);
+  animation: fade-in 0.2s ease-out both;
+}
+
+.screenshot-viewer-stage {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: max(56px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(56px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+.screenshot-viewer-stage img {
+  max-width: min(100%, 1280px);
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 30px 80px -20px #000;
+}
+
+.screenshot-viewer-close {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #fff 12%, transparent);
+  color: #fff;
+}
+
+.screenshot-viewer-close:hover {
+  background: color-mix(in srgb, #fff 22%, transparent);
+  color: #fff;
+}
+
+.screenshot-viewer .carousel-arrow {
+  top: 50%;
+}
+
+.screenshot-viewer-prev {
+  left: max(16px, env(safe-area-inset-left));
+}
+
+.screenshot-viewer-next {
+  right: max(16px, env(safe-area-inset-right));
+}
+
+.screenshot-viewer-count {
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  margin: 0;
+  translate: -50% 0;
+  color: color-mix(in srgb, #fff 75%, transparent);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Series volumes ---------- */
 
 .series-volumes {
@@ -4507,9 +4642,10 @@ html:has(.modal-dialog[open]) {
   right: -14px;
 }
 
-/* Touch screens swipe instead; the peeking card shows there's more. */
+/* Touch screens swipe instead; the peeking card shows there's more. The screenshot viewer
+   shows one image at a time, so it keeps its arrows. */
 @media (hover: none) {
-  .carousel-arrow {
+  .carousel-arrow:not(.screenshot-viewer .carousel-arrow) {
     display: none;
   }
 }

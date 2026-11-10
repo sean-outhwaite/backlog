@@ -55,6 +55,12 @@ export interface MediaDetails extends MediaSearchResult {
   facts: MediaFact[]
   url: string
   series?: SeriesRef
+  screenshots?: Screenshot[]
+}
+
+export interface Screenshot {
+  thumbnailUrl: string
+  url: string
 }
 
 // How the API identifies a title to add or recommend: an existing MediaItem, or a search result.
