@@ -44,6 +44,7 @@ import { byReleaseDate, entryTab } from '../lib/release'
 import { haptic } from '../lib/haptics'
 import { playStartScene } from '../lib/startScene'
 import type { ListEntry, ListStatus, MediaType } from '../types'
+import { HapticSwitch } from '../components/HapticSwitch'
 
 // The moves offered on each tab's cards; the first is the primary action. Start is worded and drawn
 // for the title's type (moveFace).
@@ -636,6 +637,7 @@ function MainMoveButton({ entry, onMove }: { entry: ListEntry; onMove: (to: List
           )}
         </span>
       </span>
+      <HapticSwitch />
     </button>
   )
 }
@@ -652,6 +654,7 @@ function DetailsMoves({ entry, onMove }: { entry: ListEntry; onMove: (to: ListSt
           <button key={action.to} className={primary ? 'btn-primary' : undefined} onClick={() => onMove(action.to)}>
             {face.icon}
             {face.more ? `${face.label} ${face.more}` : face.label}
+            <HapticSwitch />
           </button>
         )
       })}
@@ -683,6 +686,7 @@ function MoveShortcuts({ entry, onMove }: { entry: ListEntry; onMove: (to: ListS
         title={action.label}
       >
         <ShortcutIcon />
+        <HapticSwitch />
       </button>
     )
   })

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { MoreIcon, TrashIcon } from './icons'
+import { HapticSwitch } from './HapticSwitch'
 
 // A "⋯" button on a card; removing lives behind it so it's not one stray tap away, below any
 // less-used `actions` the card has no room for. Styled by default for a media card's cover shortcuts.
@@ -71,6 +72,7 @@ export function EntryMenu({
             >
               {action.icon}
               {action.label}
+              <HapticSwitch />
             </button>
           ))}
           <button

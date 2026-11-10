@@ -4,6 +4,7 @@ import { haptic } from '../lib/haptics'
 import type { ListStatus } from '../types'
 import { BookmarkIcon, CheckIcon, PlayIcon, PlusIcon, TrophyIcon } from './icons'
 import { Spinner } from './Spinner'
+import { HapticSwitch } from './HapticSwitch'
 
 const ADDED_LABELS: Record<ListStatus, string> = { want: 'In backlog', in_progress: 'In progress', done: 'Finished' }
 const ADDED_ICONS: Record<ListStatus, ReactNode> = { want: <BookmarkIcon />, in_progress: <PlayIcon />, done: <TrophyIcon /> }
@@ -97,6 +98,7 @@ export function AddToListButton({
         aria-busy={adding}
       >
         {content}
+        <HapticSwitch />
       </button>
       {offerStatuses && (
         <button
@@ -119,10 +121,12 @@ export function AddToListButton({
           <button className="add-split-item btn-quiet" onClick={() => void add('in_progress')} autoFocus>
             <PlayIcon />
             Started
+            <HapticSwitch />
           </button>
           <button className="add-split-item btn-quiet" onClick={() => void add('done')}>
             <CheckIcon />
             Finished
+            <HapticSwitch />
           </button>
         </div>
       )}

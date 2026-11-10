@@ -7,6 +7,7 @@ import { InProgressPanel } from './InProgressPanel'
 import { NotificationsMenu } from './NotificationsMenu'
 import { BookmarkIcon, ListIcon, LogoMark, SearchIcon, SparklesIcon, UsersIcon } from './icons'
 import { UserMenu } from './UserMenu'
+import { HapticSwitch } from './HapticSwitch'
 
 // shortLabel is what the mobile bottom bar shows, where there's only room for a word. badge names
 // the unread count shown on the item.
@@ -114,6 +115,7 @@ function Shell() {
                 aria-label={count ? `${label}, ${count} new` : label}
                 onClick={haptic}
               >
+                <HapticSwitch />
                 <NavIcon />
                 <span className="app-nav-label">{label}</span>
                 <span className="app-nav-short-label" aria-hidden="true">

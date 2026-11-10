@@ -9,6 +9,7 @@ import { haptic } from '../lib/haptics'
 import { CoverArt } from './CoverArt'
 import { CheckIcon, PlayIcon } from './icons'
 import { Spinner } from './Spinner'
+import { HapticSwitch } from './HapticSwitch'
 
 const STATUSES: ListStatus[] = ['want', 'in_progress', 'done']
 
@@ -254,6 +255,7 @@ function VolumePanel({
                 onClick={() => volume.status !== status && onStatus(status)}
               >
                 {capitalize(statusLabel(type, status))}
+                {volume.status !== status && <HapticSwitch />}
               </button>
             ))}
           </div>
@@ -261,6 +263,7 @@ function VolumePanel({
         {hasEarlierUndone && (
           <button className="btn-quiet volume-panel-catch-up" onClick={onMarkEarlierDone}>
             <CheckIcon /> Mark earlier {words.parts} {words.done}
+            <HapticSwitch />
           </button>
         )}
       </div>

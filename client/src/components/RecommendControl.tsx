@@ -8,6 +8,7 @@ import { Spinner } from './Spinner'
 import { Toast } from './Toast'
 import { haptic } from '../lib/haptics'
 import type { MediaRef, Profile } from '../types'
+import { HapticSwitch } from './HapticSwitch'
 
 // Past this many friends the picker gets a search box.
 const SEARCH_THRESHOLD = 6
@@ -233,6 +234,7 @@ function RecommendDialog({
             aria-busy={status === 'sending'}
           >
             {status === 'sending' ? <Spinner /> : <SendIcon />}
+            <HapticSwitch />
             {selected.size > 1 ? `Send to ${selected.size}` : 'Send'}
           </button>
         </footer>

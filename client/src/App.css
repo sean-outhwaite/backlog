@@ -4667,3 +4667,23 @@ html:has(.modal-dialog[open]) {
     scroll-behavior: auto;
   }
 }
+
+/* An invisible native switch over a button, for iOS haptics (components/HapticSwitch.tsx). Nearly
+   rather than fully transparent, and the parent only becomes positioned if nothing else positions it. */
+:where(:has(> .haptic-switch)) {
+  position: relative;
+}
+.haptic-switch {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0.001;
+  cursor: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+:disabled > .haptic-switch {
+  display: none;
+}
