@@ -34,8 +34,8 @@ export function recommendationPush(
 
 export function releasePush(mediaItem: { id: string; title: string }): PushPayload {
   return {
-    title: `${mediaItem.title} is out`,
-    body: "It's on your backlog.",
+    title: `${mediaItem.title} is out now`,
+    body: 'Tap to see it in your backlog.',
     url: '/',
     tag: `released-${mediaItem.id}`,
   }
