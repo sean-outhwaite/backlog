@@ -880,7 +880,9 @@
     align-items: center;
     width: auto;
     height: auto;
-    padding: calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px
+    /* The status bar's inset already leaves room below the clock, so it replaces the 10px rather
+       than adding to it (like a native nav bar). */
+    padding: max(10px, env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px
       calc(16px + env(safe-area-inset-left));
     border-right: 0;
     border-bottom: 1px solid var(--border);
@@ -978,7 +980,9 @@
     left: 0;
     flex-direction: row;
     gap: 0;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    /* The home indicator's 34px inset is more than it needs: it's a 5px line about 8px up, so the
+       labels can sit 20px from the edge, about where a native tab bar puts them. */
+    padding: 6px 8px max(6px, calc(env(safe-area-inset-bottom) - 14px));
     border-top: 1px solid var(--border);
     background: color-mix(in srgb, var(--bg) 92%, transparent);
   }
