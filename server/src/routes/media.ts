@@ -22,6 +22,8 @@ const searchQuerySchema = z.object({
 
 const popularQuerySchema = z.object({
   type: z.enum(['movie', 'tv', 'book', 'game']).optional(),
+  // Without a type, each type's list is cut to a few titles (Search's preview) unless full=1 (the Trending page).
+  full: z.literal('1').optional(),
 })
 
 // Popular lists are the same for everyone and change slowly, so cache each provider's for
@@ -162,14 +164,14 @@ mediaRouter.get(
       res.status(400).json({ error: z.flattenError(parsed.error) })
       return
     }
-    const { type } = parsed.data
+    const { type, full } = parsed.data
     const types = type ? [type] : allMediaTypes
 
     const settled = await Promise.allSettled(types.map(popularFor))
     const lists: MediaSearchResult[][] = []
     settled.forEach((outcome, i) => {
       if (outcome.status === 'fulfilled') {
-        lists.push(type ? outcome.value : outcome.value.slice(0, POPULAR_PER_TYPE_WHEN_UNFILTERED))
+        lists.push(type || full ? outcome.value : outcome.value.slice(0, POPULAR_PER_TYPE_WHEN_UNFILTERED))
       } else {
         console.warn(`Popular provider for "${types[i]}" failed:`, outcome.reason)
       }

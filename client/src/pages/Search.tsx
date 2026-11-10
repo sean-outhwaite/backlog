@@ -1,39 +1,37 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { AddToListButton } from '../components/AddToListButton'
+import { useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { FriendsPopularCarousel } from '../components/FriendsPopularCarousel'
-import { SearchIcon, SeriesIcon } from '../components/icons'
-import { MediaCard } from '../components/MediaCard'
+import { SearchIcon } from '../components/icons'
 import { EmptyState, PageHeader } from '../components/PageHeader'
+import { ResultCard } from '../components/ResultCard'
 import { LoadingState } from '../components/Spinner'
 import { TypeSelect } from '../components/TypeSelect'
-import { listedStatuses, resultKey, seriesKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
+import { useListed } from '../hooks/useListed'
+import { resultKey, useFriendsPopular, usePopular } from '../hooks/usePopular'
 import { api } from '../lib/api'
-import { isUpcoming } from '../lib/release'
-import type { ListEntry, ListStatus, MediaItem, MediaSearchResult, MediaType } from '../types'
+import type { MediaSearchResult, MediaType } from '../types'
+
+// How many trending titles Search shows before "See all".
+const TRENDING_PREVIEW_COUNT = 12
 
 export function Search() {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all')
   const [results, setResults] = useState<MediaSearchResult[]>([])
   const [searchedQuery, setSearchedQuery] = useState<string | null>(null)
-  // What's on your list and with what status, by resultKey (series by seriesKey).
-  const [listed, setListed] = useState<Map<string, ListStatus>>(new Map())
+  const { listed, addResult, addMediaItem, addSeries } = useListed()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    api
-      .get<ListEntry[]>('/api/lists')
-      .then((entries) => setListed((prev) => new Map([...listedStatuses(entries), ...prev])))
-      .catch(() => {})
-  }, [])
 
   // Before the first search, show what's popular for the selected type instead of an empty page:
   // first what your friends have, then what's popular generally (minus anything already shown above).
   const friendsPopular = useFriendsPopular(typeFilter)
   const generalPopular = usePopular(typeFilter)
   const friendsKeys = new Set(friendsPopular?.map((item) => resultKey(item.mediaItem)))
-  const popular = generalPopular && generalPopular.filter((result) => !friendsKeys.has(resultKey(result)))
+  // Only a preview: the whole list is on the Trending page, linked from the heading.
+  const popular =
+    generalPopular &&
+    generalPopular.filter((result) => !friendsKeys.has(resultKey(result))).slice(0, TRENDING_PREVIEW_COUNT)
 
   // Changing the filter mid-search can leave two requests in flight; only the latest one may land.
   const latestSearch = useRef(0)
@@ -67,31 +65,6 @@ export function Search() {
   function handleTypeChange(type: MediaType | 'all') {
     setTypeFilter(type)
     void runSearch(query, type)
-  }
-
-  async function addToList(result: MediaSearchResult, status: ListStatus) {
-    await api.post('/api/lists', {
-      type: result.type,
-      externalId: result.externalId,
-      kind: result.kind,
-      status,
-    })
-    setListed((prev) => new Map(prev).set(resultKey(result), status))
-  }
-
-  async function addFriendsPick(mediaItem: MediaItem, status: ListStatus) {
-    await api.post('/api/lists', { mediaItemId: mediaItem.id, status })
-    setListed((prev) => new Map(prev).set(resultKey(mediaItem), status))
-  }
-
-  // Keyed by series rather than result, so every volume's card shows the series as added.
-  async function addSeries(
-    result: MediaSearchResult,
-    series: NonNullable<MediaSearchResult['series']>,
-    status: ListStatus,
-  ) {
-    await api.post('/api/lists', { type: result.type, externalId: series.externalId, kind: 'series', status })
-    setListed((prev) => new Map(prev).set(seriesKey(result.type, series.externalId), status))
   }
 
   return (
@@ -132,10 +105,17 @@ export function Search() {
       {!loading && searchedQuery === null && !!friendsPopular?.length && (
         <section className="popular-section">
           <h2>Popular with your friends</h2>
-          <FriendsPopularCarousel items={friendsPopular} listed={listed} onAdd={addFriendsPick} />
+          <FriendsPopularCarousel items={friendsPopular} listed={listed} onAdd={addMediaItem} />
         </section>
       )}
-      {!loading && searchedQuery === null && !!popular?.length && <h2>Trending now</h2>}
+      {!loading && searchedQuery === null && !!popular?.length && (
+        <div className="section-heading">
+          <h2>Trending now</h2>
+          <Link to={typeFilter === 'all' ? '/search/trending' : `/search/trending?type=${typeFilter}`} className="see-all-link">
+            See all
+          </Link>
+        </div>
+      )}
       {!loading && searchedQuery !== null && results.length === 0 && (
         <EmptyState icon={<SearchIcon />}>
           <p>Nothing found for “{searchedQuery}”.</p>
@@ -144,35 +124,7 @@ export function Search() {
 
       <div className={`media-grid${loading ? ' is-stale' : ''}`}>
         {(searchedQuery === null && !loading ? (popular ?? []) : results).map((result) => (
-          <MediaCard
-            key={resultKey(result)}
-            mediaItem={result}
-            stackCovers={result.covers}
-            partCount={result.volumeCount}
-            platforms={result.platforms}
-            offerSeries={!result.series}
-            recommend={{ type: result.type, externalId: result.externalId, kind: result.kind }}
-            actions={
-              <>
-                <AddToListButton
-                  added={listed.get(resultKey(result)) ?? false}
-                  onAdd={(status) => addToList(result, status)}
-                  upcoming={isUpcoming(result)}
-                  label={result.kind === 'series' ? 'Add series' : undefined}
-                />
-                {result.series && (
-                  <AddToListButton
-                    added={listed.get(seriesKey(result.type, result.series.externalId)) ?? false}
-                    onAdd={(status) => addSeries(result, result.series!, status)}
-                    label="Add series"
-                    icon={<SeriesIcon />}
-                    primary={false}
-                    title={`Add the whole ${result.series.title} series, and track it volume by volume`}
-                  />
-                )}
-              </>
-            }
-          />
+          <ResultCard key={resultKey(result)} result={result} listed={listed} onAdd={addResult} onAddSeries={addSeries} />
         ))}
       </div>
     </div>

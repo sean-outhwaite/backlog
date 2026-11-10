@@ -2596,8 +2596,32 @@ section + section {
 }
 
 .popular-section + .popular-section,
-.popular-section + h2 {
+.popular-section + h2,
+.popular-section + .section-heading {
   margin-top: 32px;
+}
+
+/* A section's h2 with a link to more of it at the far end. */
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-heading h2 {
+  margin: 0;
+}
+
+.see-all-link {
+  flex-shrink: 0;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.see-all-link:hover {
+  text-decoration: underline;
 }
 
 .recommendation-message {

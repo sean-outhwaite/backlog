@@ -15,6 +15,7 @@ import { Privacy } from './pages/Privacy'
 import { Recommendations } from './pages/Recommendations'
 import { Search } from './pages/Search'
 import { SignIn } from './pages/SignIn'
+import { Trending } from './pages/Trending'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/search/trending" element={<Trending />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/friends/:id" element={<FriendList />} />
           <Route path="/friends/:id/lists" element={<FriendCollections />} />

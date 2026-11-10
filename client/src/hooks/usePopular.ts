@@ -4,14 +4,15 @@ import { isRetiredSource } from '../lib/mediaTypes'
 import type { FriendsPopularItem, ListEntry, MediaItem, MediaSearchResult, MediaType } from '../types'
 
 // What's popular right now, for filling pages that would otherwise be empty. null while
-// loading (or while disabled); an empty array if nothing could be fetched.
-export function usePopular(type: MediaType | 'all', enabled = true): MediaSearchResult[] | null {
+// loading (or while disabled); an empty array if nothing could be fetched. All types gets a few of
+// each type mixed together, or with full every type's whole list mixed together.
+export function usePopular(type: MediaType | 'all', enabled = true, full = false): MediaSearchResult[] | null {
   const [popular, setPopular] = useState<MediaSearchResult[] | null>(null)
 
   useEffect(() => {
     if (!enabled) return
     let cancelled = false
-    const params = type === 'all' ? '' : `?type=${type}`
+    const params = type === 'all' ? (full ? '?full=1' : '') : `?type=${type}`
     api
       .get<MediaSearchResult[]>(`/api/media/popular${params}`)
       .then((found) => {
@@ -23,7 +24,7 @@ export function usePopular(type: MediaType | 'all', enabled = true): MediaSearch
     return () => {
       cancelled = true
     }
-  }, [type, enabled])
+  }, [type, enabled, full])
 
   return enabled ? popular : null
 }
