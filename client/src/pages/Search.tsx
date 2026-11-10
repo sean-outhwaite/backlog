@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { FriendsPopularCarousel } from '../components/FriendsPopularCarousel'
-import { SearchIcon } from '../components/icons'
+import { ChevronRightIcon, SearchIcon } from '../components/icons'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { ResultCard } from '../components/ResultCard'
 import { LoadingState } from '../components/Spinner'
@@ -113,6 +113,7 @@ export function Search() {
           <h2>Trending now</h2>
           <Link to={typeFilter === 'all' ? '/search/trending' : `/search/trending?type=${typeFilter}`} className="see-all-link">
             See all
+            <ChevronRightIcon />
           </Link>
         </div>
       )}

@@ -2617,13 +2617,24 @@ section + section {
 }
 
 .see-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
   font-weight: 500;
   text-decoration: none;
 }
 
+.see-all-link .icon {
+  transition: transform 0.15s;
+}
+
 .see-all-link:hover {
   text-decoration: underline;
+}
+
+.see-all-link:hover .icon {
+  transform: translateX(2px);
 }
 
 .recommendation-message {
