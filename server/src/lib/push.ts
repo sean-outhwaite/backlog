@@ -14,6 +14,12 @@ export interface PushPayload {
   tag: string
 }
 
+// What a device is actually sent: the message's payload plus the recipient's unread count, which
+// the service worker puts on the app icon (the Badging API) while the app is closed.
+export interface PushDelivery extends PushPayload {
+  badge?: number
+}
+
 export interface PushMessage {
   userIds: string[]
   payload: PushPayload
@@ -87,11 +93,25 @@ export async function sendPush(messages: PushMessage[], deadlineMs = 10_000): Pr
 
   const work = (async () => {
     const userIds = [...new Set(messages.flatMap((message) => message.userIds))]
-    const subscriptions = await prisma.pushSubscription.findMany({ where: { userId: { in: userIds } } })
+    // The notification rows are inserted before this runs, so these counts include them. A failed
+    // count only loses the badge, never the push.
+    const [subscriptions, unread] = await Promise.all([
+      prisma.pushSubscription.findMany({ where: { userId: { in: userIds } } }),
+      prisma.notification
+        .groupBy({ by: ['userId'], where: { userId: { in: userIds }, readAt: null }, _count: true })
+        .then((groups) => new Map(groups.map((group) => [group.userId, group._count])))
+        .catch((error: unknown) => {
+          console.warn('Counting unread notifications for push failed:', error)
+          return null
+        }),
+    ])
     const deliveries = messages.flatMap((message) =>
       subscriptions
         .filter((subscription) => message.userIds.includes(subscription.userId))
-        .map((subscription) => ({ subscription, payload: message.payload })),
+        .map((subscription): { subscription: typeof subscription; payload: PushDelivery } => ({
+          subscription,
+          payload: unread ? { ...message.payload, badge: unread.get(subscription.userId) ?? 0 } : message.payload,
+        })),
     )
 
     const results = await Promise.allSettled(

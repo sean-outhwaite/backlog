@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { api } from '../lib/api'
+import { setAppBadge } from '../lib/appBadge'
 import { disablePush } from '../lib/push'
 import type { Profile } from '../types'
 
@@ -89,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // signing out: failures are ignored, and it gives up after a few seconds.
       await Promise.race([disablePush().catch(() => {}), new Promise((resolve) => setTimeout(resolve, 3000))])
       await supabase.auth.signOut()
+      // The next person on this device shouldn't see this account's unread count.
+      setAppBadge(0)
     },
   }
 

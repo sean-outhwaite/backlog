@@ -7,6 +7,7 @@ const env = vi.hoisted(() => ({
 }))
 const prisma = vi.hoisted(() => ({
   pushSubscription: { findMany: vi.fn(), deleteMany: vi.fn() },
+  notification: { groupBy: vi.fn() },
 }))
 const sendNotification = vi.hoisted(() => vi.fn())
 
@@ -26,6 +27,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   env.vapid = { publicKey: 'pub', privateKey: 'priv', subject: 'mailto:test@example.test' }
   prisma.pushSubscription.deleteMany.mockResolvedValue({ count: 0 })
+  prisma.notification.groupBy.mockResolvedValue([])
   sendNotification.mockResolvedValue({ statusCode: 201 })
 })
 
@@ -72,7 +74,7 @@ describe('payloads', () => {
   })
 
   it('tags releases by title so a repeat replaces rather than stacks', () => {
-    expect(payload).toMatchObject({ title: 'Dune is out', url: '/', tag: 'released-m1' })
+    expect(payload).toMatchObject({ title: 'Dune is out now', url: '/', tag: 'released-m1' })
   })
 })
 
@@ -110,6 +112,35 @@ describe('sendPush', () => {
       ['https://fcm.googleapis.com/3', 'released-m2'],
     ])
     expect(sendNotification.mock.calls[0][2]).toMatchObject({ vapidDetails: env.vapid })
+  })
+
+  it('adds each recipient’s unread count as the badge', async () => {
+    prisma.pushSubscription.findMany.mockResolvedValue([
+      subscription('u1', 'https://fcm.googleapis.com/1'),
+      subscription('u2', 'https://fcm.googleapis.com/2'),
+    ])
+    prisma.notification.groupBy.mockResolvedValue([{ userId: 'u1', _count: 3 }])
+
+    await sendPush([{ userIds: ['u1', 'u2'], payload }])
+
+    expect(prisma.notification.groupBy).toHaveBeenCalledWith({
+      by: ['userId'],
+      where: { userId: { in: ['u1', 'u2'] }, readAt: null },
+      _count: true,
+    })
+    const badges = sendNotification.mock.calls.map(([, body]) => JSON.parse(body).badge)
+    expect(badges).toEqual([3, 0])
+  })
+
+  it('still sends, without a badge, when counting fails', async () => {
+    prisma.pushSubscription.findMany.mockResolvedValue([subscription('u1', 'https://fcm.googleapis.com/1')])
+    prisma.notification.groupBy.mockRejectedValue(new Error('timeout'))
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const summary = await sendPush([{ userIds: ['u1'], payload }])
+
+    expect(summary.sent).toBe(1)
+    expect(JSON.parse(sendNotification.mock.calls[0][1])).not.toHaveProperty('badge')
   })
 
   it('deletes subscriptions the push service says are gone, and keeps the rest', async () => {

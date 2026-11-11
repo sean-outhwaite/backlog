@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import { setAppBadge } from '../lib/appBadge'
 import { resyncPush } from '../lib/push'
 import type { AppNotification, NotificationType, UnreadCounts } from '../types'
 
@@ -33,6 +34,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(refresh, [pathname, refresh])
+
+  // Mirror the total onto the app icon. Starts at NONE, so it briefly clears on load until the
+  // first count arrives, which is right anyway once the app is open.
+  useEffect(() => setAppBadge(unread.total), [unread.total])
 
   // Push (see lib/push.ts): keep this device's subscription known to the server, and listen to
   // the service worker, which says when a push arrives (refresh now) or a notification was
