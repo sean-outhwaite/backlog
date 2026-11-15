@@ -4,6 +4,7 @@ import { isUniqueConstraintError, prisma } from './prisma.js'
 import { providerFor, providersByType, sourceByType } from '../providers/index.js'
 import type { SeriesDetails, SeriesVolumeResult } from '../providers/types.js'
 import { releaseColumns } from './releases.js'
+import { storeShow } from './tvSeasons.js'
 
 // Provider ids (TMDB/IGDB numbers, Open Library "OL123W") are interpolated into provider URL
 // paths, so only allow characters that can't change the path.
@@ -41,7 +42,7 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
   if (!details) return null
 
   try {
-    return await prisma.mediaItem.create({
+    const item = await prisma.mediaItem.create({
       data: {
         source,
         type,
@@ -53,6 +54,8 @@ export async function resolveMediaItem(ref: MediaRef): Promise<MediaItem | null>
         ...releaseColumns(details),
       },
     })
+    // A TV show's seasons come with its details, so they're stored now rather than on first open.
+    return details.tv ? (await storeShow(item, details.tv)).show : item
   } catch (error) {
     // Someone else added the same new title between our lookup and insert.
     if (!isUniqueConstraintError(error)) throw error

@@ -33,6 +33,15 @@ enum ListStatus {
   done
 }
 
+// How a TV show on someone's list is tracked: as one title, season by season, or episode by
+// episode. Null for every other type. Every mode is told when a new season comes out; only season
+// and episode tracking reopen a finished show for it.
+enum TrackingMode {
+  show
+  season
+  episode
+}
+
 model Profile {
   id        String   @id
   username  String?  @unique
@@ -70,9 +79,15 @@ model MediaItem {
   releasePending   Boolean     @default(false)
   releaseCheckedAt DateTime?
   createdAt        DateTime    @default(now())
-  // Series only: when its volumes were last re-fetched from the provider (see refreshSeries).
-  // Null means never, so series added before this column existed are refreshed on next use.
+  // Series: when its volumes were last re-fetched from the provider (see refreshSeries). TV shows:
+  // when its seasons were (see refreshShow). Null means never.
   refreshedAt      DateTime?
+  // TV shows only, from their last refresh: the latest episode that has aired (so the airing
+  // season's episodes so far are known without fetching its episode list), and whether the show
+  // has ended or been cancelled, after which it's no longer checked for new seasons.
+  lastAiredSeason  Int?
+  lastAiredEpisode Int?
+  showEnded        Boolean     @default(false)
 
   listEntries     ListEntry[]
   recommendations Recommendation[]
@@ -81,6 +96,7 @@ model MediaItem {
   volumeProgress  VolumeProgress[]
   notifications   Notification[]
   collectionItems CollectionItem[]
+  seasons         TvSeason[]
 
   // kind is in the key because a provider's series and title ids are separate namespaces.
   @@unique([source, type, kind, externalId])
@@ -96,6 +112,39 @@ model SeriesVolume {
   volume MediaItem @relation("VolumeSeries", fields: [volumeId], references: [id])
 
   @@id([seriesId, volumeId])
+}
+
+// One season of a TV show (Specials, season 0, are left out), as TMDB last listed it. Stored with
+// the show and refreshed with it (see refreshShow); episodes aren't stored, only fetched to show.
+model TvSeason {
+  showId        String
+  number        Int
+  name          String
+  episodeCount  Int
+  airDate       DateTime? @db.Date
+  coverImageUrl String?
+  // Seen as not out yet (no date, or a future one) at the last refresh. Its premiere is only
+  // announced if it was, or if the show had been refreshed before it first appeared.
+  upcoming      Boolean   @default(false)
+
+  show MediaItem @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@id([showId, number])
+}
+
+// One user's progress through one season of a TV show on their list. No row means "want".
+// In episode tracking, episodes holds the numbers watched and status follows from them; a season
+// marked done without them (season tracking, or "done") counts as every episode watched.
+model SeasonProgress {
+  entryId     String
+  season      Int
+  status      ListStatus
+  episodes    Int[]      @default([])
+  completedAt DateTime?
+
+  entry ListEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, season])
 }
 
 // One user's progress through one volume of a series on their list. No row means "want".
@@ -125,10 +174,13 @@ model ListEntry {
   // Where the entry sits in the user's list, ascending. Reordering sets it to the midpoint of its new
   // neighbours; new entries go on top (see newEntryPosition in routes/lists).
   position    Float
+  // TV shows only (see TrackingMode).
+  tracking    TrackingMode?
 
   user           Profile          @relation(fields: [userId], references: [id])
   mediaItem      MediaItem        @relation(fields: [mediaItemId], references: [id])
   volumeProgress VolumeProgress[]
+  seasonProgress SeasonProgress[]
 
   @@unique([userId, mediaItemId])
   @@index([userId, position])
@@ -173,6 +225,7 @@ model Recommendation {
 enum NotificationType {
   recommendation
   released
+  new_season
 }
 
 // Something to tell a user about, shown in the bell menu. Points at who did it and what it's about
@@ -184,6 +237,8 @@ model Notification {
   type        NotificationType
   actorId     String?
   mediaItemId String?
+  // new_season only: which season of the show came out.
+  season      Int?
   createdAt   DateTime         @default(now())
   readAt      DateTime?
 

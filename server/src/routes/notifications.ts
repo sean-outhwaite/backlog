@@ -52,7 +52,8 @@ notificationsRouter.get(
     res.json({
       total: groups.reduce((sum, group) => sum + group._count, 0),
       recommendation: byType.recommendation ?? 0,
-      released: byType.released ?? 0,
+      // A show's new season is a release too, for the counts.
+      released: (byType.released ?? 0) + (byType.new_season ?? 0),
     })
   }),
 )
@@ -76,7 +77,8 @@ notificationsRouter.post(
       where: {
         userId,
         readAt: null,
-        ...(parsed.data.type && { type: parsed.data.type }),
+        ...(parsed.data.type === 'recommendation' && { type: 'recommendation' }),
+        ...(parsed.data.type === 'released' && { type: { in: ['released', 'new_season'] } }),
         ...(parsed.data.ids && { id: { in: parsed.data.ids } }),
       },
       data: { readAt: new Date() },

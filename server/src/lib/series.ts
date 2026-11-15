@@ -1,6 +1,7 @@
 import type { ListEntry, ListStatus, MediaItem } from '@prisma/client'
 import { prisma } from './prisma.js'
 import { isOut } from './releases.js'
+import { showProgress, type ShowProgress } from './tvProgress.js'
 
 export interface SeriesProgress {
   done: number
@@ -12,29 +13,53 @@ const STACKED_COVERS = 3
 
 type EntryWithMedia = ListEntry & { mediaItem: MediaItem }
 
-// Adds `progress` (volumes done / total) and `covers` (for the card's stack) to series entries.
-// Only volumes that are out count: an announced one isn't something you can have finished yet.
-// Two queries, run in parallel, and none at all when there are no series in the list.
+// Whether an entry is a TV show tracked by season or episode, so has progress of its own.
+export const tracksSeasons = (entry: EntryWithMedia) =>
+  entry.mediaItem.type === 'tv' &&
+  entry.mediaItem.kind === 'title' &&
+  (entry.tracking === 'season' || entry.tracking === 'episode')
+
+// Adds `progress` to series entries (volumes done / total, and `covers` for the card's stack) and
+// to TV shows tracked by season or episode (see showProgress). Only volumes and seasons that are
+// out count: an announced one isn't something you can have finished yet. Up to four queries, run
+// in parallel, and none at all when there are no such entries in the list.
 export async function withProgress<T extends EntryWithMedia>(
   entries: T[],
-): Promise<Array<T & { progress?: SeriesProgress; covers?: string[] }>> {
+): Promise<Array<T & { progress?: SeriesProgress | ShowProgress; covers?: string[] }>> {
   const seriesEntries = entries.filter((entry) => entry.mediaItem.kind === 'series')
-  if (seriesEntries.length === 0) return entries
+  const showEntries = entries.filter(tracksSeasons)
+  if (seriesEntries.length === 0 && showEntries.length === 0) return entries
 
-  const [volumes, progressRows] = await Promise.all([
-    prisma.seriesVolume.findMany({
-      where: { seriesId: { in: seriesEntries.map((entry) => entry.mediaItemId) } },
-      orderBy: { position: 'asc' },
-      select: {
-        seriesId: true,
-        volumeId: true,
-        volume: { select: { coverImageUrl: true, releasePending: true, releaseDate: true, releaseCheckedAt: true } },
-      },
-    }),
-    prisma.volumeProgress.findMany({
-      where: { entryId: { in: seriesEntries.map((entry) => entry.id) }, status: 'done' },
-      select: { entryId: true, volumeId: true },
-    }),
+  const [volumes, progressRows, seasons, seasonRows] = await Promise.all([
+    seriesEntries.length === 0
+      ? []
+      : prisma.seriesVolume.findMany({
+          where: { seriesId: { in: seriesEntries.map((entry) => entry.mediaItemId) } },
+          orderBy: { position: 'asc' },
+          select: {
+            seriesId: true,
+            volumeId: true,
+            volume: { select: { coverImageUrl: true, releasePending: true, releaseDate: true, releaseCheckedAt: true } },
+          },
+        }),
+    seriesEntries.length === 0
+      ? []
+      : prisma.volumeProgress.findMany({
+          where: { entryId: { in: seriesEntries.map((entry) => entry.id) }, status: 'done' },
+          select: { entryId: true, volumeId: true },
+        }),
+    showEntries.length === 0
+      ? []
+      : prisma.tvSeason.findMany({
+          where: { showId: { in: showEntries.map((entry) => entry.mediaItemId) } },
+          select: { showId: true, number: true, episodeCount: true, airDate: true },
+        }),
+    showEntries.length === 0
+      ? []
+      : prisma.seasonProgress.findMany({
+          where: { entryId: { in: showEntries.map((entry) => entry.id) } },
+          select: { entryId: true, season: true, status: true, episodes: true },
+        }),
   ])
 
   const volumesBySeries = new Map<string, typeof volumes>()
@@ -46,8 +71,21 @@ export async function withProgress<T extends EntryWithMedia>(
   for (const { entryId, volumeId } of progressRows) {
     doneByEntry.set(entryId, (doneByEntry.get(entryId) ?? new Set()).add(volumeId))
   }
+  const seasonsByShow = groupBy(seasons, (season) => season.showId)
+  const seasonRowsByEntry = groupBy(seasonRows, (row) => row.entryId)
 
   return entries.map((entry) => {
+    if (tracksSeasons(entry)) {
+      const showSeasons = seasonsByShow.get(entry.mediaItemId) ?? []
+      // A finished show has watched every season that's out, whether or not it has rows for them
+      // yet (shows finished before seasons were tracked get theirs when opened).
+      const rows =
+        entry.status === 'done'
+          ? showSeasons.map((season) => ({ season: season.number, status: 'done' as const, episodes: [] }))
+          : (seasonRowsByEntry.get(entry.id) ?? [])
+      const progress = showProgress(entry.tracking, showSeasons, entry.mediaItem, rows)
+      return progress ? { ...entry, progress } : entry
+    }
     if (entry.mediaItem.kind !== 'series') return entry
     const seriesVolumes = volumesBySeries.get(entry.mediaItemId) ?? []
     const doneAny = doneByEntry.get(entry.id) ?? new Set<string>()
@@ -58,6 +96,12 @@ export async function withProgress<T extends EntryWithMedia>(
       covers: stackCovers(seriesVolumes, done),
     }
   })
+}
+
+function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>()
+  for (const item of items) groups.set(key(item), [...(groups.get(key(item)) ?? []), item])
+  return groups
 }
 
 // The card's stack starts where the reader is up to: the first unread volume in front, the

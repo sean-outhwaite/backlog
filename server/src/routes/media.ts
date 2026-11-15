@@ -241,6 +241,31 @@ mediaRouter.get(
   }),
 )
 
+const episodesParamsSchema = z.object({
+  externalId: externalIdSchema,
+  season: z.coerce.number().int().min(0).max(1000),
+})
+
+// One season of a TV show's episodes, fetched live from TMDB for episode tracking; never stored.
+mediaRouter.get(
+  '/tv/:externalId/seasons/:season',
+  asyncHandler(async (req, res) => {
+    const parsed = episodesParamsSchema.safeParse(req.params)
+    if (!parsed.success) {
+      res.status(400).json({ error: z.flattenError(parsed.error) })
+      return
+    }
+    const episodes = await providersByType.tv.getSeasonEpisodes?.(parsed.data.externalId, parsed.data.season)
+    if (!episodes) {
+      res.status(404).json({ error: 'Not found' })
+      return
+    }
+    // Short, since an airing season's next episode gets its details nearer the date.
+    res.set('Cache-Control', 'private, max-age=600')
+    res.json(episodes)
+  }),
+)
+
 mediaRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {

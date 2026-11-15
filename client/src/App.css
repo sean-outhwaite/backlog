@@ -4691,3 +4691,127 @@ html:has(.modal-dialog[open]) {
 :disabled > .haptic-switch {
   display: none;
 }
+
+/* ---------- TV seasons and episodes ---------- */
+
+.tv-tracking {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.tv-tracking > span {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.episode-list {
+  display: flex;
+  flex-direction: column;
+  /* The panel's info column lines its children up at the start, which would size this to its longest name. */
+  align-self: stretch;
+  min-width: 0;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.episode-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.episode-toggle {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-h);
+  font-size: 14px;
+  text-align: left;
+}
+
+.episode-toggle:hover:not(:disabled) {
+  background: var(--accent-bg);
+}
+
+.episode-toggle:disabled {
+  opacity: 0.5;
+}
+
+.episode-check {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  color: var(--accent);
+}
+
+.episode-check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.is-watched .episode-check {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.is-watched .episode-name {
+  color: var(--text);
+}
+
+.episode-number {
+  flex: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Up to two lines, since "Up to here" leaves a phone's rows little room. */
+.episode-name {
+  display: -webkit-box;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.episode-date {
+  flex: none;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.episode-up-to {
+  position: relative;
+  flex: none;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+/* With a mouse, "Up to here" waits for the row to be hovered, rather than lining every row. */
+@media (hover: hover) {
+  .episode-up-to {
+    opacity: 0;
+  }
+
+  .episode-list li:hover .episode-up-to,
+  .episode-up-to:focus-visible {
+    opacity: 1;
+  }
+}

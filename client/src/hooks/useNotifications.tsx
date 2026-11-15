@@ -12,7 +12,7 @@ const NONE: UnreadCounts = { total: 0, recommendation: 0, released: 0 }
 
 interface NotificationsContextValue {
   unread: UnreadCounts
-  markRead: (type?: NotificationType) => Promise<void>
+  markRead: (type?: Exclude<NotificationType, 'new_season'>) => Promise<void>
   markSeen: (notifications: AppNotification[]) => Promise<void>
 }
 
@@ -64,7 +64,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [refresh])
 
   const markRead = useCallback(
-    async (type?: NotificationType) => {
+    async (type?: Exclude<NotificationType, 'new_season'>) => {
       // Optimistic: the badge clears straight away.
       setUnread((current) => (type ? { ...current, [type]: 0, total: current.total - current[type] } : NONE))
       await api.post('/api/notifications/read', type ? { type } : undefined)
@@ -83,7 +83,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       setUnread((current) => ({
         total: Math.max(0, current.total - seen.length),
         recommendation: Math.max(0, current.recommendation - count('recommendation')),
-        released: Math.max(0, current.released - count('released')),
+        // New seasons are counted as releases (see GET /api/notifications/unread).
+        released: Math.max(0, current.released - count('released') - count('new_season')),
       }))
       await api.post('/api/notifications/read', { ids: seen.map((notification) => notification.id) })
       refresh()

@@ -83,10 +83,53 @@ export interface ListEntry {
   // Ascending order of the user's list.
   position: number
   mediaItem: MediaItem
-  // Series entries only: how many of the series' volumes are done.
-  progress?: { done: number; total: number }
+  // TV shows only: how it's tracked (see TvSeasons). Null for every other type.
+  tracking?: TrackingMode | null
+  // Series entries: how many of the series' volumes are done. TV shows tracked by season or episode:
+  // seasons or aired episodes watched, and what's next.
+  progress?: EntryProgress
   // Series entries only: the first few volumes' covers, stacked up on the card.
   covers?: string[]
+}
+
+export type TrackingMode = 'show' | 'season' | 'episode'
+
+export interface EntryProgress {
+  done: number
+  total: number
+  unit?: 'season' | 'episode'
+  // Where the user is up to; null once caught up.
+  next?: { season: number; episode?: number } | null
+}
+
+// One season of a TV show entry, with the user's progress through it.
+export interface TvSeason {
+  number: number
+  name: string
+  episodeCount: number
+  airDate: string | null
+  coverImageUrl: string | null
+  // Premiered; and how many of its episodes have aired so far.
+  out: boolean
+  airedEpisodes: number
+  status: ListStatus
+  // Episode numbers watched, tracking by episode. A done season counts as all of them.
+  episodes: number[]
+}
+
+export interface TvSeasons {
+  tracking: TrackingMode | null
+  seasons: TvSeason[]
+}
+
+// One episode of a season, fetched live from TMDB.
+export interface Episode {
+  number: number
+  name: string
+  overview: string | null
+  airDate: string | null
+  runtime: number | null
+  stillUrl: string | null
 }
 
 // One volume of a series entry, with the user's status for it.
@@ -128,7 +171,7 @@ export interface Recommendation {
   mediaItem: MediaItem
 }
 
-export type NotificationType = 'recommendation' | 'released'
+export type NotificationType = 'recommendation' | 'released' | 'new_season'
 
 // Who did it (a recommendation's sender) and what it's about; either can be gone by the time it's read.
 export interface AppNotification {
@@ -138,6 +181,8 @@ export interface AppNotification {
   readAt: string | null
   actor: Pick<Profile, 'id' | 'username' | 'avatarUrl'> | null
   mediaItem: MediaItem | null
+  // new_season only.
+  season: number | null
 }
 
 // A page of GET /api/notifications. nextCursor is passed back as ?cursor= for the next one.

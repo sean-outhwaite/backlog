@@ -33,6 +33,7 @@ import { EntryMenu } from '../components/EntryMenu'
 import { EmptyState, PageHeader } from '../components/PageHeader'
 import { RecommendControl } from '../components/RecommendControl'
 import { SeriesVolumes } from '../components/SeriesVolumes'
+import { TvSeasons } from '../components/TvSeasons'
 import { StatusTabs } from '../components/StatusTabs'
 import { LoadingState } from '../components/Spinner'
 import { Toast } from '../components/Toast'
@@ -324,6 +325,9 @@ export function Dashboard() {
                       onSaved={(updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))}
                     />
                     {entry.mediaItem.kind === 'series' && <SeriesVolumes entry={entry} onChanged={load} />}
+                    {entry.mediaItem.type === 'tv' && entry.mediaItem.kind === 'title' && (
+                      <TvSeasons entry={entry} onChanged={load} />
+                    )}
                   </>
                 }
                 // Finished titles have Recommend as their main button instead.

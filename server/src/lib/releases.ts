@@ -3,6 +3,7 @@ import { prisma } from './prisma.js'
 import { activeSources, providerFor } from '../providers/index.js'
 import { releasePush, sendPush, type PushMessage } from './push.js'
 import type { NormalizedMediaResult } from '../providers/types.js'
+import { refreshShow, SHOW_REFRESH_MS } from './tvSeasons.js'
 
 // How many titles one run re-checks, and how long it may take: the cron function has a minute, and
 // Open Library allows a few requests a second. Pending titles are checked oldest-checked first,
@@ -43,43 +44,70 @@ export interface ReleaseCheckSummary {
   checked: number
   released: string[]
   failed: number
+  // TV shows whose seasons were refreshed, looking for new ones.
+  shows: number
 }
 
 // The daily job: re-fetches tracked titles that weren't out yet, updates their dates (they move),
 // and for each that's now out, tells everyone tracking it, directly or through a series. A title
 // is only announced if an earlier check saw it as upcoming, so the backfill (and anything already
-// out by the time it was first checked) stays quiet.
+// out by the time it was first checked) stays quiet. Then, in the same time budget, it refreshes
+// tracked TV shows that are still running and not refreshed since the last run, which announces
+// any new season (see refreshShow).
 export async function checkReleases(): Promise<ReleaseCheckSummary> {
   const startedAt = Date.now()
-  const candidates = await prisma.mediaItem.findMany({
-    where: {
-      kind: 'title',
-      releasePending: true,
-      // Rows from a retired source can't be checked; filtered here rather than skipped, so
-      // they don't sit at the front of the oldest-checked-first order taking the batch.
-      source: { in: activeSources },
-      OR: [{ listEntries: { some: {} } }, { inSeries: { some: { series: { listEntries: { some: {} } } } } }],
-    },
-    orderBy: { releaseCheckedAt: { sort: 'asc', nulls: 'first' } },
-    take: BATCH_SIZE,
-  })
+  const [candidates, shows] = await Promise.all([
+    prisma.mediaItem.findMany({
+      where: {
+        kind: 'title',
+        releasePending: true,
+        // Rows from a retired source can't be checked; filtered here rather than skipped, so
+        // they don't sit at the front of the oldest-checked-first order taking the batch.
+        source: { in: activeSources },
+        OR: [{ listEntries: { some: {} } }, { inSeries: { some: { series: { listEntries: { some: {} } } } } }],
+      },
+      orderBy: { releaseCheckedAt: { sort: 'asc', nulls: 'first' } },
+      take: BATCH_SIZE,
+    }),
+    prisma.mediaItem.findMany({
+      where: {
+        type: 'tv',
+        kind: 'title',
+        showEnded: false,
+        source: { in: activeSources },
+        listEntries: { some: {} },
+        OR: [{ refreshedAt: null }, { refreshedAt: { lt: new Date(Date.now() - SHOW_REFRESH_MS) } }],
+      },
+      orderBy: { refreshedAt: { sort: 'asc', nulls: 'first' } },
+      take: BATCH_SIZE,
+    }),
+  ])
 
-  const summary: ReleaseCheckSummary = { checked: 0, released: [], failed: 0 }
+  const summary: ReleaseCheckSummary = { checked: 0, released: [], failed: 0, shows: 0 }
   const pushes: PushMessage[] = []
-  const queue = [...candidates]
+  const queue: Array<() => Promise<void>> = [
+    ...candidates.map((item) => async () => {
+      const announced = await checkOne(item)
+      if (announced) {
+        summary.released.push(item.title)
+        pushes.push(announced)
+      }
+      summary.checked++
+    }),
+    ...shows.map((show) => async () => {
+      const refreshed = await refreshShow(show)
+      pushes.push(...refreshed.pushes)
+      summary.shows++
+    }),
+  ]
   async function worker() {
-    for (let item = queue.shift(); item; item = queue.shift()) {
+    for (let task = queue.shift(); task; task = queue.shift()) {
       if (Date.now() - startedAt > TIME_BUDGET_MS) return
       try {
-        const announced = await checkOne(item)
-        if (announced) {
-          summary.released.push(item.title)
-          pushes.push(announced)
-        }
-        summary.checked++
+        await task()
       } catch (error) {
         summary.failed++
-        console.warn(`Release check for ${item.id} failed:`, error)
+        console.warn('Release check failed:', error)
       }
     }
   }

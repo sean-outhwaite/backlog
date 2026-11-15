@@ -26,7 +26,15 @@ export function NotificationItem({ notification, onFollow }: { notification: App
     <Link to="/" className={className} onClick={onFollow}>
       <span className="notification-cover">{mediaItem && <CoverArt media={mediaItem} />}</span>
       <span className="notification-text">
-        <strong>{title}</strong> is out now
+        {type === 'new_season' && notification.season ? (
+          <>
+            Season {notification.season} of <strong>{title}</strong> is out now
+          </>
+        ) : (
+          <>
+            <strong>{title}</strong> is out now
+          </>
+        )}
         <time dateTime={notification.createdAt}>{timeAgo(notification.createdAt)}</time>
       </span>
     </Link>

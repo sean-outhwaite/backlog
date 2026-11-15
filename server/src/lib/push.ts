@@ -47,6 +47,15 @@ export function releasePush(mediaItem: { id: string; title: string }): PushPaylo
   }
 }
 
+export function seasonPush(show: { id: string; title: string }, season: number): PushPayload {
+  return {
+    title: `Season ${season} of ${show.title} is out now`,
+    body: 'Tap to see it in your backlog.',
+    url: '/',
+    tag: `season-${show.id}-${season}`,
+  }
+}
+
 // The server POSTs to whatever endpoint a browser hands it, so only accept the real push services
 // rather than letting any signed-in user point our server at an arbitrary URL.
 const PUSH_SERVICE_HOSTS = [

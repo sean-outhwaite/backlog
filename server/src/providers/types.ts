@@ -67,6 +67,35 @@ export interface MediaDetails extends NormalizedMediaResult {
   series?: SeriesRef
   // Stills from the title itself (IGDB game screenshots), where the provider has them.
   screenshots?: Screenshot[]
+  // TV shows only: its seasons and how far it has aired (see refreshShow).
+  tv?: TvShowData
+}
+
+export interface TvShowData {
+  // Specials (season 0) are left out.
+  seasons: TvSeasonResult[]
+  // The latest episode that has aired, if any has.
+  lastAired: { season: number; episode: number } | null
+  // Ended or cancelled: no more seasons are coming.
+  ended: boolean
+}
+
+export interface TvSeasonResult {
+  number: number
+  name: string
+  episodeCount: number
+  // YYYY-MM-DD, when the season has a full premiere date.
+  airDate: string | null
+  coverImageUrl: string | null
+}
+
+export interface EpisodeResult {
+  number: number
+  name: string
+  overview: string | null
+  airDate: string | null
+  runtime: number | null
+  stillUrl: string | null
 }
 
 export interface Screenshot {
@@ -88,6 +117,8 @@ export interface MediaProvider {
   // Ids the provider doesn't know map to []; ids whose lookup failed are left out, so a failure
   // is never cached as "nothing similar". Rejects only if every lookup failed.
   similar?(externalIds: string[]): Promise<Map<string, MediaSearchResult[]>>
+  // TV only: one season's episodes, in order, or null if the show or season doesn't exist.
+  getSeasonEpisodes?(externalId: string, season: number): Promise<EpisodeResult[] | null>
 }
 
 const STACKED_COVERS = 3

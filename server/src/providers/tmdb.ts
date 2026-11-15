@@ -11,10 +11,13 @@ import {
   type MediaSearchResult,
   type SeriesDetails,
   type SeriesVolumeResult,
+  type EpisodeResult,
+  type TvShowData,
 } from './types.js'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w342'
+const TMDB_STILL_BASE = 'https://image.tmdb.org/t/p/w300'
 
 interface TmdbMovieResult {
   id: number
@@ -66,6 +69,27 @@ interface TmdbTvDetail extends TmdbTvResult {
   vote_average: number
   // The whole run's cast; plain `credits` only lists the latest season's.
   aggregate_credits?: TmdbCredits
+  seasons?: TmdbSeason[]
+  last_episode_to_air?: { season_number: number; episode_number: number } | null
+}
+
+interface TmdbSeason {
+  season_number: number
+  name: string
+  episode_count: number
+  air_date: string | null
+  poster_path: string | null
+}
+
+interface TmdbSeasonDetail {
+  episodes?: Array<{
+    episode_number: number
+    name: string
+    overview: string | null
+    air_date: string | null
+    runtime: number | null
+    still_path: string | null
+  }>
 }
 
 interface TmdbSearchResponse<T> {
@@ -133,6 +157,26 @@ function releaseFields(date: string | undefined, status?: string | null, upcomin
 
 const UPCOMING_MOVIE_STATUSES = ['Rumored', 'Planned', 'In Production', 'Post Production']
 const UPCOMING_TV_STATUSES = ['Planned', 'In Production', 'Pilot']
+const ENDED_TV_STATUSES = ['Ended', 'Canceled']
+
+// A show's seasons and how far it has aired, as stored by refreshShow. Specials (season 0) aren't
+// a season anyone works through, so they're left out.
+export function toTvShowData(r: Pick<TmdbTvDetail, 'seasons' | 'last_episode_to_air' | 'status'>): TvShowData {
+  const last = r.last_episode_to_air
+  return {
+    seasons: (r.seasons ?? [])
+      .filter((season) => season.season_number > 0)
+      .map((season) => ({
+        number: season.season_number,
+        name: season.name,
+        episodeCount: season.episode_count,
+        airDate: exactDate(season.air_date),
+        coverImageUrl: toCoverUrl(season.poster_path),
+      })),
+    lastAired: last && last.season_number > 0 ? { season: last.season_number, episode: last.episode_number } : null,
+    ended: !!r.status && ENDED_TV_STATUSES.includes(r.status),
+  }
+}
 
 function toMovieResult(r: TmdbMovieResult): MediaSearchResult {
   return {
@@ -283,6 +327,21 @@ export const tmdbTvProvider: MediaProvider = {
         ['Rating', formatRating(r.vote_average, r.vote_count)],
       ]),
       url: `https://www.themoviedb.org/tv/${r.id}`,
+      tv: toTvShowData(r),
     }
+  },
+  async getSeasonEpisodes(externalId, season) {
+    const r = await tmdbFetch<TmdbSeasonDetail>(`/tv/${externalId}/season/${season}`, {})
+    if (!r?.episodes) return null
+    return r.episodes.map(
+      (episode): EpisodeResult => ({
+        number: episode.episode_number,
+        name: episode.name,
+        overview: episode.overview || null,
+        airDate: exactDate(episode.air_date),
+        runtime: episode.runtime,
+        stillUrl: episode.still_path ? `${TMDB_STILL_BASE}${episode.still_path}` : null,
+      }),
+    )
   },
 }
