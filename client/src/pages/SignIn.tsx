@@ -137,7 +137,7 @@ export function SignIn() {
               onChange={(event) => setEmail(event.target.value)}
             />
             <button type="submit" className="btn-primary" disabled={status === 'sending'}>
-              {status === 'sending' ? 'Sending…' : 'Send sign-in email'}
+              {status === 'sending' ? 'Sending…' : 'Continue'}
             </button>
           </form>
         </>

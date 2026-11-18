@@ -2920,7 +2920,7 @@ section + section {
 
 @media (min-width: 1000px) {
   .auth-page--split {
-    grid-template-columns: 400px minmax(0, 560px);
+    grid-template-columns: 440px minmax(0, 560px);
     grid-template-areas:
       'card preview'
       'features preview';
