@@ -2909,6 +2909,198 @@ section + section {
   font-size: 13px;
 }
 
+/* Sign-in: the card with the feature list under it, beside a preview of the app on wide screens;
+   on narrow ones the preview, then the features, follow the card. */
+.auth-page--split {
+  grid-template-columns: minmax(0, 440px);
+  justify-content: center;
+  align-content: center;
+  gap: 32px;
+}
+
+@media (min-width: 1000px) {
+  .auth-page--split {
+    grid-template-columns: 400px minmax(0, 560px);
+    grid-template-areas:
+      'card preview'
+      'features preview';
+    column-gap: 64px;
+    row-gap: 14px;
+    padding: 16px 32px;
+  }
+
+  .auth-page--split > .auth-card {
+    grid-area: card;
+    align-self: end;
+    padding: 28px 32px 24px;
+  }
+
+  .auth-page--split > .auth-card > p {
+    margin-bottom: 20px;
+  }
+
+  .auth-page--split > .showcase {
+    grid-area: preview;
+    align-self: center;
+  }
+
+  .auth-page--split > .showcase-features {
+    grid-area: features;
+    align-self: start;
+    gap: 10px;
+    padding: 14px 18px;
+  }
+
+  .auth-page--split .showcase-feature-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .auth-page--split > .auth-card > .auth-footer {
+    margin-top: 14px;
+  }
+
+  /* Turned slightly toward the sign-in card, so it reads as a picture of the app rather than part
+     of this page. */
+  .showcase-window {
+    transform: perspective(1800px) rotateY(-7deg) rotateX(2deg);
+    transform-origin: left center;
+  }
+}
+
+.showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  animation: rise-in 0.6s 0.1s ease-out both;
+}
+
+.showcase-caption {
+  padding: 0 4px;
+  font-family: var(--display);
+  font-size: 20px;
+  color: var(--text-h);
+}
+
+.showcase-window {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: var(--shadow-lift);
+}
+
+.showcase-chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.showcase-chrome > span:not(.showcase-url) {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.showcase-url {
+  flex: 1;
+  margin-right: 46px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--text);
+}
+
+.showcase-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 16px 16px;
+}
+
+.showcase-tabs {
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.showcase-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.showcase-notifications {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.showcase-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 18px 20px;
+  list-style: none;
+  /* Frosted like the sign-in card, so the text stays readable over the forest. */
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  line-height: 1.4;
+  animation: rise-in 0.6s 0.2s ease-out both;
+}
+
+.showcase-features li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.showcase-features strong {
+  display: block;
+  color: var(--text-h);
+}
+
+.showcase-feature-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 18px;
+}
+
+@media (max-width: 480px) {
+  .showcase-body {
+    padding: 0 10px 12px;
+  }
+
+  /* Two cards, like the app's own phone grid; three are too narrow for their titles and tags. */
+  .showcase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .showcase-grid > .media-card:nth-child(n + 3) {
+    display: none;
+  }
+
+  .showcase-tabs {
+    font-size: 13px;
+  }
+}
+
 .auth-floaters {
   position: absolute;
   inset: 0;

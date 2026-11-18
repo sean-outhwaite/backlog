@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { AuthShell } from '../components/AuthShell'
+import { SignInShowcase } from '../components/SignInShowcase'
 import { GoogleSignInButton, googleSignInEnabled } from '../components/GoogleSignInButton'
 import { useAuth } from '../hooks/useAuth'
 
@@ -80,7 +81,7 @@ export function SignIn() {
   const awaitingCode = status === 'sent' || status === 'verifying'
 
   return (
-    <AuthShell>
+    <AuthShell aside={<SignInShowcase />}>
       <h1 className="wordmark">Backlog</h1>
       <p>
         Keep track of everything you've been meaning to watch, read, and play. Share recommendations for your mates to
@@ -145,7 +146,7 @@ export function SignIn() {
       {error && <p className="error-text">{error}</p>}
 
       <p className="auth-footer">
-        <Link to="/privacy">Privacy policy</Link>
+        No ads, no tracking · <Link to="/privacy">Privacy policy</Link>
       </p>
     </AuthShell>
   )
