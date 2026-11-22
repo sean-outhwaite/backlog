@@ -19,7 +19,9 @@ Tests are Vitest, server only, colocated as `server/src/**/*.test.ts` (excluded 
 
 **pnpm, not npm.** The repo moved off npm because npm 11 drops other platforms' optional native binaries (`@rolldown/binding-linux-x64-gnu`, `lightningcss-linux-x64-gnu`) when it updates an existing lockfile on macOS, which broke a Vercel deploy once; `pnpm-lock.yaml` always records every platform's. The version is pinned in `packageManager` (root `package.json`) and in `vercel.json`'s `installCommand` (Vercel would otherwise pick pnpm 9 or 10 on its own); bump both together. pnpm 10 only runs install scripts for packages listed in `pnpm.onlyBuiltDependencies` (Prisma, esbuild): a new dependency that needs its postinstall must be added there. pnpm's `node_modules` is strict, so a workspace can only import packages its own `package.json` lists.
 
-`pnpm.overrides` in the root `package.json` forces `deepmerge-ts` to ^8 because `@prisma/config` 6.x pins 7.1.5 (GHSA-ggr8-5vv4-36mx). Remove it when moving to Prisma 7.
+`pnpm.overrides` in the root `package.json` forces `deepmerge-ts` to ^8 and `effect` to ^3.22.1 because `@prisma/config` 6.x pins 7.1.5 and 3.21.0 (GHSA-ggr8-5vv4-36mx, GHSA-7589-6fvf-x4pw). Remove them when moving to Prisma 7.
+
+`pnpm-workspace.yaml` sets `minimumReleaseAge: 1440`, so pnpm won't install a version published less than a day ago: 2026's npm worms (ChainDrop, node-ipc) were pulled within hours. Adding a package or bumping one to a release from today fails to resolve until it's a day old.
 
 ## Architecture
 
