@@ -126,8 +126,10 @@ export function SignInShowcase() {
         <figcaption className="showcase-caption">
           A look inside
           <Link to="/demo" className="showcase-demo-link">
-            Try the demo
-            <span aria-hidden="true">→</span>
+            <span className="showcase-demo-text">Try the demo</span>
+            <span className="showcase-demo-arrow" aria-hidden="true">
+              →
+            </span>
           </Link>
         </figcaption>
         <div className="showcase-window" inert>

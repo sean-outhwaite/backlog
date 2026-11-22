@@ -3037,15 +3037,16 @@ section + section {
   text-decoration: none;
 }
 
-.showcase-demo-link:hover {
+/* Only the words underline on hover; the arrow nudges along instead. */
+.showcase-demo-link:hover .showcase-demo-text {
   text-decoration: underline;
 }
 
-.showcase-demo-link span {
+.showcase-demo-arrow {
   transition: transform 0.2s var(--ease-spring);
 }
 
-.showcase-demo-link:hover span {
+.showcase-demo-link:hover .showcase-demo-arrow {
   transform: translateX(3px);
 }
 
