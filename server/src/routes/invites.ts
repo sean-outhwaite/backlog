@@ -3,6 +3,7 @@ import type { AuthedRequest } from '../middleware/auth.js'
 import { asyncHandler } from '../lib/asyncHandler.js'
 import { newInviteToken } from '../lib/inviteTokens.js'
 import { prisma } from '../lib/prisma.js'
+import { DEMO_READ_ONLY_MESSAGE } from '../lib/demo.js'
 import { areFriends, createFriendshipIfMissing } from '../lib/friendship.js'
 
 export const invitesRouter = Router()
@@ -10,7 +11,13 @@ export const invitesRouter = Router()
 invitesRouter.get(
   '/mine',
   asyncHandler(async (req, res) => {
-    const { userId } = req as unknown as AuthedRequest
+    const { userId, isDemo } = req as unknown as AuthedRequest
+    // The demo account never gets a link: whoever redeemed it would become its friend, and their
+    // lists would be shown to every visitor (see lib/demo.ts).
+    if (isDemo) {
+      res.status(403).json({ error: DEMO_READ_ONLY_MESSAGE, demo: true })
+      return
+    }
     const invite = await prisma.inviteLink.upsert({
       where: { ownerId: userId },
       create: { ownerId: userId, token: newInviteToken() },

@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
 import { api } from '../lib/api'
 import { setAppBadge } from '../lib/appBadge'
+import { isDemoSession } from '../lib/demo'
 import { disablePush } from '../lib/push'
 import type { Profile } from '../types'
 
@@ -13,6 +14,8 @@ interface AuthContextValue {
   // Loading the profile failed and there's none to fall back on. Not the same as having no
   // username yet: a dropped connection mustn't send someone to onboarding.
   profileUnavailable: boolean
+  // Signed into the shared, read-only demo account.
+  isDemo: boolean
   refreshProfile: () => Promise<void>
   retryProfile: () => Promise<void>
   signOut: () => Promise<void>
@@ -82,9 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     profileUnavailable,
+    isDemo: isDemoSession(session),
     refreshProfile: loadProfile,
     retryProfile: tryLoadProfile,
     signOut: async () => {
+      // The demo account is shared, so leaving it only ends this browser's session: the default
+      // (global) sign-out would end every visitor's. It never has push on.
+      if (isDemoSession(session)) {
+        await supabase.auth.signOut({ scope: 'local' })
+        return
+      }
       // Turn push off for this device first, so it stops getting this account's notifications
       // (and while the session still exists, since the API call needs its token). Never holds up
       // signing out: failures are ignored, and it gives up after a few seconds.

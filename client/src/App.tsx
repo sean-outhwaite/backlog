@@ -5,6 +5,7 @@ import { RequireAuth } from './components/RequireAuth'
 import { AuthCallback } from './pages/AuthCallback'
 import { CollectionPage } from './pages/CollectionPage'
 import { Dashboard } from './pages/Dashboard'
+import { DemoStart } from './pages/DemoStart'
 import { Friends } from './pages/Friends'
 import { FriendCollections, FriendList } from './pages/FriendList'
 import { InviteRedeem } from './pages/InviteRedeem'
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/demo" element={<DemoStart />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/invite/:token" element={<InviteRedeem />} />
       <Route path="/onboarding" element={<Onboarding />} />

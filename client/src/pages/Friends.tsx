@@ -9,8 +9,10 @@ import { LoadingState } from '../components/Spinner'
 import { api } from '../lib/api'
 import { invalidateFriends } from '../lib/friends'
 import type { InviteLink, Profile } from '../types'
+import { useAuth } from '../hooks/useAuth'
 
 export function Friends() {
+  const { isDemo } = useAuth()
   const [invite, setInvite] = useState<InviteLink | null>(null)
   const [inviteFailed, setInviteFailed] = useState(false)
   // null while loading, so it isn't mistaken for having no friends.
@@ -21,15 +23,17 @@ export function Friends() {
   const [removing, setRemoving] = useState<Profile | null>(null)
 
   useEffect(() => {
-    api
-      .get<InviteLink>('/api/invites/mine')
-      .then(setInvite)
-      .catch(() => setInviteFailed(true))
+    if (!isDemo) {
+      api
+        .get<InviteLink>('/api/invites/mine')
+        .then(setInvite)
+        .catch(() => setInviteFailed(true))
+    }
     api
       .get<Profile[]>('/api/friends')
       .then(setFriends)
       .catch(() => setFriendsFailed(true))
-  }, [])
+  }, [isDemo])
 
   const inviteUrl = invite ? `${window.location.origin}/invite/${invite.token}` : ''
 
@@ -54,30 +58,41 @@ export function Friends() {
     <div>
       <PageHeader title="Friends" subtitle="See what your friends are into, and send them things you love." />
 
-      <section className="panel">
-        <h2>Your invite link</h2>
-        <p>Share this so a friend can connect with you.</p>
-        <div className="invite-link-row">
-          <input readOnly value={inviteUrl} onFocus={(event) => event.target.select()} />
-          <button className="btn-primary" onClick={() => void copyInviteUrl()} disabled={!invite}>
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
-        {inviteFailed && <p className="error-text">Couldn't load your invite link. Reload to try again.</p>}
+{/* The demo has no invite link: whoever used it would become everyone's friend in the demo. */}
+      {isDemo ? (
+        <section className="panel">
+          <h2>Your invite link</h2>
+          <p>
+            Each account gets a link to share, and whoever opens it becomes your friend. The demo doesn't have one, so
+            its friends are sample accounts.
+          </p>
+        </section>
+      ) : (
+        <section className="panel">
+          <h2>Your invite link</h2>
+          <p>Share this so a friend can connect with you.</p>
+          <div className="invite-link-row">
+            <input readOnly value={inviteUrl} onFocus={(event) => event.target.select()} />
+            <button className="btn-primary" onClick={() => void copyInviteUrl()} disabled={!invite}>
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          {inviteFailed && <p className="error-text">Couldn't load your invite link. Reload to try again.</p>}
 
-        <button
-          className="invite-reset btn-quiet"
-          aria-describedby="invite-reset-hint"
-          onClick={() => setConfirmingReset(true)}
-          disabled={!invite}
-        >
-          <RefreshIcon />
-          Reset link
-        </button>
-        <p className="invite-link-info" id="invite-reset-hint">
-          Resetting your link stops the old one from working, so anyone who has it won't be able to add you.
-        </p>
-      </section>
+          <button
+            className="invite-reset btn-quiet"
+            aria-describedby="invite-reset-hint"
+            onClick={() => setConfirmingReset(true)}
+            disabled={!invite}
+          >
+            <RefreshIcon />
+            Reset link
+          </button>
+          <p className="invite-link-info" id="invite-reset-hint">
+            Resetting your link stops the old one from working, so anyone who has it won't be able to add you.
+          </p>
+        </section>
+      )}
 
       <section>
         <h2>Your friends</h2>

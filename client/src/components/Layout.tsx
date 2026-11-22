@@ -5,6 +5,7 @@ import { haptic } from '../lib/haptics'
 import type { UnreadCounts } from '../types'
 import { InProgressPanel } from './InProgressPanel'
 import { NotificationsMenu } from './NotificationsMenu'
+import { DemoBanner } from './DemoBanner'
 import { BookmarkIcon, ListIcon, LogoMark, SearchIcon, SparklesIcon, UsersIcon } from './icons'
 import { UserMenu } from './UserMenu'
 import { HapticSwitch } from './HapticSwitch'
@@ -134,6 +135,7 @@ function Shell() {
         <UserMenu />
       </aside>
       <main className="app-main">
+        <DemoBanner />
         <Outlet />
       </main>
     </div>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { ListTab } from '../hooks/useStatusParam'
 import type { AppNotification, MediaItem } from '../types'
 import { MediaCard } from './MediaCard'
@@ -122,7 +123,13 @@ export function SignInShowcase() {
   return (
     <>
       <figure className="showcase">
-        <figcaption className="showcase-caption">A look inside</figcaption>
+        <figcaption className="showcase-caption">
+          A look inside
+          <Link to="/demo" className="showcase-demo-link">
+            Try the demo
+            <span aria-hidden="true">→</span>
+          </Link>
+        </figcaption>
         <div className="showcase-window" inert>
           <div className="showcase-chrome" aria-hidden="true">
             <span />

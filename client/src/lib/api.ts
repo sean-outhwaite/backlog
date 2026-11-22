@@ -7,6 +7,10 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'ht
 // that made the change (like the sidebar's in-progress panel) can refresh.
 export const LISTS_CHANGED_EVENT = 'lists-changed'
 
+// Fired on window when the server refuses a change because this is the read-only demo
+// (see lib/demo.ts), so the shell can say so once rather than every caller handling it.
+export const DEMO_READ_ONLY_EVENT = 'demo-read-only'
+
 // The server answered with an error, as opposed to the request not getting through at all.
 export class ApiError extends Error {
   readonly status: number
@@ -51,6 +55,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
+    if (body.demo === true) window.dispatchEvent(new Event(DEMO_READ_ONLY_EVENT))
     throw new ApiError(errorMessage(body.error, response.status), response.status)
   }
   if (init?.method && path.startsWith('/api/lists')) window.dispatchEvent(new Event(LISTS_CHANGED_EVENT))

@@ -7,6 +7,7 @@ import { LoadingState, Spinner } from '../components/Spinner'
 import { useNotifications } from '../hooks/useNotifications'
 import { api } from '../lib/api'
 import type { AppNotification, NotificationPage } from '../types'
+import { useAuth } from '../hooks/useAuth'
 
 const PAGE_SIZE = 20
 
@@ -14,6 +15,7 @@ const PAGE_SIZE = 20
 // that were unread stay highlighted while you're here.
 export function Notifications() {
   const { markRead } = useNotifications()
+  const { isDemo } = useAuth()
   const [notifications, setNotifications] = useState<AppNotification[] | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -45,7 +47,8 @@ export function Notifications() {
   return (
     <div>
       <PageHeader title="Notifications" subtitle="Recommendations from friends, and preorder release updates." />
-      <PushToggle />
+      {/* The demo is shared by everyone looking around, so it never asks to send them notifications. */}
+      {!isDemo && <PushToggle />}
 
       {failed && (
         <EmptyState>

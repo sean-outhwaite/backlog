@@ -5,6 +5,7 @@ import { env } from './lib/env.js'
 import { requireAuth } from './middleware/auth.js'
 import { collectionsRouter } from './routes/collections.js'
 import { cronRouter } from './routes/cron.js'
+import { demoRouter } from './routes/demo.js'
 import { friendsRouter } from './routes/friends.js'
 import { invitePageRouter } from './routes/invitePage.js'
 import { invitesRouter } from './routes/invites.js'
@@ -23,6 +24,7 @@ app.use(express.json())
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }))
 app.use('/api/cron', cronRouter)
+app.use('/api/demo', demoRouter)
 app.use('/invite', invitePageRouter)
 
 app.use('/api/media', requireAuth, mediaRouter)

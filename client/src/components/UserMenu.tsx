@@ -7,7 +7,7 @@ import { CameraIcon, LogOutIcon } from './icons'
 
 // Avatar button in the header; sign out lives behind it so it's not one stray click away.
 export function UserMenu() {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, isDemo } = useAuth()
   const [open, setOpen] = useState(false)
   const [editingPhoto, setEditingPhoto] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -37,21 +37,29 @@ export function UserMenu() {
           <p className="user-menu-signed-in">
             Signed in as <strong>{profile?.username}</strong>
           </p>
-          <button
-            className="user-menu-item btn-quiet"
-            onClick={() => {
-              setOpen(false)
-              setEditingPhoto(true)
-            }}
-            autoFocus
-          >
-            <CameraIcon />
-            {profile?.avatarUrl ? 'Change avatar' : 'Add an avatar'}
-          </button>
-          <button className="user-menu-item btn-quiet" onClick={() => void signOut()}>
-            <LogOutIcon />
-            Sign out
-          </button>
+          {/* The demo account is shared, so it has no photo to change, and leaving it is the banner's
+              Sign up button rather than signing out. */}
+          {isDemo ? (
+            <p className="user-menu-note">This is the shared demo account, so there's nothing to change here.</p>
+          ) : (
+            <>
+              <button
+                className="user-menu-item btn-quiet"
+                onClick={() => {
+                  setOpen(false)
+                  setEditingPhoto(true)
+                }}
+                autoFocus
+              >
+                <CameraIcon />
+                {profile?.avatarUrl ? 'Change avatar' : 'Add an avatar'}
+              </button>
+              <button className="user-menu-item btn-quiet" onClick={() => void signOut()}>
+                <LogOutIcon />
+                Sign out
+              </button>
+            </>
+          )}
         </div>
       )}
 

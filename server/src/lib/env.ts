@@ -12,6 +12,9 @@ export const env = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   // Shared with Vercel Cron, which sends it as a bearer token. Without it the cron routes refuse.
   cronSecret: process.env.CRON_SECRET,
+  // Local only: lets scripts/seedDemo.ts write as the read-only demo accounts (see lib/demo.ts).
+  // Never set it on Vercel (and it's ignored there anyway).
+  demoSeedSecret: process.env.DEMO_SEED_SECRET,
   tmdbApiKey: required('TMDB_API_KEY'),
   // A Twitch app's credentials, for IGDB (games). dev.twitch.tv -> Console -> Applications.
   twitchClientId: required('TWITCH_CLIENT_ID'),
